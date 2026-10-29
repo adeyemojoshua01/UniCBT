@@ -1561,7 +1561,7 @@ discardSavedExam: function () {
                 this.renderQuestion();
             },
 
-                                    submitTheoryImage: async function(qId) {
+                                                submitTheoryImage: async function(qId) {
                 const fileInput = document.getElementById(`theory-image-input-${qId}`);
                 const file = fileInput.files[0];
                 if (!file) return;
@@ -1569,10 +1569,7 @@ discardSavedExam: function () {
                 const q = this.data.questions.find(q => String(q.id) === String(qId));
                 if (!q) return;
 
-                this.data.userAnswers[String(q.id)] = "[Handwritten Image Uploaded]";
-
                 const btn = document.getElementById(`submit-image-btn-${qId}`);
-
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Grading...';
                 btn.disabled = true;
                 btn.classList.add('opacity-75', 'cursor-not-allowed');
@@ -1583,7 +1580,12 @@ discardSavedExam: function () {
                     const reader = new FileReader();
                     
                     reader.onload = async (e) => {
-                        const base64String = e.target.result.split(',')[1];
+                        const fullBase64 = e.target.result;
+                        const base64String = fullBase64.split(',')[1];
+                        
+                        // SAVE THE ACTUAL IMAGE TO USER ANSWERS
+                        this.data.userAnswers[String(q.id)] = fullBase64;
+
                         const response = await fetch('/api/grade', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1721,23 +1723,24 @@ discardSavedExam: function () {
                 if (confirm("Submit? You cannot return once submitted.")) this.submitTest();
             },
 
-            submitTest: function() {
+                        submitTest: function() {
                 this.stopTimer();
                 this.clearExamState();
 
                 let score = 0;
                 const details = [];
 
-                                                                this.data.questions.forEach(q => {
-                    const userAns = this.data.userAnswers[q.id];
+                this.data.questions.forEach(q => {
+                    // FIX: Look for String key, fallback to number
+                    const userAns = this.data.userAnswers[String(q.id)] || this.data.userAnswers[q.id];
                     let isCorrect = false;
                     
-                    // Grab the AI grading data if it's a theory question
-                    const revealed = this.data.answerRevealed[q.id];
+                    const revealed = this.data.answerRevealed[String(q.id)] || this.data.answerRevealed[q.id];
+                    const maxMarks = q.maxMarks || 10;
 
                     if (q.type === 'theory') {
                         if (revealed && typeof revealed === 'object' && revealed.score !== undefined) {
-                            const passingMark = (q.maxMarks || 10) / 2; 
+                            const passingMark = maxMarks / 2; 
                             isCorrect = revealed.score >= passingMark;
                         }
                     } else if (userAns !== undefined && userAns !== '') {
@@ -1753,12 +1756,10 @@ discardSavedExam: function () {
                     details.push({
                         question: q.text,
                         userAnswer: userAns || 'Not Answered',
-                        // Show AI score for theory, otherwise show the normal correct answer
-                        correctAnswer: q.type === 'theory' ? `AI Grade: ${revealed ? revealed.score : 0}/${q.maxMarks}` : q.correct,
+                        correctAnswer: q.type === 'theory' ? `AI Grade: ${revealed && revealed.score !== undefined ? revealed.score : 0}/${maxMarks}` : q.correct,
                         isCorrect,
                         questionType: q.type,
                         options: q.options,
-                        // Show AI feedback as the explanation for theory
                         explanation: (q.type === 'theory' && revealed) ? revealed.explanation : q.explanation
                     });
                 });
@@ -1783,7 +1784,7 @@ discardSavedExam: function () {
 
                 this.showSimplifiedResult(score, total, percentage);
             },
-
+            
             // ============================================================
             // SIMPLIFIED RESULT (SCORE ONLY + PREVIEW BUTTON)
             // ============================================================
@@ -1902,9 +1903,12 @@ discardSavedExam: function () {
                                     <p class="text-gray-700 mb-4 bg-gray-50 p-4 rounded">${d.question}</p>
 
                                                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                        <div class="${!d.isCorrect ? 'bg-red-50 p-3 rounded border border-red-200' : ''}">
+                                       <div class="${!d.isCorrect ? 'bg-red-50 p-3 rounded border border-red-200' : ''}">
                                             <div class="text-sm text-gray-500 mb-1">Your Answer:</div>
-                                            <div class="font-bold ${d.isCorrect ? 'text-green-700' : 'text-red-700'}">${d.userAnswer}</div>
+                                            ${(d.userAnswer && d.userAnswer.startsWith('data:image')) 
+                                                ? `<img src="${d.userAnswer}" class="max-h-60 rounded border mt-2 object-contain shadow-sm" alt="Uploaded Answer">` 
+                                                : `<div class="font-bold ${d.isCorrect ? 'text-green-700' : 'text-red-700'}">${d.userAnswer}</div>`
+                                            }
                                         </div>
                                         ${(!d.isCorrect || d.questionType === 'theory') ? `
                                             <div class="bg-green-50 p-3 rounded border border-green-200">
@@ -2659,86 +2663,6 @@ window.addEventListener('beforeunload', (e) => {
 });
 </script>
 
-    <!-- FIX FOR THEORY GRADING DISPLAY -->
-    <script>
-    (function() {
-        const patchInterval = setInterval(() => {
-            if (window.app && typeof window.app.submitTest === 'function') {
-                clearInterval(patchInterval);
-                
-                // Override the submitTest function with the corrected logic
-                window.app.submitTest = function() {
-                    this.stopTimer();
-                    this.clearExamState();
 
-                    let score = 0;
-                    const details = [];
-
-                    this.data.questions.forEach(q => {
-                        const userAns = this.data.userAnswers[q.id];
-                        let isCorrect = false;
-                        
-                        // FIX: Check BOTH String and Number keys to find the AI grade
-                        const revealed = this.data.answerRevealed[String(q.id)] || this.data.answerRevealed[q.id];
-                        const maxMarks = q.maxMarks || 10;
-
-                        if (q.type === 'theory') {
-                            if (revealed && typeof revealed === 'object' && revealed.score !== undefined) {
-                                const passingMark = maxMarks / 2; 
-                                isCorrect = revealed.score >= passingMark;
-                            }
-                        } else if (userAns !== undefined && userAns !== '') {
-                            if (q.type === 'objective') {
-                                isCorrect = userAns.toUpperCase() === q.correct.toUpperCase();
-                            } else {
-                                isCorrect = userAns.toLowerCase().trim() === q.correct.toLowerCase().trim();
-                            }
-                        }
-
-                        if (isCorrect) score++;
-
-                        // Ensure score defaults to 0 if the AI API had an issue
-                        const aiScore = (revealed && revealed.score !== undefined) ? revealed.score : 0;
-
-                        details.push({
-                            question: q.text,
-                            userAnswer: userAns || 'Not Answered',
-                            correctAnswer: q.type === 'theory' ? `AI Grade: ${aiScore}/${maxMarks}` : q.correct,
-                            isCorrect,
-                            questionType: q.type,
-                            options: q.options,
-                            explanation: (q.type === 'theory' && revealed) ? revealed.explanation : q.explanation
-                        });
-                    });
-
-                    const total = this.data.questions.length;
-                    const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
-                    const subjectName = this.data.subjects[this.data.currentSubjectId]?.name || 'General';
-
-                    this.data.lastResults = {
-                        name: this.data.candidateName,
-                        subjectName,
-                        score,
-                        total,
-                        percentage,
-                        date: new Date().toISOString(),
-                        details,
-                        examMode: this.data.examMode
-                    };
-
-                    this.data.results.push(this.data.lastResults);
-                    this.saveResults();
-
-                    this.showSimplifiedResult(score, total, percentage);
-                };
-
-                console.log('✅ Patched submitTest to correctly display Theory scores');
-            }
-        }, 500);
-    })();
-    </script>
-
-    
-    
 </body>
 </html>
