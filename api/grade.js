@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         if (type === 'text') {
             const { studentAnswer, correctAnswer, questionText } = data;
             payload = {
-                model: "llama-3.1-70b-versatile", // Updated to active model
+                model: "llama3-70b-8192", // ✅ Stable Groq model
                 messages: [
                     { role: "system", content: `You are an automated examiner. Compare the student's answer to the correct answer. A positive result (score >= 80) means the student's answer is semantically correct, even if the wording is different. Return ONLY a valid JSON object: {"score": 0-100, "reason": "string"}` },
                     { role: "user", content: `Question: "${questionText}"\nCorrect Answer: "${correctAnswer}"\nStudent Answer: "${studentAnswer}"` }
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         } else if (type === 'theory_text') {
             const { studentAnswer, questionText, maxMarks } = data;
             payload = {
-                model: "llama-3.1-70b-versatile", // Updated to active model
+                model: "llama3-70b-8192", // ✅ Stable Groq model
                 messages: [
                     { role: "system", content: `You are an automated examiner. Read the student's typed theory answer and grade it out of ${maxMarks} marks. Be fair and look for key concepts. Return ONLY a valid JSON object: {"score": 0-${maxMarks}, "reason": "string"}` },
                     { role: "user", content: `Question: "${questionText}"\nMax Marks: ${maxMarks}\nStudent Answer: "${studentAnswer}"` }
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         } else if (type === 'image') {
             const { imageBase64, questionText, maxMarks } = data;
             payload = {
-                model: "llama-3.2-11b-vision-preview", 
+                model: "llama-3.2-11b-vision-preview", // ✅ Stable Groq vision model
                 messages: [
                     { role: "system", content: `You are an automated examiner. Read the student's handwritten answer in the image and grade it out of ${maxMarks} marks. Return ONLY a valid JSON object: {"score": 0-${maxMarks}, "reason": "string"}` },
                     { role: "user", content: [
