@@ -1,0 +1,2654 @@
+<!DOCTYPE html>
+<html lang="en" style="overflow: hidden;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>University eduCBT</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind (via CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="theme-aurora.css">
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                packages: { '[+]': ['mhchem', 'ams'] }
+            },
+            options: {
+                ignoreHtmlClass: 'no-mathjax',
+                processHtmlClass: 'mathjax'
+            }
+        };
+    </script>
+   
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+      
+</head>
+<body class="bg-gray-100 h-screen flex flex-col overflow-hidden text-gray-800" style="overflow: hidden;">
+
+    <!-- Header -->
+    <header class="bg-green-700 text-white p-4 shadow-md z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-graduation-cap text-2xl"></i>
+                <h1 class="text-xl font-bold">University eduCBT</h1>
+            </div>
+            <div id="header-actions">
+                <button onclick="event.preventDefault(); app.showLanding()" class="text-sm bg-green-800 hover:bg-green-900 px-3 py-1 rounded flex items-center gap-2">
+                    <i class="fas fa-home"></i>
+                    <span class="hidden sm:inline">Home</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main id="app-container" class="flex-grow container mx-auto p-4 overflow-auto relative"></main>
+
+    <!-- Mobile Grid Modal -->
+    <div id="mobile-grid-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-4 w-11/12 max-w-sm shadow-xl flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="font-bold text-gray-800">Question Navigator</h3>
+                <button onclick="event.preventDefault(); document.getElementById('mobile-grid-modal').classList.add('hidden')" class="text-gray-500 hover:text-red-500">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="flex-grow overflow-y-auto p-2" id="mobile-grid-container"></div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="image-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-4 w-11/12 max-w-6xl shadow-xl flex flex-col" style="height: 90vh;">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg" id="image-modal-title">Reference Images</h3>
+                    <p id="image-folder-name" class="text-sm text-gray-500"></p>
+                </div>
+                <button onclick="event.preventDefault(); imageViewer.close()" class="text-gray-500 hover:text-red-500 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="image-viewer-container" class="flex-grow flex flex-col">
+                <!-- Image Toolbar -->
+                <div class="image-toolbar">
+                    <div class="flex items-center gap-1">
+                        <button onclick="imageViewer.zoomIn()" title="Zoom In"><i class="fas fa-search-plus"></i></button>
+                        <button onclick="imageViewer.zoomOut()" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
+                        <button onclick="imageViewer.downloadAll()" title="Download All Images"><i class="fas fa-download"></i></button>
+                    </div>
+                    <div class="ml-auto">
+                        <span id="image-count" class="text-sm text-gray-600">0 images</span>
+                    </div>
+                </div>
+
+                <!-- Image Gallery -->
+                <div id="image-gallery" class="flex-grow overflow-auto image-gallery"></div>
+            </div>
+
+            <!-- No Images Message -->
+            <div id="no-images-message" class="hidden h-full flex items-center justify-center">
+                <div class="text-center p-8">
+                    <i class="fas fa-image text-5xl text-gray-300 mb-4"></i>
+                    <h4 class="text-xl font-bold text-gray-500 mb-2">No Images Available</h4>
+                    <p class="text-gray-400">No reference images uploaded for this subject.</p>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Click on any image to view full size
+                </div>
+                <button onclick="event.preventDefault(); imageViewer.close()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Topic Image Viewer Modal -->
+    <div id="topic-image-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-4 w-11/12 max-w-6xl shadow-xl flex flex-col" style="height: 90vh;">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg" id="topic-image-modal-title">Topic Images</h3>
+                    <p id="topic-image-folder-name" class="text-sm text-gray-500"></p>
+                </div>
+                <button onclick="event.preventDefault(); document.getElementById('topic-image-modal').classList.add('hidden')" class="text-gray-500 hover:text-red-500 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="topic-image-gallery" class="flex-grow overflow-auto image-gallery"></div>
+            <div class="mt-4 pt-4 border-t text-right">
+                <button onclick="event.preventDefault(); document.getElementById('topic-image-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Viewer Modal -->
+    <div id="note-viewer-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-4xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold" id="note-viewer-title">Topic Notes</h2>
+                <button onclick="event.preventDefault(); document.getElementById('note-viewer-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="note-viewer-content" class="prose max-w-none note-content"></div>
+            <div class="mt-4 pt-4 border-t text-right">
+                <button onclick="event.preventDefault(); document.getElementById('note-viewer-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full-Screen Explanation Viewer Modal -->
+    <div id="fullscreen-explain-modal">
+        <div class="modal-content theme-white">
+            <button class="theme-toggle-btn" onclick="window.toggleExplanationTheme(this)" title="Change background color">💡</button>
+            <button class="close-btn" onclick="document.getElementById('fullscreen-explain-modal').classList.remove('open')">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2>📖 Full Screen Explanation</h2>
+            <div id="fullscreen-explain-body"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MAIN APPLICATION JAVASCRIPT (EMBEDDED)                       -->
+    <!-- ============================================================ -->
+    <script>
+        // ============================================================
+        // IMAGE VIEWER MODULE
+        // ============================================================
+
+
+function compressImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(blob => {
+                            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        const imageViewer = {
+            images: [],
+            scale: 1,
+
+            init: function() {
+                this.setupEventListeners();
+            },
+
+            setupEventListeners: function() {
+                // No admin upload areas – image viewing only
+            },
+
+            open: function(images, title) {
+                this.images = images || [];
+                const modal = document.getElementById('image-modal');
+                document.getElementById('image-modal-title').textContent = title || 'Reference Images';
+                document.getElementById('image-count').textContent = `${this.images.length} images`;
+
+                if (this.images.length === 0) {
+                    document.getElementById('image-viewer-container').classList.add('hidden');
+                    document.getElementById('no-images-message').classList.remove('hidden');
+                } else {
+                    document.getElementById('image-viewer-container').classList.remove('hidden');
+                    document.getElementById('no-images-message').classList.add('hidden');
+                    this.renderGallery();
+                }
+
+                modal.classList.remove('hidden');
+            },
+
+            close: function() {
+                document.getElementById('image-modal').classList.add('hidden');
+                this.images = [];
+            },
+
+            renderGallery: function() {
+                const gallery = document.getElementById('image-gallery');
+                gallery.innerHTML = '';
+
+                this.images.forEach((image) => {
+                    const item = document.createElement('div');
+                    item.className = 'image-item';
+                    item.onclick = () => this.viewFullSize(image.data);
+
+                    const img = document.createElement('img');
+                    img.src = image.data;
+                    img.alt = image.filename;
+
+                    const filename = document.createElement('div');
+                    filename.className = 'filename';
+                    filename.textContent = image.filename;
+
+                    item.appendChild(img);
+                    item.appendChild(filename);
+                    gallery.appendChild(item);
+                });
+            },
+
+            viewFullSize: function(imageData) {
+                const fullscreenModal = document.createElement('div');
+                fullscreenModal.className = 'fixed inset-0 bg-black/90 flex items-center justify-center z-[60]';
+                fullscreenModal.onclick = () => fullscreenModal.remove();
+
+                const img = document.createElement('img');
+                img.src = imageData;
+                img.className = 'max-h-[90vh] max-w-[90vw] object-contain';
+
+                fullscreenModal.appendChild(img);
+                document.body.appendChild(fullscreenModal);
+            },
+
+            zoomIn: function() {
+                this.scale += 0.1;
+                this.applyZoom();
+            },
+
+            zoomOut: function() {
+                if (this.scale > 0.3) {
+                    this.scale -= 0.1;
+                    this.applyZoom();
+                }
+            },
+
+            applyZoom: function() {
+                const images = document.querySelectorAll('.image-item img');
+                images.forEach(img => {
+                    img.style.transform = `scale(${this.scale})`;
+                });
+            },
+
+            downloadAll: function() {
+                this.images.forEach((image, index) => {
+                    const link = document.createElement('a');
+                    link.href = image.data;
+                    link.download = image.filename || `image-${index + 1}.jpg`;
+                    link.click();
+                });
+                app.showNotification(`Downloading ${this.images.length} images...`, 'success');
+            }
+        };
+
+        // ============================================================
+        // MAIN APP OBJECT – CANDIDATE ONLY
+        // ============================================================
+
+        const app = {
+            data: {
+                subjects: {},
+                currentSubjectId: null,
+                questions: [],
+                examDuration: 30,
+                currentQuestionIndex: 0,
+                userAnswers: {},
+                candidateName: '',
+                timer: null,
+                timeLeft: 0,
+                mode: 'landing',
+                results: [],
+                images: {},
+                examMode: null, // 'practice' or 'study'
+                answerRevealed: {},
+                lastResults: null,
+                refreshLocked: true
+            },
+
+            // ============================================================
+            // INITIALIZATION
+            // ============================================================
+
+            init: function () {
+    this.loadData();
+    this.loadResults();
+    this.loadImages();
+    imageViewer.init();
+    this.setupMathJaxPatch();
+
+    // Resume prompt short-circuits the normal landing render
+    if (this.checkForSavedExam()) return;
+
+    this.showLanding();
+},
+
+                        loadData: function() {
+                const storedSubjects = localStorage.getItem('cbt_subjects');
+                if (storedSubjects) {
+                    this.data.subjects = JSON.parse(storedSubjects);
+                    Object.values(this.data.subjects).forEach(subj => {
+                        if (!subj.notes) subj.notes = {};
+                        if (!subj.topicImages) subj.topicImages = {};
+                    });
+                } else {
+                    this.data.subjects = {}; // Start empty if nothing is saved
+                }
+            },
+
+            
+
+            loadImages: function() {
+                const storedImages = localStorage.getItem('cbt_images');
+                if (storedImages) {
+                    try {
+                        this.data.images = JSON.parse(storedImages);
+                    } catch(e) {
+                        this.data.images = {};
+                    }
+                }
+            },
+
+            loadResults: function() {
+                const storedResults = localStorage.getItem('cbt_results');
+                if (storedResults) {
+                    try {
+                        this.data.results = JSON.parse(storedResults);
+                    } catch(e) {}
+                }
+            },
+
+            saveSubjects: function() {
+                localStorage.setItem('cbt_subjects', JSON.stringify(this.data.subjects));
+            },
+
+            saveResults: function() {
+                localStorage.setItem('cbt_results', JSON.stringify(this.data.results));
+                
+            },
+
+            saveImages: function() {
+                localStorage.setItem('cbt_images', JSON.stringify(this.data.images));
+            },
+
+            createSubjectInternal: function(name, duration, questions = [], id = null) {
+                const newId = id || 'subj_' + Date.now();
+                this.data.subjects[newId] = {
+                    id: newId,
+                    name: name,
+                    duration: parseInt(duration) || 30,
+                    questions: questions,
+                    topics: [{ id: 'general', name: 'General' }],
+                    notes: {},
+                    topicImages: {}
+                };
+                this.saveSubjects();
+                return newId;
+            },
+
+// ============================================================
+// EXAM STATE PERSISTENCE
+// ============================================================
+
+saveExamState: function () {
+    if (this.data.mode !== 'test') return;
+    try {
+        localStorage.setItem('cbt_exam_state', JSON.stringify({
+            questions:        this.data.questions,
+            userAnswers:      this.data.userAnswers,
+            answerRevealed:   this.data.answerRevealed,
+            currentIndex:     this.data.currentQuestionIndex,
+            endTime:          this.data.endTime || null,
+            examMode:         this.data.examMode,
+            candidateName:    this.data.candidateName,
+            currentSubjectId: this.data.currentSubjectId,
+            examDuration:     this.data.examDuration,
+            timeLeft:         this.data.timeLeft
+        }));
+    } catch (e) {
+        console.warn('saveExamState failed:', e);
+    }
+},
+
+clearExamState: function () {
+    localStorage.removeItem('cbt_exam_state');
+},
+
+// Call from init() — returns true if an exam was found and needs a prompt
+checkForSavedExam: function () {
+    const raw = localStorage.getItem('cbt_exam_state');
+    if (!raw) return false;
+
+    let state;
+    try { state = JSON.parse(raw); } catch { this.clearExamState(); return false; }
+
+    // Discard if practice exam already ran out of time
+    if (state.examMode === 'practice' && state.endTime) {
+        const remaining = Math.round((state.endTime - Date.now()) / 1000);
+        if (remaining <= 0) { this.clearExamState(); return false; }
+        state.timeLeft = remaining;
+    }
+
+    this._savedExamState = state;
+    this.showResumePrompt(state);
+    return true;
+},
+
+showResumePrompt: function (state) {
+    this.data.mode = 'resume-prompt';
+    this.updateHeader();
+
+    const subjectName = this.data.subjects[state.currentSubjectId]?.name || 'Unknown';
+    const answered = Object.keys(state.userAnswers || {}).filter(k =>
+        state.userAnswers[k] !== undefined && state.userAnswers[k] !== ''
+    ).length;
+
+    document.getElementById('app-container').innerHTML = `
+        <div class="flex items-center justify-center h-full">
+            <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+                <div class="text-center mb-6">
+                    <i class="fas fa-clock-rotate-left text-5xl text-blue-600 mb-3"></i>
+                    <h2 class="text-2xl font-bold text-gray-800">Unfinished Exam Found</h2>
+                    <p class="text-gray-500 mt-1">Would you like to resume?</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded mb-6 space-y-1 text-sm">
+                    <p><span class="text-gray-500">Candidate:</span> <strong>${state.candidateName || '—'}</strong></p>
+                    <p><span class="text-gray-500">Subject:</span> <strong>${subjectName}</strong></p>
+                    <p><span class="text-gray-500">Mode:</span> <strong>${state.examMode}</strong></p>
+                    <p><span class="text-gray-500">Progress:</span> <strong>${answered} / ${state.questions.length} answered</strong></p>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="event.preventDefault(); app.resumeSavedExam()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg">
+                        <i class="fas fa-play mr-2"></i>Resume Exam
+                    </button>
+                    <button onclick="event.preventDefault(); app.discardSavedExam()"
+                            class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg">
+                        <i class="fas fa-trash mr-2"></i>Discard & Start Fresh
+                    </button>
+                </div>
+            </div>
+        </div>`;
+},
+
+resumeSavedExam: function () {
+    const state = this._savedExamState;
+    if (!state) { this.showLanding(); return; }
+
+    this.data.questions            = state.questions;
+    this.data.userAnswers          = state.userAnswers || {};
+    this.data.answerRevealed       = state.answerRevealed || {};
+    this.data.currentQuestionIndex = state.currentIndex || 0;
+    this.data.examMode             = state.examMode;
+    this.data.candidateName        = state.candidateName || '';
+    this.data.currentSubjectId     = state.currentSubjectId;
+    this.data.examDuration         = state.examDuration || 30;
+    this.data.mode                 = 'test';
+    this.data.answerRevealed       = state.answerRevealed || {};
+
+    if (state.examMode === 'practice' && state.endTime) {
+        this.data.timeLeft = Math.max(0, Math.round((state.endTime - Date.now()) / 1000));
+        if (this.data.timeLeft <= 0) {
+            this.clearExamState();
+            this.submitTest();
+            return;
+        }
+        this.startTimer();   // see Fix 3 — this now re-uses state.endTime
+    } else {
+        this.data.timeLeft = 0;
+    }
+
+    this._savedExamState = null;
+    this.showTestInterface();
+},
+
+discardSavedExam: function () {
+    this.clearExamState();
+    this._savedExamState = null;
+    this.showLanding();
+},
+
+            // ============================================================
+            // NOTIFICATIONS
+            // ============================================================
+
+            showNotification: function(message, type = 'info') {
+                const existing = document.querySelector('.cbt-notification');
+                if (existing) existing.remove();
+
+                const colors = {
+                    info: 'bg-blue-100 text-blue-800 border-blue-300',
+                    success: 'bg-green-100 text-green-800 border-green-300',
+                    warning: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                    error: 'bg-red-100 text-red-800 border-red-300'
+                };
+
+                const notification = document.createElement('div');
+                notification.className = `cbt-notification fixed top-4 right-4 z-50 p-4 rounded-lg border shadow-lg ${colors[type]}`;
+                notification.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="font-medium">${message}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 3000);
+            },
+
+            // ============================================================
+            // LANDING PAGE
+            // ============================================================
+
+            showLanding: function() {
+                this.stopTimer();
+                this.data.mode = 'landing';
+                this.data.examMode = null;
+                this.updateHeader();
+
+                const subjectsWithNotes = Object.values(this.data.subjects).filter(subj =>
+                    (subj.notes && Object.keys(subj.notes).some(topicId => subj.notes[topicId] && subj.notes[topicId].trim() !== '')) ||
+                    (subj.topicImages && Object.keys(subj.topicImages).some(topicId => subj.topicImages[topicId]?.length > 0))
+                );
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full p-4">
+                        <div class="text-center mb-8">
+                            <i class="fas fa-graduation-cap text-6xl text-green-600 mb-4"></i>
+                            <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome to the CBT Portal</h2>
+                            <p class="text-gray-600">Select your role to continue</p>
+                        </div>
+
+                        ${subjectsWithNotes.length > 0 ? `
+                        <div class="w-full max-w-2xl mb-6">
+                            <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                <i class="fas fa-book-open text-blue-500"></i>
+                                Available Study Materials
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                ${subjectsWithNotes.map(subj => {
+                                    const noteCount = subj.notes ? Object.keys(subj.notes).filter(t => subj.notes[t]?.trim()).length : 0;
+                                    const imageCount = subj.topicImages ? Object.values(subj.topicImages).flat().length : 0;
+                                    return `
+                                        <div onclick="event.preventDefault(); app.showSubjectNotes('${subj.id}')" class="note-card cursor-pointer">
+                                            <i class="fas fa-book"></i>
+                                            <h4 class="font-bold">${subj.name}</h4>
+                                            <p class="text-sm opacity-90">${noteCount} topics with notes, ${imageCount} topic images</p>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-6 w-full max-w-md">
+                            <button onclick="event.preventDefault(); app.showCandidateOptions()" class="group bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition border text-center">
+                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200">
+                                    <i class="fas fa-user-graduate text-2xl text-blue-600"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800">Candidate</h3>
+                                <p class="text-gray-500 mt-2">Take the examination</p>
+                            </button>
+                        </div>
+                    </div>`;
+            },
+
+            // ============================================================
+            // STUDY MATERIALS (Notes & Images)
+            // ============================================================
+
+            showSubjectNotes: function(subjectId) {
+                const subj = this.data.subjects[subjectId];
+                if (!subj) return;
+
+                const topicsWithMaterials = subj.topics.filter(t =>
+                    (subj.notes && subj.notes[t.id] && subj.notes[t.id].trim() !== '') ||
+                    (subj.topicImages && subj.topicImages[t.id] && subj.topicImages[t.id].length > 0)
+                );
+
+                if (topicsWithMaterials.length === 0) {
+                    this.showNotification('No notes or images available for this subject', 'info');
+                    return;
+                }
+
+                this.data.mode = 'notes-browser';
+                this.updateHeader();
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="max-w-4xl mx-auto h-full flex flex-col">
+                        <div class="flex items-center gap-2 mb-4">
+                            <button onclick="event.preventDefault(); app.showLanding()" class="text-gray-500 hover:text-gray-800">
+                                <i class="fas fa-arrow-left text-xl"></i>
+                            </button>
+                            <h2 class="text-2xl font-bold text-gray-800">${subj.name} - Study Materials</h2>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow overflow-y-auto pb-4">
+                            ${topicsWithMaterials.map(t => {
+                                const hasNote = subj.notes && subj.notes[t.id] && subj.notes[t.id].trim() !== '';
+                                const hasImages = subj.topicImages && subj.topicImages[t.id] && subj.topicImages[t.id].length > 0;
+                                return `
+                                    <div class="bg-white p-6 rounded-lg shadow-md border hover:shadow-lg transition">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-folder-open text-blue-600"></i>
+                                            </div>
+                                            <h3 class="font-bold text-lg text-gray-800">${t.name}</h3>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${hasNote ? `
+                                                <button onclick="event.preventDefault(); app.viewTopicNote('${subjectId}', '${t.id}', '${t.name}')" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm font-bold">
+                                                    <i class="fas fa-book-open mr-1"></i> Read Notes
+                                                </button>
+                                            ` : ''}
+                                            ${hasImages ? `
+                                                <button onclick="event.preventDefault(); app.viewTopicImages('${subjectId}', '${t.id}')" class="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 px-3 py-2 rounded text-sm font-bold">
+                                                    <i class="fas fa-images mr-1"></i> View Images (${subj.topicImages[t.id].length})
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            viewTopicNote: function(subjectId, topicId, topicName) {
+                const subj = this.data.subjects[subjectId];
+                if (!subj || !subj.notes || !subj.notes[topicId]) {
+                    this.showNotification('No notes available for this topic', 'info');
+                    return;
+                }
+
+                document.getElementById('note-viewer-title').textContent = `Notes: ${topicName}`;
+                document.getElementById('note-viewer-content').innerHTML = subj.notes[topicId];
+                document.getElementById('note-viewer-modal').classList.remove('hidden');
+                this.triggerMathJax();
+            },
+
+            viewTopicImages: function(subjectId, topicId) {
+                const subj = this.data.subjects[subjectId];
+                if (!subj || !subj.topicImages || !subj.topicImages[topicId] || subj.topicImages[topicId].length === 0) {
+                    this.showNotification('No images for this topic', 'info');
+                    return;
+                }
+                const images = subj.topicImages[topicId];
+                const modal = document.getElementById('topic-image-modal');
+                document.getElementById('topic-image-modal-title').textContent = `Images - ${subj.topics.find(t => t.id === topicId)?.name || 'Topic'}`;
+                const gallery = document.getElementById('topic-image-gallery');
+                gallery.innerHTML = '';
+                images.forEach(img => {
+                    const item = document.createElement('div');
+                    item.className = 'image-item';
+                    item.onclick = () => {
+                        const full = document.createElement('div');
+                        full.className = 'fixed inset-0 bg-black/90 flex items-center justify-center z-[60]';
+                        full.onclick = () => full.remove();
+                        const fullImg = document.createElement('img');
+                        fullImg.src = img.data;
+                        fullImg.className = 'max-h-[90vh] max-w-[90vw] object-contain';
+                        full.appendChild(fullImg);
+                        document.body.appendChild(full);
+                    };
+                    const thumb = document.createElement('img');
+                    thumb.src = img.data;
+                    thumb.alt = img.filename;
+                    const filename = document.createElement('div');
+                    filename.className = 'filename';
+                    filename.textContent = img.filename;
+                    item.appendChild(thumb);
+                    item.appendChild(filename);
+                    gallery.appendChild(item);
+                });
+                modal.classList.remove('hidden');
+            },
+
+            // ============================================================
+            // CANDIDATE OPTIONS
+            // ============================================================
+
+            showCandidateOptions: function() {
+                this.data.mode = 'candidate-options';
+                this.updateHeader();
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full p-4">
+                        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+                            <i class="fas fa-user-graduate text-5xl text-blue-600 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Select Exam Mode</h2>
+
+                            <div class="space-y-4">
+                                <button onclick="event.preventDefault(); app.showCandidateLogin('practice')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-3">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Practice Mode (Timed)</span>
+                                </button>
+
+                                <button onclick="event.preventDefault(); app.showCandidateLogin('study')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-3">
+                                    <i class="fas fa-book-open"></i>
+                                    <span>Study Mode (Learn with Explanations)</span>
+                                </button>
+                            </div>
+
+                            <div class="mt-6 text-sm text-gray-500">
+                                <p><i class="fas fa-info-circle mr-1"></i> Practice: Timed exam, results at the end</p>
+                                <p class="mt-1"><i class="fas fa-info-circle mr-1"></i> Study: Click on your answer to see correct answer & explanation</p>
+                            </div>
+
+                            <button onclick="event.preventDefault(); app.showLanding()" class="mt-6 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-arrow-left mr-1"></i> Back
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // ============================================================
+            // CANDIDATE LOGIN
+            // ============================================================
+
+            showCandidateLogin: function(mode) {
+                this.data.examMode = mode;
+                const subjects = Object.values(this.data.subjects);
+
+                if (subjects.length === 0) {
+                    this.showNotification('No subjects available.', 'error');
+                    return;
+                }
+
+                const customDurationHtml = mode === 'practice' ? `
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-medium">
+                            <i class="fas fa-hourglass-half mr-1 text-blue-500"></i>
+                            Custom Exam Duration (minutes)
+                        </label>
+                        <input type="number" id="custom-duration-input" class="w-full border rounded-lg p-3"
+                               placeholder="Leave empty to use subject default (${subjects[0]?.duration || 30} min)"
+                               min="1" max="999" step="1">
+                        <p class="text-xs text-gray-500 mt-1">Enter any number between 1 and 999 minutes</p>
+                    </div>
+                ` : '';
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="flex items-center justify-center h-full">
+                        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border-t-4 ${mode === 'practice' ? 'border-blue-600' : 'border-green-600'} max-h-[90vh] overflow-y-auto">
+                            <div class="flex items-center gap-2 mb-4">
+                                <button onclick="event.preventDefault(); app.showCandidateOptions()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <h2 class="text-2xl font-bold text-center text-gray-800 flex-grow">Candidate Login</h2>
+                            </div>
+
+                            <div class="mb-4 text-center">
+                                <span class="inline-block px-4 py-1 rounded-full text-sm font-bold ${mode === 'practice' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                    <i class="fas ${mode === 'practice' ? 'fa-clock' : 'fa-book-open'} mr-1"></i>
+                                    ${mode === 'practice' ? 'Practice Mode (Timed)' : 'Study Mode (Click answers to reveal)'}
+                                </span>
+                            </div>
+
+                            <form id="candidate-login-form">
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-2 font-medium">Full Name</label>
+                                    <input type="text" id="candidate-name" class="w-full border rounded-lg p-3" placeholder="Enter your name" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-2 font-medium">Select Subject</label>
+                                    <select id="exam-subject" onchange="app.renderCandidateTopics()" class="w-full border rounded-lg p-3">
+                                        ${subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+
+                                ${customDurationHtml}
+
+                                <div id="candidate-topics-container" class="mb-6"></div>
+                                <div class="bg-blue-50 p-4 rounded mb-6 text-sm text-blue-800">
+                                    <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> Instructions:</p>
+                                    <ul class="list-disc list-inside">
+                                        <li>${mode === 'practice' ? 'You can set a custom time limit above' : 'No time limit - learn at your own pace'}</li>
+                                        ${mode === 'study' ? '<li class="text-green-700 font-bold">Click on your chosen answer to see correct answer and explanation!</li>' : ''}
+                                        <li>Don't refresh the browser</li>
+                                        <li>Reference images are available during exam</li>
+                                        <li>Click the <i class="fas fa-book-open"></i> or <i class="fas fa-images"></i> icons next to topics to view study materials</li>
+                                    </ul>
+                                </div>
+                                <button type="submit" class="w-full ${mode === 'practice' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white font-bold py-3 rounded-lg transition">
+                                    Start ${mode === 'practice' ? 'Practice' : 'Study'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>`;
+
+                document.getElementById('candidate-login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.startTestPrep();
+                });
+                setTimeout(() => this.renderCandidateTopics(), 0);
+            },
+
+            // ============================================================
+            // TOPIC SELECTION WITH QUANTITY
+            // ============================================================
+
+            renderCandidateTopics: function() {
+                const subjEl = document.getElementById('exam-subject');
+                if (!subjEl) return;
+                const subj = this.data.subjects[subjEl.value];
+                const container = document.getElementById('candidate-topics-container');
+                if (!subj?.topics || subj.topics.length <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                let topicsHtml = `
+                    <p class="mb-2 text-sm font-bold text-gray-700">Select Topics & Choose Number of Questions</p>
+                    <div class="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto border p-3 rounded bg-white">
+                `;
+
+                subj.topics.forEach(topic => {
+                    const questionCount = subj.questions.filter(q => q.topicId === topic.id).length;
+                    const hasNote = subj.notes && subj.notes[topic.id] && subj.notes[topic.id].trim() !== '';
+                    const hasImages = subj.topicImages && subj.topicImages[topic.id] && subj.topicImages[topic.id].length > 0;
+
+                    topicsHtml += `
+                        <div class="flex flex-col gap-2 p-3 border rounded-lg bg-gray-50 hover:bg-gray-100">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <input type="checkbox" name="exam-topic" value="${topic.id}" class="topic-checkbox rounded text-green-600 w-5 h-5">
+                                <span class="text-sm font-bold text-gray-800 flex-grow">${topic.name}</span>
+                                ${hasNote ? `<button type="button" onclick="event.preventDefault(); app.viewTopicNote('${subj.id}', '${topic.id}', '${topic.name}')" class="text-blue-500 hover:text-blue-700" title="View notes"><i class="fas fa-book-open"></i></button>` : ''}
+                                ${hasImages ? `<button type="button" onclick="event.preventDefault(); app.viewTopicImages('${subj.id}', '${topic.id}')" class="text-purple-500 hover:text-purple-700" title="View images"><i class="fas fa-images"></i></button>` : ''}
+                            </div>
+                            <div class="flex items-center gap-3 text-sm ml-6">
+                                <span class="text-gray-600"><i class="fas fa-database"></i> Available: <strong class="text-green-700">${questionCount}</strong> questions</span>
+                                <div class="flex items-center gap-2">
+                                    <label class="text-gray-600">Take:</label>
+                                    <input type="number"
+                                           class="topic-quantity w-20 border rounded px-2 py-1 text-center text-sm"
+                                           data-topic-id="${topic.id}"
+                                           min="0"
+                                           max="${questionCount}"
+                                           value="${questionCount}"
+                                           step="1"
+                                           ${questionCount === 0 ? 'disabled' : ''}>
+                                    <span class="text-xs text-gray-500">questions</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                topicsHtml += `</div>`;
+                container.innerHTML = topicsHtml;
+
+                // Event listeners for checkbox/quantity sync
+                document.querySelectorAll('.topic-checkbox').forEach(checkbox => {
+                    const topicId = checkbox.value;
+                    const qtyInput = document.querySelector(`.topic-quantity[data-topic-id="${topicId}"]`);
+                    if (qtyInput) {
+                        const updateQtyState = () => {
+                            if (checkbox.checked) {
+                                qtyInput.disabled = false;
+                                let currentVal = parseInt(qtyInput.value);
+                                let maxVal = parseInt(qtyInput.max);
+                                if (isNaN(currentVal) || currentVal < 1) qtyInput.value = 1;
+                                if (currentVal > maxVal) qtyInput.value = maxVal;
+                            } else {
+                                qtyInput.disabled = true;
+                                qtyInput.value = 0;
+                            }
+                        };
+                        checkbox.addEventListener('change', updateQtyState);
+                        qtyInput.addEventListener('input', function() {
+                            let val = parseInt(this.value);
+                            let maxVal = parseInt(this.max);
+                            if (isNaN(val)) val = 1;
+                            if (val < 0) val = 0;
+                            if (val > maxVal) val = maxVal;
+                            this.value = val;
+                            if (val === 0 && checkbox.checked) {
+                                checkbox.checked = false;
+                                this.disabled = true;
+                            } else if (val > 0 && !checkbox.checked) {
+                                checkbox.checked = true;
+                                this.disabled = false;
+                            }
+                        });
+                        updateQtyState();
+                    }
+                });
+            },
+
+            // ============================================================
+            // START EXAM
+            // ============================================================
+
+            startTestPrep: function() {
+                const nameInput = document.getElementById('candidate-name');
+                const subjectInput = document.getElementById('exam-subject');
+
+                if (nameInput) this.data.candidateName = nameInput.value;
+                if (!subjectInput) { this.showNotification('No subject selected.', 'error'); return; }
+
+                const subject = this.data.subjects[subjectInput.value];
+                this.data.currentSubjectId = subjectInput.value;
+
+                // Custom duration
+                let customDurationMinutes = null;
+                if (this.data.examMode === 'practice') {
+                    const customDurationInput = document.getElementById('custom-duration-input');
+                    if (customDurationInput && customDurationInput.value) {
+                        const parsed = parseInt(customDurationInput.value, 10);
+                        if (!isNaN(parsed) && parsed > 0 && parsed <= 999) {
+                            customDurationMinutes = parsed;
+                        }
+                    }
+                }
+
+                // Gather topic selections and quantities
+                const selectedTopics = [];
+                const topicQuantityMap = {};
+
+                document.querySelectorAll('input[name="exam-topic"]:checked').forEach(cb => {
+                    const topicId = cb.value;
+                    const qtyInput = document.querySelector(`.topic-quantity[data-topic-id="${topicId}"]`);
+                    let qty = qtyInput ? parseInt(qtyInput.value) : 0;
+                    if (isNaN(qty) || qty < 0) qty = 0;
+                    if (qty > 0) {
+                        selectedTopics.push(topicId);
+                        topicQuantityMap[topicId] = qty;
+                    }
+                });
+
+                let questionsToUse = [];
+
+                if (selectedTopics.length === 0) {
+                    questionsToUse = [...subject.questions];
+                } else {
+                    for (let topicId of selectedTopics) {
+                        const topicQuestions = subject.questions.filter(q => q.topicId === topicId);
+                        const requested = topicQuantityMap[topicId];
+                        if (topicQuestions.length === 0) continue;
+                        let numberOfQuestions = Math.min(requested, topicQuestions.length);
+                        if (numberOfQuestions <= 0) continue;
+                        const shuffled = [...topicQuestions];
+                        for (let i = shuffled.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                        }
+                        const selected = shuffled.slice(0, numberOfQuestions);
+                        questionsToUse.push(...selected);
+                    }
+                }
+
+                if (questionsToUse.length === 0) {
+                    this.showNotification("No questions available.", "error");
+                    return;
+                }
+
+                // Final shuffle
+                for (let i = questionsToUse.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [questionsToUse[i], questionsToUse[j]] = [questionsToUse[j], questionsToUse[i]];
+                }
+
+                this.data.questions = questionsToUse;
+
+                if (this.data.examMode === 'practice') {
+                    if (customDurationMinutes !== null) {
+                        this.data.examDuration = customDurationMinutes;
+                    } else {
+                        this.data.examDuration = subject.duration;
+                    }
+                }
+
+                if (this.data.questions.length === 0) {
+                    this.showNotification("No questions set.", "error");
+                    return;
+                }
+
+                this.data.currentQuestionIndex = 0;
+                this.data.userAnswers = {};
+                this.data.answerRevealed = {};
+                this.clearExamState();
+                this.data.endTime = null; 
+
+                if (this.data.examMode === 'practice') {
+                    this.data.timeLeft = this.data.examDuration * 60;
+                    this.startTimer();
+                } else {
+                    this.data.timeLeft = 0;
+                }
+
+                this.data.refreshLocked = true;
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+
+                this.showTestInterface();
+            },
+
+            // ============================================================
+            // TIMER
+            // ============================================================
+
+            startTimer: function() {
+    if (this.data.timer) clearInterval(this.data.timer);
+    
+    // If resuming, endTime is already set. Otherwise, calculate it.
+    if (!this.data.endTime) {
+        this.data.endTime = Date.now() + this.data.timeLeft * 1000;
+    }
+
+    this.data.timer = setInterval(() => {
+        const remaining = Math.max(0, Math.round((this.data.endTime - Date.now()) / 1000));
+        
+        // Only update UI if the second actually changed (saves performance)
+        if (remaining === this.data.timeLeft) return;
+        
+        this.data.timeLeft = remaining;
+        this.updateTimerDisplay();
+        this.saveExamState(); // Keep the resume state in sync
+        
+        if (remaining <= 0) {
+            clearInterval(this.data.timer);
+            this.data.timer = null;
+            this.submitTest();
+        }
+    }, 250); // Poll 4x a second for extreme accuracy
+},
+
+            stopTimer: function() {
+    if (this.data.timer) clearInterval(this.data.timer);
+    this.data.timer = null;
+    this.data.endTime = null; // Reset timestamp so next exam starts fresh
+},
+
+            updateTimerDisplay: function() {
+                const el = document.getElementById('timer-display');
+                if (el) {
+                    const m = Math.floor(this.data.timeLeft / 60);
+                    const s = this.data.timeLeft % 60;
+                    el.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    if (this.data.timeLeft < 60) el.classList.add('text-red-500', 'animate-pulse');
+                }
+            },
+
+            // ============================================================
+            // TEST INTERFACE
+            // ============================================================
+
+            showTestInterface: function() {
+                this.data.mode = 'test';
+                this.updateHeader();
+                this.renderQuestion();
+            },
+
+            toggleMobileGrid: function() {
+                const modal = document.getElementById('mobile-grid-modal');
+                let html = '<div class="flex flex-wrap gap-2 justify-center">';
+                this.data.questions.forEach((_q, idx) => {
+                    const isAnswered = this.data.userAnswers[_q.id] !== undefined && this.data.userAnswers[_q.id] !== '';
+                    const isActive = idx === this.data.currentQuestionIndex;
+                    let cls = "w-10 h-10 flex items-center justify-center text-sm font-bold rounded border cursor-pointer ";
+                    if (isActive) cls += "bg-blue-600 text-white border-blue-600";
+                    else if (isAnswered) cls += "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
+                    else cls += "bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200";
+                    html += `<div onclick="event.preventDefault(); app.jumpToQuestion(${idx}); document.getElementById('mobile-grid-modal').classList.add('hidden')" class="${cls}">${idx + 1}</div>`;
+                });
+                html += '</div>';
+                document.getElementById('mobile-grid-container').innerHTML = html;
+                modal.classList.remove('hidden');
+            },
+
+            // ============================================================
+            // RENDER QUESTION
+            // ============================================================
+
+            renderQuestion: function() {
+                const q = this.data.questions[this.data.currentQuestionIndex];
+                const total = this.data.questions.length;
+                const userAnswer = this.data.userAnswers[q.id];
+                const isStudyMode = this.data.examMode === 'study';
+
+                let isCorrect = false;
+                let showExplanation = false;
+
+                if (isStudyMode && this.data.answerRevealed[q.id]) {
+    if (typeof this.data.answerRevealed[q.id] === 'object') {
+        isCorrect = this.data.answerRevealed[q.id].isCorrect;
+    } else {
+        isCorrect = this.checkAnswer(q.id, userAnswer);
+    }
+    showExplanation = true;
+}
+
+                let gridHtml = '';
+                this.data.questions.forEach((_q, idx) => {
+                    const isAnswered = this.data.userAnswers[_q.id] !== undefined && this.data.userAnswers[_q.id] !== '';
+                    const isActive = idx === this.data.currentQuestionIndex;
+                    let cls = "w-8 h-8 flex items-center justify-center text-xs font-bold rounded border cursor-pointer ";
+                    if (isActive) cls += "bg-blue-600 text-white border-blue-600";
+                    else if (isAnswered) cls += "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
+                    else cls += "bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200";
+                    gridHtml += `<div onclick="event.preventDefault(); app.jumpToQuestion(${idx})" class="${cls}">${idx + 1}</div>`;
+                });
+
+                const subject = this.data.subjects[this.data.currentSubjectId];
+                const hasTopicNotes = subject && subject.notes && subject.notes[q.topicId] && subject.notes[q.topicId].trim() !== '';
+                const hasTopicImages = subject && subject.topicImages && subject.topicImages[q.topicId] && subject.topicImages[q.topicId].length > 0;
+
+                let answerArea = '';
+                
+                                                                if (q.type === 'theory') {
+                    const alreadyGraded = this.data.answerRevealed[q.id];
+                    let theoryFeedback = '';
+                    if (alreadyGraded && typeof alreadyGraded === 'object' && alreadyGraded.score !== undefined) {
+                        theoryFeedback = `
+                            <div class="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
+                                <p class="font-bold text-green-800">Marks Awarded: ${alreadyGraded.score} / ${q.maxMarks}</p>
+                                <p class="mt-2 text-sm text-green-700"><strong>Examiner Notes:</strong> ${alreadyGraded.explanation}</p>
+                            </div>`;
+                    }
+
+                    answerArea = `
+                        <div class="max-w-2xl">
+                            <!-- Toggle Buttons -->
+                            <div class="flex gap-2 mb-4" id="theory-tabs-${q.id}">
+                                <button type="button" onclick="app.toggleTheoryTab('${q.id}', 'text')" class="flex-1 py-2 rounded-lg font-bold border-2 bg-green-50 border-green-500 text-green-700" id="tab-text-${q.id}">
+                                    <i class="fas fa-keyboard mr-1"></i> Type Answer
+                                </button>
+                                <button type="button" onclick="app.toggleTheoryTab('${q.id}', 'image')" class="flex-1 py-2 rounded-lg font-bold border-2 bg-gray-50 border-gray-300 text-gray-500" id="tab-image-${q.id}">
+                                    <i class="fas fa-camera mr-1"></i> Upload Photo
+                                </button>
+                            </div>
+
+                            <!-- Text Input Area -->
+                            <div id="theory-text-container-${q.id}" class="${alreadyGraded ? 'hidden' : ''}">
+                                <textarea id="theory-text-input-${q.id}" rows="5" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 text-lg" placeholder="Type your theory answer here..." ${alreadyGraded ? 'disabled' : ''}></textarea>
+                                <button onclick="app.submitTheoryText('${q.id}')" id="submit-text-btn-${q.id}"
+                                        class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition">
+                                    <i class="fas fa-magic mr-2"></i>Submit for AI Grading
+                                </button>
+                            </div>
+
+                            <!-- Image Input Area -->
+                            <div id="theory-image-container-${q.id}" class="hidden">
+                                <input type="file" id="theory-image-input-${q.id}" accept="image/*" 
+                                       class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 mb-2" 
+                                       ${alreadyGraded ? 'disabled' : ''}>
+                                <div id="image-preview-container-${q.id}" class="mt-2 hidden">
+                                    <img id="theory-image-preview-${q.id}" src="" class="max-h-60 rounded-lg border shadow-md mb-2 w-full object-contain" />
+                                    <button onclick="app.submitTheoryImage('${q.id}')" id="submit-image-btn-${q.id}"
+                                            class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition">
+                                        <i class="fas fa-magic mr-2"></i>Submit for AI Grading
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            ${theoryFeedback}
+                        </div>`;
+                    
+                    setTimeout(() => {
+                        const input = document.getElementById(`theory-image-input-${q.id}`);
+                        if (input) {
+                            input.addEventListener('change', (e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                        document.getElementById(`theory-image-preview-${q.id}`).src = event.target.result;
+                                        document.getElementById(`image-preview-container-${q.id}`).classList.remove('hidden');
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            });
+                        }
+                    }, 100);
+                } else if (q.type === 'objective') {
+                
+                
+                
+                    if (isStudyMode) {
+                        if (showExplanation) {
+                            answerArea = `
+                                <div class="space-y-3 max-w-2xl">
+                                    ${['A', 'B', 'C', 'D'].map(opt => {
+                                        let optionClass = "block p-4 border-2 rounded-lg flex items-center gap-3 relative";
+                                        let isSelected = userAnswer === opt;
+                                        let isCorrectOpt = q.correct === opt;
+
+                                        if (isCorrectOpt) {
+                                            optionClass += " correct-option-highlight";
+                                        } else if (isSelected) {
+                                            optionClass += " wrong-answer-selected";
+                                        } else {
+                                            optionClass += " border-gray-200 bg-gray-50";
+                                        }
+
+                                        let badge = '';
+                                        if (isCorrectOpt) {
+                                            badge = '<span class="correct-badge"><i class="fas fa-check-circle mr-1"></i>Correct Answer</span>';
+                                        }
+
+                                        return `
+                                            <div class="${optionClass}">
+                                                <span class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-bold text-sm border ${isCorrectOpt ? 'border-white' : 'border-gray-300'}">${opt}</span>
+                                                <span class="flex-grow">${q.options?.[opt] || ''}</span>
+                                                ${badge}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>`;
+                        } else {
+                            answerArea = `
+                                <div class="space-y-3 max-w-2xl">
+                                    <p class="text-sm text-gray-500 mb-2"><i class="fas fa-hand-pointer mr-1"></i> Click on your answer to reveal correct answer and explanation:</p>
+                                    ${['A', 'B', 'C', 'D'].map(opt => {
+                                        let isSelected = userAnswer === opt;
+                                        let selectedClass = isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50';
+                                        return `
+                                            <div onclick="event.preventDefault(); app.handleStudyAnswerClick('${q.id}', '${opt}')"
+                                                 class="block p-4 border-2 rounded-lg flex items-center gap-3 relative cursor-pointer study-option ${selectedClass}">
+                                                <span class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-bold text-sm border border-gray-300">${opt}</span>
+                                                <span class="flex-grow">${q.options?.[opt] || ''}</span>
+                                                ${isSelected ? '<span class="text-blue-600 text-xs font-bold ml-2"><i class="fas fa-check-circle"></i> Selected</span>' : ''}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>`;
+                        }
+                    } else {
+                        answerArea = `
+                            <div class="space-y-3 max-w-2xl">
+                                ${['A', 'B', 'C', 'D'].map(opt => `
+                                    <div class="relative">
+                                        <input type="radio" name="option" id="opt-${opt}" class="cbt-radio hidden" value="${opt}" ${userAnswer === opt ? 'checked' : ''} onchange="app.selectAnswer('${q.id}', '${opt}')">
+                                        <label for="opt-${opt}" class="block p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 flex items-center gap-3">
+                                            <span class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm">${opt}</span>
+                                            <span class="text-gray-700">${q.options?.[opt] || ''}</span>
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>`;
+                    }
+                } else {
+                    if (isStudyMode) {
+                        const answerRevealed = this.data.answerRevealed[q.id];
+                        let fillAnswerDisplay = '';
+                        if (answerRevealed) {
+                            if (isCorrect) {
+                                fillAnswerDisplay = `
+                                    <div class="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
+                                        <p class="font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i>Correct! Your answer: "${userAnswer}"</p>
+                                        <p class="mt-2 text-sm text-green-700">✓ The correct answer is "${q.correct}"</p>
+                                    </div>`;
+                            } else {
+                                fillAnswerDisplay = `
+                                    <div class="mt-4 p-4 bg-red-100 border border-red-300 rounded-lg">
+                                        <p class="font-bold text-red-800"><i class="fas fa-times-circle mr-2"></i>Incorrect. Your answer: "${userAnswer}"</p>
+                                        <p class="mt-3 fill-correct-highlight" onclick="event.preventDefault(); app.showNotification('✓ Correct answer is: ${q.correct}', 'success')">
+                                            ✓ Click to see correct answer: "${q.correct}"
+                                        </p>
+                                    </div>`;
+                            }
+                        }
+
+                        answerArea = `
+                            <div class="max-w-2xl">
+                                <label class="block text-gray-600 mb-2 font-bold">Your Answer:</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="fill-answer-${q.id}" class="flex-grow p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 text-lg" value="${userAnswer || ''}" placeholder="Type your answer..." ${answerRevealed ? 'disabled' : ''}>
+                                    ${!answerRevealed ?
+                                        `<button onclick="event.preventDefault(); app.handleStudyAnswerClick('${q.id}', null, true)" class="insert-answer-btn bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg font-bold">
+                                            <i class="fas fa-check mr-2"></i>Check Answer
+                                        </button>` :
+                                        `<button class="bg-gray-400 text-white px-6 py-4 rounded-lg font-bold cursor-not-allowed" disabled>
+                                            <i class="fas fa-check-circle mr-2"></i>Answered
+                                        </button>`
+                                    }
+                                </div>
+                                ${fillAnswerDisplay}
+                                ${!answerRevealed ? '<p class="text-sm text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Click the button to check your answer and see explanation</p>' : ''}
+                            </div>`;
+                    } else {
+                        answerArea = `
+                            <div class="max-w-2xl">
+                                <label class="block text-gray-600 mb-2 font-bold">Your Answer:</label>
+                                <input type="text" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 text-lg" value="${userAnswer || ''}" oninput="app.selectAnswer('${q.id}', this.value)" placeholder="Type your answer...">
+                            </div>`;
+                    }
+                }
+
+                let explanationArea = '';
+                if (isStudyMode && showExplanation) {
+                    if (q.explanation) {
+                        explanationArea = `
+                            <div class="mt-6 explanation-box">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i class="fas ${isCorrect ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600'} text-xl"></i>
+                                    <span class="font-bold text-lg ${isCorrect ? 'text-green-600' : 'text-red-600'}">
+                                        ${isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+                                    </span>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                                    <p class="font-bold text-gray-700 mb-2">📚 Explanation:</p>
+                                    <p class="text-gray-700">${q.explanation}</p>
+                                </div>
+                                ${!isCorrect && q.type === 'objective' ?
+                                    `<div class="mt-3 p-3 bg-green-50 rounded-lg">
+                                        <p class="font-bold text-green-800">Correct answer: ${q.correct}: ${q.options?.[q.correct] || ''}</p>
+                                    </div>` : ''
+                                }
+                            </div>`;
+                    } else if (!q.explanation) {
+                        explanationArea = `
+                            <div class="mt-6 explanation-box">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i class="fas ${isCorrect ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600'} text-xl"></i>
+                                    <span class="font-bold text-lg ${isCorrect ? 'text-green-600' : 'text-red-600'}">
+                                        ${isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+                                    </span>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg">
+                                    <p class="font-bold text-gray-700 mb-2">Correct answer:</p>
+                                    <p class="text-green-700 font-bold text-lg">${q.correct}</p>
+                                    ${q.type === 'objective' && q.options?.[q.correct] ?
+                                        `<p class="text-gray-600 mt-1">${q.options[q.correct]}</p>` : ''
+                                    }
+                                </div>
+                            </div>`;
+                    }
+                }
+
+                const hasImages = this.data.images?.[this.data.currentSubjectId]?.length > 0;
+                const imageButtonHtml = hasImages ? `
+                    <div class="mb-4">
+                        <button onclick="event.preventDefault(); app.showImageModal()"
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-image"></i>
+                            <span>View Reference Images</span>
+                        </button>
+                    </div>
+                ` : '';
+
+                const notesButtonHtml = hasTopicNotes ? `
+                    <div class="mb-4">
+                        <button onclick="event.preventDefault(); app.viewTopicNote('${this.data.currentSubjectId}', '${q.topicId}', '${subject.topics.find(t => t.id === q.topicId)?.name || 'Topic'}')"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-book-open"></i>
+                            <span>View Topic Notes</span>
+                        </button>
+                    </div>
+                ` : '';
+
+                const topicImagesButtonHtml = hasTopicImages ? `
+                    <div class="mb-4">
+                        <button onclick="event.preventDefault(); app.viewTopicImages('${this.data.currentSubjectId}', '${q.topicId}')"
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-images"></i>
+                            <span>View Topic Images (${subject.topicImages[q.topicId].length})</span>
+                        </button>
+                    </div>
+                ` : '';
+
+                const isLastQuestion = this.data.currentQuestionIndex === total - 1;
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="flex h-full gap-4">
+                        <div class="flex-grow flex flex-col bg-white rounded-lg shadow-md overflow-hidden">
+                            <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                                <span class="font-bold text-gray-700">Question ${this.data.currentQuestionIndex + 1} of ${total}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs uppercase font-bold px-2 py-1 rounded bg-gray-200 text-gray-600">${q.type === 'objective' ? 'MCQ' : (q.type === 'theory' ? 'Theory' : 'Fill in Gap')}</span>
+                                    <span class="text-xs px-2 py-1 rounded ${this.data.examMode === 'practice' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                        <i class="fas ${this.data.examMode === 'practice' ? 'fa-clock' : 'fa-book-open'} mr-1"></i>
+                                        ${this.data.examMode}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-6 flex-grow overflow-y-auto">
+                                <div class="flex gap-2 mb-4 flex-wrap">
+                                    ${imageButtonHtml}
+                                    ${notesButtonHtml}
+                                    ${topicImagesButtonHtml}
+                                </div>
+                                <div class="text-xl text-gray-800 font-medium mb-8 leading-relaxed whitespace-pre-wrap">${q.text}</div>
+                                ${answerArea}
+                                ${explanationArea}
+                            </div>
+                            <div class="p-4 border-t bg-gray-50">
+                                <div class="nav-buttons">
+                                    <button onclick="event.preventDefault(); app.prevQuestion()" ${this.data.currentQuestionIndex === 0 ? 'disabled class="opacity-50 cursor-not-allowed px-6 py-2 bg-gray-300 text-gray-600 rounded font-bold"' : 'class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-bold"'}>Previous</button>
+
+                                    ${isLastQuestion ?
+                                        `<button onclick="event.preventDefault(); app.submitTestConfirm()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold">Submit</button>` :
+                                        `<button onclick="event.preventDefault(); app.nextQuestion()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-bold">Next</button>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-64 bg-white rounded-lg shadow-md flex-col hidden md:flex">
+                            <div class="p-4 border-b bg-gray-50 font-bold text-center text-gray-700">Navigator</div>
+                            <div class="p-4 flex-grow overflow-y-auto"><div class="flex flex-wrap gap-2 question-grid justify-center">${gridHtml}</div></div>
+                            <div class="p-4 border-t bg-gray-50 text-xs text-center text-gray-500">
+                                <div class="flex items-center justify-center gap-2 mb-1">
+                                    <span class="w-3 h-3 bg-blue-600 rounded"></span>Current
+                                    <span class="w-3 h-3 bg-green-100 border border-green-300 rounded"></span>Answered
+                                </div>
+                                ${hasImages ?
+                                    `<button onclick="event.preventDefault(); app.showImageModal()" class="mt-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded text-xs font-bold w-full">
+                                        <i class="fas fa-image mr-1"></i>View Images
+                                    </button>` : ''
+                                }
+                                ${hasTopicNotes ?
+                                    `<button onclick="event.preventDefault(); app.viewTopicNote('${this.data.currentSubjectId}', '${q.topicId}', '${subject.topics.find(t => t.id === q.topicId)?.name || 'Topic'}')" class="mt-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold w-full">
+                                        <i class="fas fa-book-open mr-1"></i>View Notes
+                                    </button>` : ''
+                                }
+                                ${hasTopicImages ?
+                                    `<button onclick="event.preventDefault(); app.viewTopicImages('${this.data.currentSubjectId}', '${q.topicId}')" class="mt-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded text-xs font-bold w-full">
+                                        <i class="fas fa-images mr-1"></i>View Topic Images
+                                    </button>` : ''
+                                }
+                            </div>
+                        </div>
+                    </div>`;
+
+                this.triggerMathJax();
+            },
+
+            // ============================================================
+            // ANSWER HANDLING
+            // ============================================================
+
+                        checkAnswer: function(qId, selectedValue) {
+                const q = this.data.questions.find(q => String(q.id) === String(qId)); // FIX
+                if (!q) return false;
+
+                if (q.type === 'objective') {
+                    return selectedValue && selectedValue.toUpperCase() === q.correct.toUpperCase();
+                } else {
+                    return selectedValue && selectedValue.toLowerCase().trim() === q.correct.toLowerCase().trim();
+                }
+            },
+
+                                    handleStudyAnswerClick: async function(qId, selectedValue, isFill = false) {
+                if (isFill) {
+                    const input = document.getElementById(`fill-answer-${qId}`);
+                    if (input) selectedValue = input.value;
+                }
+                if (selectedValue === undefined || selectedValue === '') return;
+
+                // FIX 1: Convert both to String so they match perfectly
+                const q = this.data.questions.find(q => String(q.id) === String(qId));
+                if (!q) return; 
+
+                this.data.userAnswers[String(q.id)] = selectedValue;
+
+                if (q.type === 'fill') {
+                    this.showNotification("AI is checking your answer...", "info");
+                    try {
+                        const response = await fetch('/api/grade', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'text',
+                                data: { studentAnswer: selectedValue, correctAnswer: q.correct, questionText: q.text }
+                            })
+                        });
+                        const result = await response.json();
+                        this.data.answerRevealed[String(q.id)] = { 
+                            isCorrect: result.score >= 80, 
+                            score: result.score, 
+                            explanation: q.explanation, 
+                            aiReason: result.reason 
+                        };
+                    } catch (error) {
+                        console.error(error);
+                        this.showNotification("AI failed. Using exact match.", "error");
+                        const isCorrect = selectedValue.toLowerCase().trim() === q.correct.toLowerCase().trim();
+                        this.data.answerRevealed[String(q.id)] = { isCorrect, score: isCorrect ? 100 : 0, explanation: q.explanation };
+                    }
+                } else {
+                    // FIX 2: Actually evaluate if the MCQ answer is correct (it was hardcoded to true before!)
+                    const isCorrect = selectedValue.toUpperCase() === q.correct.toUpperCase();
+                    this.data.answerRevealed[String(q.id)] = { isCorrect: isCorrect, score: isCorrect ? 100 : 0, explanation: q.explanation };
+                }
+                this.saveExamState();
+                this.renderQuestion();
+            },
+
+                                    submitTheoryImage: async function(qId) {
+                const fileInput = document.getElementById(`theory-image-input-${qId}`);
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                const q = this.data.questions.find(q => String(q.id) === String(qId));
+                if (!q) return;
+
+                const btn = document.getElementById(`submit-image-btn-${qId}`);
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Grading...';
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                this.showNotification("Compressing & sending to AI Examiner...", "info");
+
+                try {
+                    const compressedFile = await compressImage(file, 1024, 1024, 0.7);
+                    const reader = new FileReader();
+                    
+                    reader.onload = async (e) => {
+                        const base64String = e.target.result.split(',')[1];
+                        const response = await fetch('/api/grade', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'image',
+                                data: { imageBase64: base64String, questionText: q.text, maxMarks: q.maxMarks || 10 }
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        this.data.answerRevealed[String(q.id)] = {
+                            isCorrect: true, 
+                            score: result.score,
+                            explanation: result.reason
+                        };
+                        this.saveExamState();
+                        this.renderQuestion();
+                        this.showNotification(`Graded: ${result.score}/${q.maxMarks}`, 'success');
+                    };
+                    reader.readAsDataURL(compressedFile);
+                } catch (error) {
+                    console.error(error);
+                    this.showNotification("Failed to grade image.", "error");
+                    btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+            },
+
+                        toggleTheoryTab: function(qId, tabName) {
+                const textTabBtn = document.getElementById(`tab-text-${qId}`);
+                const imgTabBtn = document.getElementById(`tab-image-${qId}`);
+                const textContainer = document.getElementById(`theory-text-container-${qId}`);
+                const imgContainer = document.getElementById(`theory-image-container-${qId}`);
+
+                if (tabName === 'text') {
+                    textTabBtn.className = "flex-1 py-2 rounded-lg font-bold border-2 bg-green-50 border-green-500 text-green-700";
+                    imgTabBtn.className = "flex-1 py-2 rounded-lg font-bold border-2 bg-gray-50 border-gray-300 text-gray-500";
+                    textContainer.classList.remove('hidden');
+                    imgContainer.classList.add('hidden');
+                } else {
+                    imgTabBtn.className = "flex-1 py-2 rounded-lg font-bold border-2 bg-green-50 border-green-500 text-green-700";
+                    textTabBtn.className = "flex-1 py-2 rounded-lg font-bold border-2 bg-gray-50 border-gray-300 text-gray-500";
+                    imgContainer.classList.remove('hidden');
+                    textContainer.classList.add('hidden');
+                }
+            },
+
+
+                        submitTheoryText: async function(qId) {
+                const textarea = document.getElementById(`theory-text-input-${qId}`);
+                const answerText = textarea.value.trim();
+                if (!answerText) {
+                    this.showNotification("Please type an answer before submitting.", "warning");
+                    return;
+                }
+
+                const q = this.data.questions.find(q => String(q.id) === String(qId));
+                if (!q) return;
+
+                const btn = document.getElementById(`submit-text-btn-${qId}`);
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Grading...';
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                this.showNotification("AI is reading and grading your answer...", "info");
+
+                try {
+                    const response = await fetch('/api/grade', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'theory_text',
+                            data: { studentAnswer: answerText, questionText: q.text, maxMarks: q.maxMarks || 10 }
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    this.data.answerRevealed[String(q.id)] = {
+                        isCorrect: true, 
+                        score: result.score,
+                        explanation: result.reason
+                    };
+                    this.saveExamState();
+                    this.renderQuestion(); // Re-render to show the green feedback box
+                    this.showNotification(`Graded: ${result.score}/${q.maxMarks}`, 'success');
+                } catch (error) {
+                    console.error(error);
+                    this.showNotification("Failed to grade. Check connection.", "error");
+                    btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+            },
+            
+            
+            
+
+            selectAnswer: function (qId, value) { this.data.userAnswers[qId] = value; this.saveExamState(); },
+           
+
+            // ============================================================
+            // NAVIGATION
+            // ============================================================
+
+            nextQuestion: function() {
+                if (this.data.currentQuestionIndex < this.data.questions.length - 1) {
+                    this.data.currentQuestionIndex++;
+                    this.saveExamState();
+                    this.renderQuestion();
+                }
+            },
+
+            prevQuestion: function() {
+                if (this.data.currentQuestionIndex > 0) {
+                    this.data.currentQuestionIndex--;
+                    this.saveExamState();
+                    this.renderQuestion();
+                }
+            },
+
+            jumpToQuestion: function(index) {
+                this.data.currentQuestionIndex = index;
+                this.saveExamState();
+                this.renderQuestion();
+            },
+
+            // ============================================================
+            // SUBMIT TEST
+            // ============================================================
+
+            submitTestConfirm: function() {
+                if (confirm("Submit? You cannot return once submitted.")) this.submitTest();
+            },
+
+            submitTest: function() {
+                this.stopTimer();
+                this.clearExamState();
+
+                let score = 0;
+                const details = [];
+
+                                                this.data.questions.forEach(q => {
+                    const userAns = this.data.userAnswers[q.id];
+                    let isCorrect = false;
+
+                    if (q.type === 'theory') {
+                        // Check if AI gave a passing mark (e.g., >= 50% of max marks)
+                        const revealed = this.data.answerRevealed[q.id];
+                        if (revealed && typeof revealed === 'object' && revealed.score !== undefined) {
+                            const passingMark = (q.maxMarks || 10) / 2; 
+                            isCorrect = revealed.score >= passingMark;
+                        }
+                    } else if (userAns !== undefined && userAns !== '') {
+                        if (q.type === 'objective') {
+                            isCorrect = userAns.toUpperCase() === q.correct.toUpperCase();
+                        } else {
+                            isCorrect = userAns.toLowerCase().trim() === q.correct.toLowerCase().trim();
+                        }
+                    }
+
+                    if (isCorrect) score++;
+
+                    details.push({
+                        question: q.text,
+                        userAnswer: userAns || 'Not Answered',
+                        correctAnswer: q.correct,
+                        isCorrect,
+                        questionType: q.type,
+                        options: q.options,
+                        explanation: q.explanation
+                    });
+                });
+
+                const total = this.data.questions.length;
+                const percentage = Math.round((score / total) * 100);
+                const subjectName = this.data.subjects[this.data.currentSubjectId]?.name || 'General';
+
+                this.data.lastResults = {
+                    name: this.data.candidateName,
+                    subjectName,
+                    score,
+                    total,
+                    percentage,
+                    date: new Date().toISOString(),
+                    details,
+                    examMode: this.data.examMode
+                };
+
+                this.data.results.push(this.data.lastResults);
+                this.saveResults();
+
+                this.showSimplifiedResult(score, total, percentage);
+            },
+
+            // ============================================================
+            // SIMPLIFIED RESULT (SCORE ONLY + PREVIEW BUTTON)
+            // ============================================================
+
+            showSimplifiedResult: function(score, total, percentage) {
+                this.data.mode = 'result';
+                this.updateHeader();
+
+                const subjectName = this.data.subjects[this.data.currentSubjectId]?.name || 'General';
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="max-w-2xl mx-auto h-full flex flex-col justify-center">
+                        <div class="bg-white p-8 rounded-xl shadow-lg border-t-4 ${percentage >= 50 ? 'border-green-600' : 'border-red-600'}">
+                            <div class="text-center mb-6">
+                                <div class="w-24 h-24 rounded-full mx-auto flex items-center justify-center ${percentage >= 50 ? 'bg-green-100' : 'bg-red-100'} mb-4">
+                                    <i class="fas ${percentage >= 50 ? 'fa-trophy text-green-600' : 'fa-sad-tear text-red-600'} text-4xl"></i>
+                                </div>
+                                <h2 class="text-3xl font-bold ${percentage >= 50 ? 'text-green-700' : 'text-red-700'}">
+                                    ${percentage >= 50 ? 'Congratulations!' : 'Keep Trying!'}
+                                </h2>
+                                <p class="text-gray-600">${this.data.candidateName} - ${subjectName}</p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <span class="inline-block px-2 py-1 rounded ${this.data.examMode === 'practice' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                        <i class="fas ${this.data.examMode === 'practice' ? 'fa-clock' : 'fa-book-open'} mr-1"></i>
+                                        ${this.data.examMode} mode
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div class="text-center mb-6">
+                                <div class="text-8xl font-bold ${percentage >= 50 ? 'text-green-600' : 'text-red-600'} mb-2">
+                                    ${percentage}%
+                                </div>
+                                <div class="text-xl text-gray-500">
+                                    ${score} out of ${total} correct
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 text-center mb-6">
+                                <div class="bg-green-50 p-4 rounded-lg">
+                                    <div class="text-3xl font-bold text-green-600">${score}</div>
+                                    <div class="text-sm text-gray-500">Correct</div>
+                                </div>
+                                <div class="bg-red-50 p-4 rounded-lg">
+                                    <div class="text-3xl font-bold text-red-600">${total - score}</div>
+                                    <div class="text-sm text-gray-500">Incorrect</div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mb-6">
+                                <button onclick="event.preventDefault(); app.showFullReview()"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold text-lg transition">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    Preview Corrections & Answers
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    Click to see correct answers and explanations
+                                </p>
+                            </div>
+
+                            <div class="text-center mt-6">
+                                <button onclick="event.preventDefault(); app.showLanding()"
+                                        class="bg-gray-800 text-white px-8 py-3 rounded-lg hover:bg-gray-900 font-bold">
+                                    Return Home
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            setTimeout(() => this.showVersePopup(), 600);
+             },
+
+            // ============================================================
+            // FULL ANSWER REVIEW
+            // ============================================================
+
+            showFullReview: function() {
+                if (!this.data.lastResults) {
+                    this.showNotification('No results to review', 'error');
+                    return;
+                }
+
+                this.data.mode = 'review';
+                this.updateHeader();
+
+                const { name, subjectName, score, total, percentage, details } = this.data.lastResults;
+
+                const reviewHtml = details.map((d, i) => {
+                    let optionsHtml = '';
+                    if (d.questionType === 'objective' && d.options) {
+                        optionsHtml = `
+                            <div class="mt-3 grid grid-cols-2 gap-2">
+                                ${['A', 'B', 'C', 'D'].map(opt => `
+                                    <div class="p-2 rounded border ${d.correctAnswer === opt ? 'bg-green-100 border-green-300' : 'bg-gray-50'} ${d.userAnswer === opt && !d.isCorrect ? 'bg-red-100 border-red-300' : ''}">
+                                        <span class="font-bold mr-2">${opt}:</span>
+                                        <span>${d.options[opt] || ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="bg-white p-6 rounded-lg shadow border mb-6 ${d.isCorrect ? 'border-green-200' : 'border-red-200'}">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${d.isCorrect ? 'bg-green-500' : 'bg-red-500'}">
+                                    <i class="fas ${d.isCorrect ? 'fa-check' : 'fa-times'}"></i>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="text-lg font-bold text-gray-800">Question ${i + 1}</h3>
+                                        <span class="px-2 py-1 text-xs font-bold rounded ${d.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                            ${d.isCorrect ? 'Correct' : 'Incorrect'}
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-700 mb-4 bg-gray-50 p-4 rounded">${d.question}</p>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div class="${!d.isCorrect ? 'bg-red-50 p-3 rounded border border-red-200' : ''}">
+                                            <div class="text-sm text-gray-500 mb-1">Your Answer:</div>
+                                            <div class="font-bold ${d.isCorrect ? 'text-green-700' : 'text-red-700'}">${d.userAnswer}</div>
+                                        </div>
+                                        ${!d.isCorrect ? `
+                                            <div class="bg-green-50 p-3 rounded border border-green-200">
+                                                <div class="text-sm text-gray-500 mb-1">Correct Answer:</div>
+                                                <div class="font-bold text-green-700">${d.correctAnswer}</div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+
+                                    ${optionsHtml}
+
+                                    ${d.explanation ? `
+                                        <div class="mt-4 bg-blue-50 p-3 rounded border border-blue-200">
+                                            <div class="text-sm text-blue-600 font-bold mb-1">Explanation:</div>
+                                            <p class="text-sm text-gray-700">${d.explanation}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('app-container').innerHTML = `
+                    <div class="max-w-4xl mx-auto h-full flex flex-col">
+                        <div class="bg-white p-6 rounded-lg shadow mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-800">Answer Review</h2>
+                                    <p class="text-gray-600">${name} - ${subjectName}</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-3xl font-bold ${percentage >= 50 ? 'text-green-600' : 'text-red-600'}">${percentage}%</div>
+                                    <div class="text-sm text-gray-500">${score}/${total} Correct</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-4 gap-2 mb-6">
+                                <div class="text-center p-3 rounded bg-green-100 border border-green-300">
+                                    <div class="text-xl font-bold text-green-700">${score}</div>
+                                    <div class="text-xs text-green-800">Correct</div>
+                                </div>
+                                <div class="text-center p-3 rounded bg-red-100 border border-red-300">
+                                    <div class="text-xl font-bold text-red-700">${total - score}</div>
+                                    <div class="text-xs text-red-800">Incorrect</div>
+                                </div>
+                                <div class="text-center p-3 rounded bg-blue-100 border border-blue-300">
+                                    <div class="text-xl font-bold text-blue-700">${percentage}%</div>
+                                    <div class="text-xs text-blue-800">Accuracy</div>
+                                </div>
+                                <div class="text-center p-3 rounded bg-purple-100 border border-purple-300">
+                                    <div class="text-xl font-bold text-purple-700">${total}</div>
+                                    <div class="text-xs text-purple-800">Total</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-grow overflow-y-auto pb-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Detailed Review</h3>
+                            ${reviewHtml}
+                        </div>
+
+                        <div class="flex justify-between pt-4 border-t">
+                            <button onclick="event.preventDefault(); app.showLanding()" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-bold">
+                                <i class="fas fa-home mr-2"></i>Home
+                            </button>
+                            <button onclick="event.preventDefault(); app.showSimplifiedResult(${score}, ${total}, ${percentage})" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Score
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // ============================================================
+            // IMAGE MODAL (CANDIDATE VIEW ONLY)
+            // ============================================================
+
+            showImageModal: function() {
+                const subjectId = this.data.currentSubjectId;
+                const images = this.data.images[subjectId] || [];
+
+                if (images.length > 0) {
+                    imageViewer.open(images, `Reference Images - ${this.data.subjects[subjectId]?.name || 'Subject'}`);
+                } else {
+                    const modal = document.getElementById('image-modal');
+                    document.getElementById('image-viewer-container').classList.add('hidden');
+                    document.getElementById('no-images-message').classList.remove('hidden');
+                    modal.classList.remove('hidden');
+                }
+            },
+
+            // ============================================================
+            // HEADER UPDATE
+            // ============================================================
+
+            updateHeader: function() {
+                const headerActions = document.getElementById('header-actions');
+
+                if (this.data.mode === 'test') {
+                    const subjName = this.data.subjects[this.data.currentSubjectId]?.name || '';
+                    const hasImages = this.data.images?.[this.data.currentSubjectId]?.length > 0;
+
+                    headerActions.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            ${hasImages ? `
+                                <button onclick="event.preventDefault(); app.showImageModal()" class="text-sm bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded flex items-center gap-2">
+                                    <i class="fas fa-image"></i>
+                                    <span class="hidden sm:inline">Images</span>
+                                </button>
+                            ` : ''}
+                            <div class="hidden md:block text-right">
+                                <div class="text-xs text-green-200 uppercase font-bold">${subjName}</div>
+                                <div class="font-bold">${this.data.candidateName}</div>
+                            </div>
+                            ${this.data.examMode === 'practice' ?
+                                `<div class="bg-white text-green-800 px-4 py-1 rounded font-mono font-bold text-lg shadow" id="timer-display">00:00</div>` :
+                                `<div class="bg-white text-green-800 px-4 py-1 rounded font-mono font-bold text-lg shadow">
+                                    <i class="fas fa-book-open text-sm mr-1"></i>Study
+                                </div>`
+                            }
+                            <button onclick="event.preventDefault(); app.toggleMobileGrid()" class="md:hidden bg-green-800 hover:bg-green-900 text-white px-3 py-1 rounded">
+                                <i class="fas fa-th"></i>
+                            </button>
+                        </div>`;
+
+                    if (this.data.examMode === 'practice') {
+                        this.updateTimerDisplay();
+                    }
+                } else if (this.data.mode === 'result' || this.data.mode === 'review') {
+                    headerActions.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.preventDefault(); app.showLanding()" class="text-sm bg-green-800 hover:bg-green-900 px-3 py-1 rounded flex items-center gap-2">
+                                <i class="fas fa-home"></i>
+                                <span class="hidden sm:inline">Home</span>
+                            </button>
+                        </div>`;
+                } else {
+                    headerActions.innerHTML = `
+                        <button onclick="event.preventDefault(); app.showLanding()" class="text-sm bg-green-800 hover:bg-green-900 px-3 py-1 rounded flex items-center gap-2">
+                            <i class="fas fa-home"></i>
+                            <span class="hidden sm:inline">Home</span>
+                        </button>`;
+                }
+            },
+
+            // ============================================================
+            // MATHJAX RENDERING
+            // ============================================================
+
+            setupMathJaxPatch: function() {
+                // Patch app methods to trigger MathJax after content updates
+                const methods = ['renderQuestion', 'showResult', 'showFullReview', 'viewTopicNote', 'showSubjectDashboard', 'showLanding', 'showTestInterface'];
+                methods.forEach(methodName => {
+                    if (this[methodName]) {
+                        const original = this[methodName];
+                        this[methodName] = function() {
+                            const result = original.apply(this, arguments);
+                            setTimeout(() => this.triggerMathJax(), 200);
+                            return result;
+                        };
+                    }
+                });
+            },
+
+            triggerMathJax: function() {
+                if (window.MathJax && MathJax.typesetPromise) {
+                    const container = document.getElementById('app-container');
+                    if (container) {
+                        MathJax.typesetPromise([container]).catch(err => {
+                            console.warn('MathJax typeset error:', err);
+                        });
+                    }
+                }
+            },
+
+            // ============================================================
+            // ENCOURAGEMENT VERSE POPUP
+            // ============================================================
+
+            showVersePopup: function() {
+                const results = this.data.results;
+                if (!results || results.length === 0) return;
+
+                const lastResult = results[results.length - 1];
+                const percentage = lastResult.percentage;
+
+                if (percentage === undefined) return;
+
+                const VERSES_GOOD = [
+                    "🌟 'Well done, good and faithful servant! You have been faithful over a little; I will set you over much.' — Matthew 25:21",
+                    "🏆 'I can do all things through Christ who strengthens me.' — Philippians 4:13",
+                    "📖 'Commit your work to the Lord, and your plans will be established.' — Proverbs 16:3",
+                    "✨ 'For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope.' — Jeremiah 29:11"
+                ];
+
+                const VERSES_TRY_AGAIN = [
+                    "💪 'Do not be discouraged, for the Lord your God is with you wherever you go.' — Joshua 1:9",
+                    "🌅 'For though the righteous fall seven times, they rise again.' — Proverbs 24:16",
+                    "🙏 'But those who hope in the Lord will renew their strength.' — Isaiah 40:31",
+                    "❤️ 'My grace is sufficient for you, for my power is made perfect in weakness.' — 2 Corinthians 12:9"
+                ];
+
+                const isGood = percentage >= 50;
+                const verses = isGood ? VERSES_GOOD : VERSES_TRY_AGAIN;
+                const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+
+                const title = isGood ? '🎉 Congratulations! 🎉' : '💪 Keep Going! 💪';
+                const icon = isGood ? '🎓✨' : '🌱💪';
+                const bgColor = isGood ? '#1e3c2c' : '#2d2b1f';
+                const accentColor = isGood ? '#ffd700' : '#ffaa66';
+
+                const popup = document.createElement('div');
+                popup.id = 'verse-popup';
+                popup.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.75);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 999999;
+                    backdrop-filter: blur(5px);
+                `;
+
+                popup.innerHTML = `
+                    <div style="
+                        background: linear-gradient(135deg, ${bgColor}, ${isGood ? '#2a6b3c' : '#6b4c14'});
+                        max-width: 500px;
+                        width: 90%;
+                        border-radius: 24px;
+                        padding: 30px 25px;
+                        text-align: center;
+                        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+                        border: 2px solid ${accentColor};
+                        animation: slideUpVerse 0.4s ease-out;
+                        color: white;
+                    ">
+                        <div style="font-size: 60px; margin-bottom: 10px;">${icon}</div>
+                        <h2 style="font-size: 28px; margin: 0 0 15px; color: ${accentColor};">${title}</h2>
+                        <div style="
+                            background: rgba(255,255,255,0.12);
+                            border-radius: 16px;
+                            padding: 20px;
+                            margin: 20px 0;
+                            font-size: 18px;
+                            line-height: 1.6;
+                            font-style: italic;
+                            border-left: 4px solid ${accentColor};
+                        ">
+                            ${randomVerse}
+                        </div>
+                        <button onclick="this.closest('#verse-popup').remove()" style="
+                            background: ${accentColor};
+                            color: ${isGood ? '#1e3c2c' : '#2d2b1f'};
+                            border: none;
+                            padding: 12px 28px;
+                            border-radius: 40px;
+                            font-size: 16px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            transition: transform 0.2s;
+                        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            Continue
+                        </button>
+                    </div>
+                `;
+
+                document.body.appendChild(popup);
+
+                // Auto-close after 6 seconds
+                setTimeout(() => {
+                    if (popup && popup.parentNode) popup.remove();
+                }, 6000);
+            }
+        };
+
+        // ============================================================
+        // INITIALIZE APP
+        // ============================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+        // ============================================================
+        // FULL-SCREEN EXPLANATION VIEWER
+        // ============================================================
+
+        (function() {
+            // Inject CSS for the full-screen viewer
+            const style = document.createElement('style');
+            style.textContent = `
+                .blink-btn {
+                    animation: blink-pulse 1.5s infinite ease-in-out;
+                    background: #3b82f6 !important;
+                    color: white !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    padding: 8px 14px !important;
+                    font-size: 13px !important;
+                    font-weight: bold !important;
+                    cursor: pointer !important;
+                    margin-top: 12px !important;
+                    margin-bottom: 4px !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3) !important;
+                    transition: transform 0.2s, background 0.2s !important;
+                }
+                .blink-btn:hover {
+                    transform: scale(1.05) !important;
+                    animation: none !important;
+                    background: #2563eb !important;
+                    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4) !important;
+                }
+                @keyframes blink-pulse {
+                    0%, 100% { opacity: 1; background: #3b82f6; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+                    50% { opacity: 0.6; background: #2563eb; box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+                }
+
+                #fullscreen-explain-modal {
+                    position: fixed; inset: 0; z-index: 9999999; background: rgba(0, 0, 0, 0.85);
+                    display: none; align-items: center; justify-content: center; padding: 20px;
+                    backdrop-filter: blur(4px);
+                }
+                #fullscreen-explain-modal.open { display: flex; }
+
+                #fullscreen-explain-modal .modal-content {
+                    background: white;
+                    max-width: 95vw !important;
+                    max-height: 95vh !important;
+                    width: 100%;
+                    padding: 25px !important;
+                    border-radius: 16px;
+                    overflow-y: auto;
+                    position: relative;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    animation: scaleUp 0.3s ease-out;
+                    color: #1e293b;
+                }
+                @keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+                #fullscreen-explain-modal .close-btn,
+                #fullscreen-explain-modal .theme-toggle-btn {
+                    position: absolute; top: 12px; background: #f3f4f6;
+                    border: none; border-radius: 50%; width: 36px; height: 36px;
+                    font-size: 18px; cursor: pointer; transition: 0.2s; color: #374151;
+                    display: flex; align-items: center; justify-content: center;
+                }
+                #fullscreen-explain-modal .close-btn { right: 16px; }
+                #fullscreen-explain-modal .theme-toggle-btn { right: 58px; }
+                #fullscreen-explain-modal .close-btn:hover,
+                #fullscreen-explain-modal .theme-toggle-btn:hover { background: #e5e7eb; transform: scale(1.1); }
+
+                #fullscreen-explain-modal h2 {
+                    font-size: 24px; font-weight: bold;
+                    margin-bottom: 16px; border-bottom: 2px solid #3b82f6; padding-bottom: 12px;
+                    padding-right: 70px;
+                }
+                #fullscreen-explain-body {
+                    white-space: pre-wrap !important; line-height: 1.8 !important;
+                    font-size: 16px !important;
+                }
+
+                #fullscreen-explain-modal .theme-white {
+                    background: #ffffff !important; color: #1e293b !important;
+                }
+                #fullscreen-explain-modal .theme-white h2 { border-bottom-color: #3b82f6 !important; }
+
+                #fullscreen-explain-modal .theme-dark {
+                    background: #1a1a1a !important; color: #ffffff !important;
+                }
+                #fullscreen-explain-modal .theme-dark h2 { border-bottom-color: #818cf8 !important; }
+                #fullscreen-explain-modal .theme-dark .close-btn,
+                #fullscreen-explain-modal .theme-dark .theme-toggle-btn { background: #3b3b3b !important; color: #ffffff !important; }
+                #fullscreen-explain-modal .theme-dark .close-btn:hover,
+                #fullscreen-explain-modal .theme-dark .theme-toggle-btn:hover { background: #555 !important; }
+                #fullscreen-explain-modal .theme-dark mjx-container,
+                #fullscreen-explain-modal .theme-dark mjx-container * { color: #ffffff !important; }
+
+                #fullscreen-explain-modal .theme-sepia {
+                    background: #f5f0e6 !important; color: #3e2e1e !important;
+                }
+                #fullscreen-explain-modal .theme-sepia h2 { border-bottom-color: #d97706 !important; }
+                #fullscreen-explain-modal .theme-sepia .close-btn,
+                #fullscreen-explain-modal .theme-sepia .theme-toggle-btn { background: #e5dcd2 !important; color: #4a3b2c !important; }
+                #fullscreen-explain-modal .theme-sepia .close-btn:hover,
+                #fullscreen-explain-modal .theme-sepia .theme-toggle-btn:hover { background: #d4c9bb !important; }
+            `;
+            document.head.appendChild(style);        
+
+            // Open full-screen explanation
+            window.openFullScreenExplanation = function(btnElement) {
+                const container = btnElement.closest('.explanation-box, .bg-blue-50, .bg-white.p-4.rounded-lg.border-l-4');
+                if (!container) return;
+                const clone = container.cloneNode(true);
+                const btnInClone = clone.querySelector('.fullscreen-explain-btn');
+                if (btnInClone) btnInClone.remove();
+
+                const modalContent = document.querySelector('#fullscreen-explain-modal .modal-content');
+                modalContent.className = 'modal-content theme-white';
+
+                document.getElementById('fullscreen-explain-body').innerHTML = clone.innerHTML;
+                document.getElementById('fullscreen-explain-modal').classList.add('open');
+                if (window.MathJax && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([document.getElementById('fullscreen-explain-body')]).catch(() => {});
+                }
+            };
+
+            // Theme toggle
+            window.toggleExplanationTheme = function(btnElement) {
+                const modalContent = btnElement.closest('.modal-content');
+                if (!modalContent) return;
+
+                const themes = ['theme-white', 'theme-dark', 'theme-sepia'];
+                let currentIndex = themes.findIndex(t => modalContent.classList.contains(t));
+                let nextIndex = (currentIndex + 1) % themes.length;
+                themes.forEach(t => modalContent.classList.remove(t));
+                modalContent.classList.add(themes[nextIndex]);
+            };
+
+            // Inject buttons into explanation boxes
+            function injectBlinkButtons() {
+                document.querySelectorAll('.explanation-box').forEach(container => {
+                    if (container.querySelector('.fullscreen-explain-btn')) return;
+
+                    let target = container.querySelector('.bg-white.p-4.rounded-lg.border-l-4.border-blue-500');
+                    if (!target) target = container.querySelector('.bg-blue-50');
+                    if (!target) target = container;
+
+                    if (target.querySelector('.fullscreen-explain-btn')) return;
+                    if (target.textContent.trim().length < 5) return;
+
+                    const btn = document.createElement('button');
+                    btn.className = 'fullscreen-explain-btn blink-btn';
+                    btn.innerHTML = '<i class="fas fa-expand"></i> View in full screen';
+                    btn.onclick = function(e) {
+                        e.preventDefault();
+                        window.openFullScreenExplanation(this);
+                    };
+                    target.appendChild(btn);
+                });
+
+                // Remove buttons from green boxes
+                document.querySelectorAll('.bg-green-50 .fullscreen-explain-btn').forEach(btn => btn.remove());
+            }
+
+            // Patch render methods
+            const methodsToPatch = ['renderQuestion', 'showResult', 'showFullReview'];
+            methodsToPatch.forEach(methodName => {
+                const original = app[methodName];
+                if (typeof original === 'function') {
+                    app[methodName] = function() {
+                        const result = original.apply(this, arguments);
+                        setTimeout(injectBlinkButtons, 400);
+                        return result;
+                    };
+                }
+            });
+
+            setTimeout(injectBlinkButtons, 500);
+        })();
+    </script>
+        <!-- Question Bank Import -->
+    <script src="question-bank.js?v=2" defer></script>
+    
+    <!-- ============================================================ -->
+<!-- BACK-BUTTON / HISTORY NAVIGATION MANAGER                      -->
+<!-- Drop-in: no changes to existing app functions required        -->
+<!-- ============================================================ -->
+<script>
+(function () {
+    'use strict';
+
+    // ------------------------------------------------------------
+    // Wait for `app` to exist, then wire everything up
+    // ------------------------------------------------------------
+    function boot() {
+        if (typeof app === 'undefined' || !app || typeof app.showLanding !== 'function') {
+            setTimeout(boot, 100);
+            return;
+        }
+
+        // ========================================================
+        // NAV MANAGER
+        // ========================================================
+        const nav = {
+            stack: ['landing'],
+            _suppress: false,   // set true while we programmatically re-render
+            _booted: false,
+
+            // Push a new entry + render via the wrapped function
+            push: function (screenKey, state, renderFn) {
+                if (this._booted && this.stack[this.stack.length - 1] === screenKey) {
+                    // Already on this screen — just render (no new history entry)
+                    renderFn();
+                    return;
+                }
+                this.stack.push(screenKey);
+                history.pushState(Object.assign({ screen: screenKey }, state || {}), '', '#' + screenKey);
+                renderFn();
+            },
+
+            // Replace current entry (no new history entry) — for re-renders / landing
+            replace: function (screenKey, state, renderFn) {
+                if (this.stack.length === 0) this.stack.push(screenKey);
+                else this.stack[this.stack.length - 1] = screenKey;
+                history.replaceState(Object.assign({ screen: screenKey }, state || {}), '', '#' + screenKey);
+                renderFn();
+            },
+
+            // Called from popstate — dispatch to the right render function
+            handlePop: function (state) {
+                const screen = (state && state.screen) || 'landing';
+                this._suppress = true;
+                try {
+                    switch (screen) {
+                        case 'landing':
+                            app.showLanding();
+                            break;
+                        case 'candidate-options':
+                            app.showCandidateOptions();
+                            break;
+                        case 'login-practice':
+                            app.showCandidateLogin('practice');
+                            break;
+                        case 'login-study':
+                            app.showCandidateLogin('study');
+                            break;
+                        case 'notes-browser':
+                            if (state.subjectId) app.showSubjectNotes(state.subjectId);
+                            else app.showLanding();
+                            break;
+                        case 'result':
+                            if (app.data.lastResults) {
+                                const r = app.data.lastResults;
+                                app.showSimplifiedResult(r.score, r.total, r.percentage);
+                            } else {
+                                app.showLanding();
+                            }
+                            break;
+                        case 'review':
+                            if (app.data.lastResults) app.showFullReview();
+                            else app.showLanding();
+                            break;
+                        case 'test':
+                            // They back-buttoned out of an exam.
+                            // Re-trap them — exam state is still live.
+                            if (app.data.mode === 'test') {
+                                history.pushState({ screen: 'test' }, '', '#test');
+                                app.showNotification(
+                                    'You are in an exam. Use the Submit button to finish.',
+                                    'warning'
+                                );
+                            } else {
+                                app.showLanding();
+                            }
+                            break;
+                        default:
+                            app.showLanding();
+                    }
+                } finally {
+                    // Release suppression after a tick so any nested renders settle
+                    setTimeout(() => { nav._suppress = false; }, 0);
+                }
+            }
+        };
+
+        // ========================================================
+        // WRAP EXISTING app.* FUNCTIONS
+        // Original bodies are preserved; we just intercept the
+        // *navigation* calls and mirror them into history.
+        // ========================================================
+
+        // -------- showLanding --------
+        const _origShowLanding = app.showLanding.bind(app);
+        app.showLanding = function () {
+            if (nav._suppress) {
+                // Called from popstate — just render, don't touch history
+                return _origShowLanding();
+            }
+            nav.replace('landing', {}, _origShowLanding);
+        };
+
+        // -------- showCandidateOptions --------
+        const _origShowCandidateOptions = app.showCandidateOptions.bind(app);
+        app.showCandidateOptions = function () {
+            if (nav._suppress) return _origShowCandidateOptions();
+            nav.push('candidate-options', {}, _origShowCandidateOptions);
+        };
+
+        // -------- showCandidateLogin --------
+        const _origShowCandidateLogin = app.showCandidateLogin.bind(app);
+        app.showCandidateLogin = function (mode) {
+            if (nav._suppress) return _origShowCandidateLogin(mode);
+            nav.push('login-' + mode, { mode: mode }, () => _origShowCandidateLogin(mode));
+        };
+
+        // -------- showSubjectNotes --------
+        const _origShowSubjectNotes = app.showSubjectNotes.bind(app);
+        app.showSubjectNotes = function (subjectId) {
+            if (nav._suppress) return _origShowSubjectNotes(subjectId);
+            nav.push('notes-browser', { subjectId: subjectId }, () => _origShowSubjectNotes(subjectId));
+        };
+
+        // -------- showSimplifiedResult --------
+        const _origShowSimplifiedResult = app.showSimplifiedResult.bind(app);
+        app.showSimplifiedResult = function (score, total, percentage) {
+            if (nav._suppress) return _origShowSimplifiedResult(score, total, percentage);
+            // Use REPLACE so the back button from results goes to the login
+            // screen, not the just-finished exam.
+            nav.replace('result', { score: score }, () => _origShowSimplifiedResult(score, total, percentage));
+        };
+
+        // -------- showFullReview --------
+        const _origShowFullReview = app.showFullReview.bind(app);
+        app.showFullReview = function () {
+            if (nav._suppress) return _origShowFullReview();
+            nav.push('review', {}, _origShowFullReview);
+        };
+
+        // -------- showTestInterface (called once when exam starts) --------
+        const _origShowTestInterface = app.showTestInterface.bind(app);
+        app.showTestInterface = function () {
+            if (nav._suppress) return _origShowTestInterface();
+            nav.push('test', {}, _origShowTestInterface);
+        };
+
+        // ========================================================
+        // POPSTATE LISTENER
+        // ========================================================
+        window.addEventListener('popstate', function (e) {
+            // Special case: exam in progress — trap the back button
+            if (app.data.mode === 'test') {
+                // Re-push the test entry so back again still fires popstate
+                history.pushState({ screen: 'test' }, '', '#test');
+                if (confirm('Leave the exam? Your answers will be lost.')) {
+                    // User confirmed — actually leave
+                    app.data.mode = 'landing';
+                    app.data.questions = [];
+                    app.data.userAnswers = {};
+                    app.data.answerRevealed = {};
+                    if (app.data.timer) clearInterval(app.data.timer);
+                    nav.stack = ['landing'];
+                    history.replaceState({ screen: 'landing' }, '', '#landing');
+                    nav._suppress = true;
+                    app.showLanding();
+                    setTimeout(() => { nav._suppress = false; }, 0);
+                }
+                return;
+            }
+
+            // Normal screens — restore the target screen
+            const idx = nav.stack.indexOf((e.state && e.state.screen) || 'landing');
+            if (idx >= 0) nav.stack = nav.stack.slice(0, idx + 1);
+            else nav.stack = [(e.state && e.state.screen) || 'landing'];
+            nav.handlePop(e.state);
+        });
+
+        // ========================================================
+        // SEED HISTORY WITH LANDING
+        // ========================================================
+        history.replaceState({ screen: 'landing' }, '', '#landing');
+        nav.stack = ['landing'];
+        nav._booted = true;
+
+        // ========================================================
+        // BOOT: render landing (bypassing history push via suppress)
+        // ========================================================
+        nav._suppress = true;
+        _origShowLanding();
+        setTimeout(() => { nav._suppress = false; }, 0);
+
+        // ========================================================
+        // EXPOSE for debugging (optional)
+        // ========================================================
+        window.nav = nav;
+        console.log('✅ Back-button navigation manager ready');
+    }
+
+    boot();
+})();
+</script>
+
+<!-- ============================================================
+     MIDNIGHT SCHOLAR PALETTE (VERSE POPUP FIX ONLY)
+     ============================================================ -->
+<script>
+(function(){
+  // Fix the Verse Popup colors dynamically
+  function applyVerseTheme(){
+    if (!window.app || !app.showVersePopup) return;
+    const orig = app.showVersePopup;
+    
+    app.showVersePopup = function(){
+      // Remove any existing popups to avoid duplicates
+      const old = document.getElementById('verse-popup');
+      if (old) old.remove();
+      
+      // Call the original function to generate the popup
+      const r = orig.apply(this, arguments);
+      
+      // Style it to match Midnight Scholar
+      const popup = document.getElementById('verse-popup');
+      if (popup) {
+        const card = popup.firstElementChild;
+        const results = this.data.results;
+        const pct = results && results.length ? results[results.length-1].percentage : 0;
+        const good = pct >= 50;
+        
+        // Apply new Midnight Scholar colors
+        card.style.background = good
+          ? 'linear-gradient(135deg, #1E293B, #4F46E5)'
+          : 'linear-gradient(135deg, #0F172A, #3730A3)';
+        card.style.borderColor = '#F59E0B'; // Amber border
+        
+        const h2 = card.querySelector('h2');
+        if (h2) h2.style.color = '#F59E0B'; // Amber title
+        
+        const btn = card.querySelector('button');
+        if (btn) { 
+          btn.style.background = '#F59E0B'; 
+          btn.style.color = '#0F172A'; 
+        }
+      }
+      return r;
+    };
+  }
+
+  // Wait for the app object to be ready, then apply the patch
+  const checkApp = setInterval(() => {
+    if (window.app) {
+      clearInterval(checkApp);
+      applyVerseTheme();
+    }
+  }, 100);
+})();
+</script>
+    
+    <script>
+window.addEventListener('beforeunload', (e) => {
+    if (window.app && app.data && app.data.mode === 'test') {
+        e.preventDefault();
+        e.returnValue = '';   // Chrome requires this; blank string is fine
+        return '';
+    }
+});
+</script>
+    
+</body>
+</html>
