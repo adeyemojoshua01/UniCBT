@@ -1579,11 +1579,10 @@ discardSavedExam: function () {
                     const compressedFile = await compressImage(file, 1024, 1024, 0.7);
                     const reader = new FileReader();
                     
-                    reader.onload = async (e) => {
+                                        reader.onload = async (e) => {
                         const fullBase64 = e.target.result;
                         const base64String = fullBase64.split(',')[1];
                         
-                        // SAVE THE ACTUAL IMAGE TO USER ANSWERS
                         this.data.userAnswers[String(q.id)] = fullBase64;
 
                         const response = await fetch('/api/grade', {
@@ -1596,10 +1595,19 @@ discardSavedExam: function () {
                         });
                         
                         const result = await response.json();
+                        
+                        if (!response.ok || result.score === undefined) {
+                            this.showNotification("AI Error: " + (result.error || "Failed to read image"), "error");
+                            btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                            return;
+                        }
+
                         this.data.answerRevealed[String(q.id)] = {
                             isCorrect: true, 
                             score: result.score,
-                            explanation: result.reason
+                            explanation: result.reason || "No reason provided."
                         };
                         this.saveExamState();
                         this.renderQuestion();
@@ -1635,7 +1643,7 @@ discardSavedExam: function () {
             },
 
 
-                        submitTheoryText: async function(qId) {
+                                    submitTheoryText: async function(qId) {
                 const textarea = document.getElementById(`theory-text-input-${qId}`);
                 const answerText = textarea.value.trim();
                 if (!answerText) {
@@ -1649,7 +1657,6 @@ discardSavedExam: function () {
                 this.data.userAnswers[String(q.id)] = answerText; 
 
                 const btn = document.getElementById(`submit-text-btn-${qId}`);
-
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Grading...';
                 btn.disabled = true;
                 btn.classList.add('opacity-75', 'cursor-not-allowed');
@@ -1666,17 +1673,23 @@ discardSavedExam: function () {
                     });
                     
                     const result = await response.json();
+                    
+                    // STOP the app if the AI failed
+                    if (!response.ok || result.score === undefined) {
+                        throw new Error(result.error || "AI failed to return a score.");
+                    }
+
                     this.data.answerRevealed[String(q.id)] = {
                         isCorrect: true, 
                         score: result.score,
-                        explanation: result.reason
+                        explanation: result.reason || "No reason provided."
                     };
                     this.saveExamState();
-                    this.renderQuestion(); // Re-render to show the green feedback box
+                    this.renderQuestion(); 
                     this.showNotification(`Graded: ${result.score}/${q.maxMarks}`, 'success');
                 } catch (error) {
                     console.error(error);
-                    this.showNotification("Failed to grade. Check connection.", "error");
+                    this.showNotification("AI Error: " + error.message, "error");
                     btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
                     btn.disabled = false;
                     btn.classList.remove('opacity-75', 'cursor-not-allowed');
