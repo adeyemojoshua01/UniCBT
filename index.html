@@ -2658,6 +2658,87 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 </script>
+
+    <!-- FIX FOR THEORY GRADING DISPLAY -->
+    <script>
+    (function() {
+        const patchInterval = setInterval(() => {
+            if (window.app && typeof window.app.submitTest === 'function') {
+                clearInterval(patchInterval);
+                
+                // Override the submitTest function with the corrected logic
+                window.app.submitTest = function() {
+                    this.stopTimer();
+                    this.clearExamState();
+
+                    let score = 0;
+                    const details = [];
+
+                    this.data.questions.forEach(q => {
+                        const userAns = this.data.userAnswers[q.id];
+                        let isCorrect = false;
+                        
+                        // FIX: Check BOTH String and Number keys to find the AI grade
+                        const revealed = this.data.answerRevealed[String(q.id)] || this.data.answerRevealed[q.id];
+                        const maxMarks = q.maxMarks || 10;
+
+                        if (q.type === 'theory') {
+                            if (revealed && typeof revealed === 'object' && revealed.score !== undefined) {
+                                const passingMark = maxMarks / 2; 
+                                isCorrect = revealed.score >= passingMark;
+                            }
+                        } else if (userAns !== undefined && userAns !== '') {
+                            if (q.type === 'objective') {
+                                isCorrect = userAns.toUpperCase() === q.correct.toUpperCase();
+                            } else {
+                                isCorrect = userAns.toLowerCase().trim() === q.correct.toLowerCase().trim();
+                            }
+                        }
+
+                        if (isCorrect) score++;
+
+                        // Ensure score defaults to 0 if the AI API had an issue
+                        const aiScore = (revealed && revealed.score !== undefined) ? revealed.score : 0;
+
+                        details.push({
+                            question: q.text,
+                            userAnswer: userAns || 'Not Answered',
+                            correctAnswer: q.type === 'theory' ? `AI Grade: ${aiScore}/${maxMarks}` : q.correct,
+                            isCorrect,
+                            questionType: q.type,
+                            options: q.options,
+                            explanation: (q.type === 'theory' && revealed) ? revealed.explanation : q.explanation
+                        });
+                    });
+
+                    const total = this.data.questions.length;
+                    const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+                    const subjectName = this.data.subjects[this.data.currentSubjectId]?.name || 'General';
+
+                    this.data.lastResults = {
+                        name: this.data.candidateName,
+                        subjectName,
+                        score,
+                        total,
+                        percentage,
+                        date: new Date().toISOString(),
+                        details,
+                        examMode: this.data.examMode
+                    };
+
+                    this.data.results.push(this.data.lastResults);
+                    this.saveResults();
+
+                    this.showSimplifiedResult(score, total, percentage);
+                };
+
+                console.log('✅ Patched submitTest to correctly display Theory scores');
+            }
+        }, 500);
+    })();
+    </script>
+
+    
     
 </body>
 </html>
