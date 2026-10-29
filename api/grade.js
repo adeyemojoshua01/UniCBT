@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Groq API key not configured in Vercel' });
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'OpenRouter API key not configured in Vercel' });
 
     try {
         const { type, data } = req.body;
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         if (type === 'text') {
             const { studentAnswer, correctAnswer, questionText } = data;
             payload = {
-                model: "llama3-70b-8192", // ✅ Stable Groq model
+                model: "deepseek/deepseek-r1:free", // ✅ Free text model on OpenRouter
                 messages: [
                     { role: "system", content: `You are an automated examiner. Compare the student's answer to the correct answer. A positive result (score >= 80) means the student's answer is semantically correct, even if the wording is different. Return ONLY a valid JSON object: {"score": 0-100, "reason": "string"}` },
                     { role: "user", content: `Question: "${questionText}"\nCorrect Answer: "${correctAnswer}"\nStudent Answer: "${studentAnswer}"` }
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         } else if (type === 'theory_text') {
             const { studentAnswer, questionText, maxMarks } = data;
             payload = {
-                model: "llama3-70b-8192", // ✅ Stable Groq model
+                model: "deepseek/deepseek-r1:free", // ✅ Free text model on OpenRouter
                 messages: [
                     { role: "system", content: `You are an automated examiner. Read the student's typed theory answer and grade it out of ${maxMarks} marks. Be fair and look for key concepts. Return ONLY a valid JSON object: {"score": 0-${maxMarks}, "reason": "string"}` },
                     { role: "user", content: `Question: "${questionText}"\nMax Marks: ${maxMarks}\nStudent Answer: "${studentAnswer}"` }
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         } else if (type === 'image') {
             const { imageBase64, questionText, maxMarks } = data;
             payload = {
-                model: "llama-3.2-11b-vision-preview", // ✅ Stable Groq vision model
+                model: "qwen/qwen-2.5-vl-7b-instruct:free", // ✅ Free vision model on OpenRouter
                 messages: [
                     { role: "system", content: `You are an automated examiner. Read the student's handwritten answer in the image and grade it out of ${maxMarks} marks. Return ONLY a valid JSON object: {"score": 0-${maxMarks}, "reason": "string"}` },
                     { role: "user", content: [
@@ -48,12 +48,15 @@ export default async function handler(req, res) {
             };
         }
 
-        // Call Groq API
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        // Call OpenRouter API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${apiKey}`,
+                // Optional but recommended by OpenRouter for app attribution
+                'HTTP-Referer': 'https://academycby.vercel.app', 
+                'X-OpenRouter-Title': 'University eduCBT'
             },
             body: JSON.stringify(payload)
         });
@@ -82,7 +85,7 @@ export default async function handler(req, res) {
         res.status(200).json(gradingResult);
 
     } catch (error) {
-        console.error('Groq Grading Error:', error);
+        console.error('OpenRouter Grading Error:', error);
         res.status(500).json({ error: error.message || 'Failed to grade' });
     }
 }
