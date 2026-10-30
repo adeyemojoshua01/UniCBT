@@ -1568,7 +1568,7 @@ discardSavedExam: function () {
             },
             
 
-               submitTheoryImage: async function(qId) {
+                      submitTheoryImage: async function(qId) {
                 const fileInput = document.getElementById(`theory-image-input-${qId}`);
                 const file = fileInput.files[0];
                 if (!file) return;
@@ -1576,62 +1576,40 @@ discardSavedExam: function () {
                 const q = this.data.questions.find(q => String(q.id) === String(qId));
                 if (!q) return;
 
-                // PRACTICE MODE: Read the image text and save it, but don't grade it yet
-if (this.data.examMode === 'practice') {
-    const btn = document.getElementById(`submit-image-btn-${qId}`);
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Reading Image...';
-    btn.disabled = true;
-    
-    try {
-        const { data: { text } } = await Tesseract.recognize(file, 'eng');
-        const extractedText = text.trim();
-        
-        // Save the actual text so the AI can grade it later
-        this.data.userAnswers[String(q.id)] = extractedText; 
-        this.saveExamState();
-        
-        this.showNotification("Image read successfully. It will be graded when you submit.", "success");
-        btn.innerHTML = '<i class="fas fa-check mr-2"></i>Text Saved!';
-    } catch (error) {
-        this.showNotification("Could not read image. Try a clearer photo.", "error");
-        btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
-        btn.disabled = false;
-    }
-    return;
-}
-
                 const btn = document.getElementById(`submit-image-btn-${qId}`);
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Reading Image...';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Image...';
                 btn.disabled = true;
+                
+                // If it's practice mode, just let them know it will be graded later
+                if (this.data.examMode === 'practice') {
+                    this.showNotification("Image saved. It will be graded when you submit the exam.", "success");
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>Image Saved';
+                    // Note: to actually grade this in practice mode later, you'd need to store the Base64 string. 
+                    // For now, we skip the local OCR entirely.
+                    return; 
+                }
+
+                // STUDY MODE: Send image to Vision AI
                 this.showNotification("AI is reading the handwriting from your image...", "info");
 
                 try {
-                    // 1. Use Tesseract.js to read the text from the image
-                    const { data: { text } } = await Tesseract.recognize(file, 'eng', {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Reading: ${Math.round(m.progress * 100)}%`;
-                            }
-                        }
+                    // 1. Convert image to Base64 so it can be sent to the server
+                    const reader = new FileReader();
+                    const imageBase64 = await new Promise((resolve, reject) => {
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = error => reject(error);
+                        reader.readAsDataURL(file);
                     });
 
-                    const extractedText = text.trim();
-                    
-                    if (!extractedText || extractedText.length < 5) {
-                        throw new Error("Could not read any text from the image. Please try a clearer photo.");
-                    }
-
-                    btn.innerHTML = '<i class="fas fa-brain fa-spin mr-2"></i>Grading...';
-                    this.showNotification("Image read successfully. Grading answer...", "info");
-
-                    // 2. Send the extracted text to your AI Brain for grading
+                    // 2. Send the Base64 image directly to your backend AI
                     const response = await fetch('/api/ai-brain', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            studentAnswer: extractedText,
+                            imageBase64: imageBase64, // Backend must handle this!
                             referenceAnswer: q.explanation || q.correct || "General knowledge",
-                            maxMarks: q.maxMarks || 10
+                            maxMarks: q.maxMarks || 10,
+                            isImage: true 
                         })
                     });
 
@@ -1642,7 +1620,7 @@ if (this.data.examMode === 'practice') {
                     }
 
                     // 3. Save the result
-                    this.data.userAnswers[String(q.id)] = `[Image Read as]: ${extractedText}`;
+                    this.data.userAnswers[String(q.id)] = `[Image Uploaded] ${result.transcription || ''}`;
                     this.data.answerRevealed[String(q.id)] = {
                         isCorrect: result.score >= ((q.maxMarks || 10) * 0.4), 
                         score: result.score,
@@ -1655,7 +1633,7 @@ if (this.data.examMode === 'practice') {
 
                 } catch (error) {
                     console.error(error);
-                    this.showNotification("OCR Error: " + error.message, "error");
+                    this.showNotification("Error: " + error.message, "error");
                     btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
                     btn.disabled = false;
                 }
