@@ -1607,7 +1607,7 @@ discardSavedExam: function () {
             },
 
 
-                              submitTheoryText: async function(qId) {
+                                          submitTheoryText: async function(qId) {
                 const textarea = document.getElementById(`theory-text-input-${qId}`);
                 const answerText = textarea.value.trim();
                 if (!answerText) {
@@ -1649,6 +1649,11 @@ discardSavedExam: function () {
 
                     const result = await response.json();
 
+                    // 🛡️ SAFETY CHECK: If the backend failed, throw an error
+                    if (!response.ok || result.score === undefined || result.error) {
+                        throw new Error(result.error || "AI failed to return a score.");
+                    }
+
                     this.data.answerRevealed[String(q.id)] = {
                         isCorrect: result.score >= ((q.maxMarks || 10) * 0.4), 
                         score: result.score,
@@ -1661,7 +1666,8 @@ discardSavedExam: function () {
 
                 } catch (error) {
                     console.error(error);
-                    this.showNotification("AI is offline. Please try again.", "error");
+                    // Show the exact error so you know what's wrong
+                    this.showNotification("AI Error: " + error.message, "error");
                     btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
                     btn.disabled = false;
                     btn.classList.remove('opacity-75', 'cursor-not-allowed');
@@ -1739,7 +1745,7 @@ if (ungradedTheory.length > 0) {
     // Grade each ungraded theory via the AI brain
     for (const q of ungradedTheory) {
         const userAns = this.data.userAnswers[String(q.id)] || this.data.userAnswers[q.id] || "";
-        try {
+                try {
             const response = await fetch('/api/ai-brain', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1750,6 +1756,12 @@ if (ungradedTheory.length > 0) {
                 })
             });
             const result = await response.json();
+            
+            // 🛡️ SAFETY CHECK
+            if (!response.ok || result.score === undefined || result.error) {
+                throw new Error(result.error || "AI failed to return a score.");
+            }
+
             this.data.answerRevealed[String(q.id)] = {
                 isCorrect: result.score >= ((q.maxMarks || 10) * 0.4),
                 score: result.score,
@@ -1761,7 +1773,7 @@ if (ungradedTheory.length > 0) {
             this.data.answerRevealed[String(q.id)] = {
                 isCorrect: false,
                 score: 0,
-                explanation: "Could not grade this answer automatically."
+                explanation: "Could not grade this answer automatically. Error: " + err.message
             };
         }
     }
