@@ -12,24 +12,35 @@ export default async function handler(req, res) {
             headers: { 'Authorization': `Bearer ${apiKey}` }
         });
         const modelsData = await modelsRes.json();
+        const availableModels = modelsData.data.map(m => m.id);
 
         let chosenModel = null;
         let prompt = '';
         let messages = [];
 
-        // Get a simple array of all available model IDs
-        const availableModels = modelsData.data.map(m => m.id);
-
         if (isImage && imageBase64) {
             // --- VISION MODE (Handwriting) ---
-            // Dynamically find ANY model that supports vision/multimodal
+            // 1. Check for the exact current Groq vision models
             const visionModels = availableModels.filter(id => 
-                id.includes('vision') || id.includes('vlm') || id.includes('multimodal')
+                id === 'qwen/qwen3.8-27b' || 
+                id === 'meta-models/muse-spark-open' ||
+                id.includes('qwen') // Fallback for future Qwen vision versions
             );
             
             if (visionModels.length > 0) {
-                chosenModel = visionModels[0]; // Automatically pick the first available vision model
+                chosenModel = visionModels[0]; 
             } else {
+                // 2. Fallback: If the above exact IDs aren't found, pick any multimodal model
+                // (This ensures the app doesn't break if Groq renames the models again)
+                const fallbackVision = availableModels.find(id => 
+                    id.includes('vision') || id.includes('llava')
+                );
+                if (fallbackVision) {
+                    chosenModel = fallbackVision;
+                }
+            }
+
+            if (!chosenModel) {
                 throw new Error("No vision models are currently available on this Groq account.");
             }
 
@@ -59,12 +70,10 @@ export default async function handler(req, res) {
 
         } else {
             // --- TEXT MODE (Typed answers) ---
-            // Find text models (exclude vision models)
             const textModels = availableModels.filter(id => 
                 !id.includes('vision') && !id.includes('whisper')
             );
 
-            // Optional: Try to prefer the ones you originally had, but fallback to any text model
             const preferredTextModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3-32b'];
             chosenModel = preferredTextModels.find(p => textModels.includes(p)) || textModels[0];
 
