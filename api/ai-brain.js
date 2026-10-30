@@ -1,13 +1,4 @@
 export default async function handler(req, res) {
-    // 🚨 TEMPORARY DEBUG TEST
-    if (req.method === 'GET') {
-        return res.status(200).json({ 
-            hasKey: !!process.env.GROQ_API_KEY,
-            keyStart: process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.substring(0, 4) : "none"
-        });
-    }
-    //...rest of the code
-    
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const apiKey = process.env.GROQ_API_KEY;
@@ -16,9 +7,39 @@ export default async function handler(req, res) {
     try {
         const { studentAnswer, referenceAnswer, maxMarks } = req.body;
 
-        // Use a highly stable, fast model that supports JSON
-        const chosenModel = "llama-3.1-8b-instant";
+        // 🛡️ STEP 1: Ask Groq for the live list of models
+        const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        const modelsData = await modelsRes.json();
 
+        // 🛡️ STEP 2: Pick a live model from the preferred list
+        // These are the current active models on Groq's free tier
+        const preferredModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3-32b'];
+        let chosenModel = null;
+
+        for (const pref of preferredModels) {
+            if (modelsData.data.some(m => m.id === pref)) {
+                chosenModel = pref;
+                break;
+            }
+        }
+
+        // Fallback: If none of the preferred models are there, pick the first available text model
+        if (!chosenModel) {
+            const available = modelsData.data.filter(m => 
+                m.id.includes('llama') || m.id.includes('qwen') || m.id.includes('gpt-oss')
+            );
+            if (available.length > 0) chosenModel = available[0].id;
+        }
+
+        if (!chosenModel) {
+            throw new Error("No compatible text models found on Groq.");
+        }
+
+        console.log(`Using live model: ${chosenModel}`);
+
+        // 🧠 STEP 3: Grade the answer
         const prompt = `
             You are an automated examiner for any academic subject.
             Question Context (Admin's Answer): "${referenceAnswer}"
@@ -44,19 +65,19 @@ export default async function handler(req, res) {
                 model: chosenModel,
                 messages: [{ role: "user", content: prompt }],
                 response_format: { type: "json_object" },
-                temperature: 0.1 // Keep it focused and strict
+                temperature: 0.1
             })
         });
 
         const result = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(result.error?.message || 'Groq API Error');
         }
 
         const content = result.choices[0].message.content;
-        
-        // 🛡️ Safe JSON parsing (in case the AI adds markdown like ```json)
+
+        // 🛡️ Safe JSON parsing
         let aiResponse;
         try {
             aiResponse = JSON.parse(content);
@@ -69,7 +90,6 @@ export default async function handler(req, res) {
             }
         }
 
-        // Ensure score is a number
         const finalScore = Number(aiResponse.score) || 0;
 
         res.status(200).json({
