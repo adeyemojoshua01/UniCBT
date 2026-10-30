@@ -1576,13 +1576,29 @@ discardSavedExam: function () {
                 const q = this.data.questions.find(q => String(q.id) === String(qId));
                 if (!q) return;
 
-                // PRACTICE MODE: Just save a placeholder
-                if (this.data.examMode === 'practice') {
-                    this.data.userAnswers[String(q.id)] = "[Image Uploaded - Pending Grading]";
-                    this.saveExamState();
-                    this.showNotification("Image saved. It will be graded when you submit the exam.", "success");
-                    return;
-                }
+                // PRACTICE MODE: Read the image text and save it, but don't grade it yet
+if (this.data.examMode === 'practice') {
+    const btn = document.getElementById(`submit-image-btn-${qId}`);
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Reading Image...';
+    btn.disabled = true;
+    
+    try {
+        const { data: { text } } = await Tesseract.recognize(file, 'eng');
+        const extractedText = text.trim();
+        
+        // Save the actual text so the AI can grade it later
+        this.data.userAnswers[String(q.id)] = extractedText; 
+        this.saveExamState();
+        
+        this.showNotification("Image read successfully. It will be graded when you submit.", "success");
+        btn.innerHTML = '<i class="fas fa-check mr-2"></i>Text Saved!';
+    } catch (error) {
+        this.showNotification("Could not read image. Try a clearer photo.", "error");
+        btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
+        btn.disabled = false;
+    }
+    return;
+}
 
                 const btn = document.getElementById(`submit-image-btn-${qId}`);
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Reading Image...';
