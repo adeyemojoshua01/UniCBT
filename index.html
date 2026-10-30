@@ -1568,7 +1568,7 @@ discardSavedExam: function () {
             },
             
 
-                      submitTheoryImage: async function(qId) {
+                                  submitTheoryImage: async function(qId) {
                 const fileInput = document.getElementById(`theory-image-input-${qId}`);
                 const file = fileInput.files[0];
                 if (!file) return;
@@ -1579,34 +1579,41 @@ discardSavedExam: function () {
                 const btn = document.getElementById(`submit-image-btn-${qId}`);
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Image...';
                 btn.disabled = true;
-                
-                // If it's practice mode, just let them know it will be graded later
-                if (this.data.examMode === 'practice') {
-                    this.showNotification("Image saved. It will be graded when you submit the exam.", "success");
-                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>Image Saved';
-                    // Note: to actually grade this in practice mode later, you'd need to store the Base64 string. 
-                    // For now, we skip the local OCR entirely.
-                    return; 
-                }
 
-                // STUDY MODE: Send image to Vision AI
-                this.showNotification("AI is reading the handwriting from your image...", "info");
-
+                // 1. Convert image to Base64 so we can save it or send it
+                let imageBase64 = null;
                 try {
-                    // 1. Convert image to Base64 so it can be sent to the server
                     const reader = new FileReader();
-                    const imageBase64 = await new Promise((resolve, reject) => {
+                    imageBase64 = await new Promise((resolve, reject) => {
                         reader.onload = () => resolve(reader.result);
                         reader.onerror = error => reject(error);
                         reader.readAsDataURL(file);
                     });
+                } catch (err) {
+                    this.showNotification("Error reading image file.", "error");
+                    btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
+                    btn.disabled = false;
+                    return;
+                }
+                
+                // 2. PRACTICE MODE: Save the actual Base64 string so we can grade it on submit
+                if (this.data.examMode === 'practice') {
+                    this.data.userAnswers[String(q.id)] = imageBase64; // Save the image!
+                    this.saveExamState();
+                    this.showNotification("Image saved. It will be graded when you submit the exam.", "success");
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>Image Saved';
+                    return; 
+                }
 
-                    // 2. Send the Base64 image directly to your backend AI
+                // 3. STUDY MODE: Send to AI immediately
+                this.showNotification("AI is reading the handwriting from your image...", "info");
+
+                try {
                     const response = await fetch('/api/ai-brain', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            imageBase64: imageBase64, // Backend must handle this!
+                            imageBase64: imageBase64,
                             referenceAnswer: q.explanation || q.correct || "General knowledge",
                             maxMarks: q.maxMarks || 10,
                             isImage: true 
@@ -1619,12 +1626,11 @@ discardSavedExam: function () {
                         throw new Error(result.error || "AI failed to grade.");
                     }
 
-                    // 3. Save the result
-                    this.data.userAnswers[String(q.id)] = `[Image Uploaded] ${result.transcription || ''}`;
+                    this.data.userAnswers[String(q.id)] = imageBase64; 
                     this.data.answerRevealed[String(q.id)] = {
                         isCorrect: result.score >= ((q.maxMarks || 10) * 0.4), 
                         score: result.score,
-                        explanation: `Model Answer:\n\n"${q.explanation}"\n\nAI Feedback: ${result.reason}`
+                        explanation: `Model Answer:\n\n"${q.explanation}"\n\nAI Feedback: ${result.reason}\n\nAI Transcription: "${result.transcription || 'N/A'}"`
                     };
                     
                     this.saveExamState();
@@ -1801,15 +1807,26 @@ if (ungradedTheory.length > 0) {
     // Grade each ungraded theory via the AI brain
     for (const q of ungradedTheory) {
         const userAns = this.data.userAnswers[String(q.id)] || this.data.userAnswers[q.id] || "";
-                try {
+        const isImage = String(userAns).startsWith('data:image');
+        
+        try {
+            // Build the payload based on whether it's text or an image
+            const bodyPayload = {
+                referenceAnswer: q.explanation || q.correct || "General knowledge",
+                maxMarks: q.maxMarks || 10
+            };
+
+            if (isImage) {
+                bodyPayload.imageBase64 = userAns;
+                bodyPayload.isImage = true;
+            } else {
+                bodyPayload.studentAnswer = userAns;
+            }
+
             const response = await fetch('/api/ai-brain', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    studentAnswer: userAns,
-                    referenceAnswer: q.explanation || q.correct || "General knowledge",
-                    maxMarks: q.maxMarks || 10
-                })
+                body: JSON.stringify(bodyPayload)
             });
             const result = await response.json();
             
