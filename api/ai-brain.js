@@ -5,7 +5,6 @@ export default async function handler(req, res) {
     if (!apiKey) return res.status(500).json({ error: 'Groq API key missing in Vercel' });
 
     try {
-        // Accept both text and image inputs
         const { studentAnswer, referenceAnswer, maxMarks, imageBase64, isImage } = req.body;
 
         // 🛡️ STEP 1: Ask Groq for the live list of models
@@ -18,27 +17,21 @@ export default async function handler(req, res) {
         let prompt = '';
         let messages = [];
 
+        // Get a simple array of all available model IDs
+        const availableModels = modelsData.data.map(m => m.id);
+
         if (isImage && imageBase64) {
             // --- VISION MODE (Handwriting) ---
-            const preferredVisionModels = [
-                'llama-3.2-11b-vision-preview', 
-                'llama-3.2-90b-vision-preview'
-            ];
+            // Dynamically find ANY model that supports vision/multimodal
+            const visionModels = availableModels.filter(id => 
+                id.includes('vision') || id.includes('vlm') || id.includes('multimodal')
+            );
             
-            for (const pref of preferredVisionModels) {
-                if (modelsData.data.some(m => m.id === pref)) {
-                    chosenModel = pref;
-                    break;
-                }
+            if (visionModels.length > 0) {
+                chosenModel = visionModels[0]; // Automatically pick the first available vision model
+            } else {
+                throw new Error("No vision models are currently available on this Groq account.");
             }
-
-            if (!chosenModel) {
-                // Fallback to any available vision model
-                const availableVision = modelsData.data.filter(m => m.id.includes('vision'));
-                if (availableVision.length > 0) chosenModel = availableVision[0].id;
-            }
-
-            if (!chosenModel) throw new Error("No vision models found on Groq.");
 
             prompt = `
                 You are an automated examiner for any academic subject.
@@ -49,14 +42,11 @@ export default async function handler(req, res) {
                 Please do two things:
                 1. Transcribe the handwritten text from the image accurately.
                 2. Grade the student's transcribed answer fairly based on the Admin's answer.
-                - If the student's answer is factually wrong or contradicts the Admin, give a low score.
-                - If the student's answer has the exact same meaning but uses different words, give a high score.
 
-                Return ONLY a valid JSON object. Do not add any other text outside the JSON.
+                Return ONLY a valid JSON object.
                 {"score": (number from 0 to ${maxMarks}), "reason": "A brief explanation.", "transcription": "The exact text you read from the image"}
             `;
 
-            // Groq Vision API uses the OpenAI multimodal format
             messages = [
                 {
                     role: "user",
@@ -69,22 +59,14 @@ export default async function handler(req, res) {
 
         } else {
             // --- TEXT MODE (Typed answers) ---
-            const preferredTextModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3-32b'];
-            
-            for (const pref of preferredTextModels) {
-                if (modelsData.data.some(m => m.id === pref)) {
-                    chosenModel = pref;
-                    break;
-                }
-            }
+            // Find text models (exclude vision models)
+            const textModels = availableModels.filter(id => 
+                !id.includes('vision') && !id.includes('whisper')
+            );
 
-            if (!chosenModel) {
-                const availableText = modelsData.data.filter(m => 
-                    (m.id.includes('llama') || m.id.includes('qwen') || m.id.includes('gpt-oss')) && 
-                    !m.id.includes('vision')
-                );
-                if (availableText.length > 0) chosenModel = availableText[0].id;
-            }
+            // Optional: Try to prefer the ones you originally had, but fallback to any text model
+            const preferredTextModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3-32b'];
+            chosenModel = preferredTextModels.find(p => textModels.includes(p)) || textModels[0];
 
             if (!chosenModel) throw new Error("No text models found on Groq.");
 
@@ -95,18 +77,15 @@ export default async function handler(req, res) {
                 Maximum Marks: ${maxMarks}
 
                 Grade the student's answer fairly based on the Admin's answer.
-                - If the student's answer is factually wrong or contradicts the Admin, give a low score.
-                - If the student's answer has the exact same meaning but uses different words, give a high score.
-                - Do not give points for just using similar words if the logic is wrong.
 
-                Return ONLY a valid JSON object. Do not add any other text outside the JSON.
+                Return ONLY a valid JSON object.
                 {"score": (number from 0 to ${maxMarks}), "reason": "A brief explanation."}
             `;
 
             messages = [{ role: "user", content: prompt }];
         }
 
-        console.log(`Using live model: ${chosenModel} | Mode: ${isImage ? 'Vision' : 'Text'}`);
+        console.log(`Using dynamically selected model: ${chosenModel} | Mode: ${isImage ? 'Vision' : 'Text'}`);
 
         // 🧠 STEP 3: Grade the answer
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -131,7 +110,6 @@ export default async function handler(req, res) {
 
         const content = result.choices[0].message.content;
 
-        // 🛡️ Safe JSON parsing
         let aiResponse;
         try {
             aiResponse = JSON.parse(content);
@@ -149,7 +127,7 @@ export default async function handler(req, res) {
         res.status(200).json({
             score: finalScore,
             reason: aiResponse.reason || "Graded by AI.",
-            transcription: aiResponse.transcription || null // Pass transcription back to frontend
+            transcription: aiResponse.transcription || null 
         });
 
     } catch (error) {
