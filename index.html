@@ -1568,7 +1568,7 @@ discardSavedExam: function () {
             },
             
 
-                                  submitTheoryImage: async function(qId) {
+                       submitTheoryImage: async function(qId) {
                 const fileInput = document.getElementById(`theory-image-input-${qId}`);
                 const file = fileInput.files[0];
                 if (!file) return;
@@ -1580,32 +1580,35 @@ discardSavedExam: function () {
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Image...';
                 btn.disabled = true;
 
-                // 1. Convert image to Base64 so we can save it or send it
+                // 1. COMPRESS the image first to prevent "Request Entity Too Large" errors
                 let imageBase64 = null;
                 try {
+                    // Compress to max 1000x1000 pixels and 70% quality (usually ~100KB)
+                    const compressedFile = await compressImage(file, 1000, 1000, 0.7);
+                    
                     const reader = new FileReader();
                     imageBase64 = await new Promise((resolve, reject) => {
                         reader.onload = () => resolve(reader.result);
                         reader.onerror = error => reject(error);
-                        reader.readAsDataURL(file);
+                        reader.readAsDataURL(compressedFile);
                     });
                 } catch (err) {
-                    this.showNotification("Error reading image file.", "error");
+                    this.showNotification("Error processing image file.", "error");
                     btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
                     btn.disabled = false;
                     return;
                 }
                 
-                // 2. PRACTICE MODE: Save the actual Base64 string so we can grade it on submit
+                // 2. PRACTICE MODE: Save the compressed Base64 string
                 if (this.data.examMode === 'practice') {
-                    this.data.userAnswers[String(q.id)] = imageBase64; // Save the image!
+                    this.data.userAnswers[String(q.id)] = imageBase64; 
                     this.saveExamState();
                     this.showNotification("Image saved. It will be graded when you submit the exam.", "success");
                     btn.innerHTML = '<i class="fas fa-check mr-2"></i>Image Saved';
                     return; 
                 }
 
-                // 3. STUDY MODE: Send to AI immediately
+                // 3. STUDY MODE: Send compressed image to AI immediately
                 this.showNotification("AI is reading the handwriting from your image...", "info");
 
                 try {
@@ -1620,7 +1623,14 @@ discardSavedExam: function () {
                         })
                     });
 
-                    const result = await response.json();
+                    // Check if the server returned HTML (like an error page) instead of JSON
+                    const textResponse = await response.text();
+                    let result;
+                    try {
+                        result = JSON.parse(textResponse);
+                    } catch (e) {
+                        throw new Error("Server error. The image might still be too large, or the AI is down.");
+                    }
 
                     if (!response.ok || result.score === undefined) {
                         throw new Error(result.error || "AI failed to grade.");
