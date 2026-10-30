@@ -1,4 +1,13 @@
 export default async function handler(req, res) {
+    // 🚨 TEMPORARY DEBUG TEST
+    if (req.method === 'GET') {
+        return res.status(200).json({ 
+            hasKey: !!process.env.GROQ_API_KEY,
+            keyStart: process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.substring(0, 4) : "none"
+        });
+    }
+    //...rest of the code
+    
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const apiKey = process.env.GROQ_API_KEY;
