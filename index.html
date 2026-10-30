@@ -37,7 +37,8 @@
     
    
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
-
+    <!-- Tesseract.js for Image OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
       
 </head>
 <body class="bg-gray-100 h-screen flex flex-col overflow-hidden text-gray-800" style="overflow: hidden;">
@@ -1223,8 +1224,9 @@ discardSavedExam: function () {
                                 <textarea id="theory-text-input-${q.id}" rows="5" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 text-lg" placeholder="Type your theory answer here..." ${alreadyGraded ? 'disabled' : ''}>${userAnswer || ''}</textarea>
                                 
                                 <button onclick="app.submitTheoryText('${q.id}')" id="submit-text-btn-${q.id}"
-                                        class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition">
-                                    <i class="fas fa-magic mr-2"></i>Submit for AI Grading
+                                        class="mt-2 w-full ${this.data.examMode === 'practice' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white px-6 py-3 rounded-lg font-bold transition">
+                                    <i class="fas ${this.data.examMode === 'practice' ? 'fa-save' : 'fa-magic'} mr-2"></i>
+                                    ${this.data.examMode === 'practice' ? 'Save Answer' : 'Submit for AI Grading'}
                                 </button>
                             </div>
 
@@ -1566,7 +1568,7 @@ discardSavedExam: function () {
             },
             
 
-                                                            submitTheoryImage: async function(qId) {
+               submitTheoryImage: async function(qId) {
                 const fileInput = document.getElementById(`theory-image-input-${qId}`);
                 const file = fileInput.files[0];
                 if (!file) return;
@@ -1574,17 +1576,73 @@ discardSavedExam: function () {
                 const q = this.data.questions.find(q => String(q.id) === String(qId));
                 if (!q) return;
 
-                // For now, image grading is simulated locally since we moved to cloud AI
-                this.data.answerRevealed[String(q.id)] = {
-                    isCorrect: true, 
-                    score: q.maxMarks || 10,
-                    explanation: "Image Uploaded. (Handwriting reading will be available in the next update)."
-                };
-                
-                this.data.userAnswers[String(q.id)] = "[Handwritten Image Uploaded]";
-                this.saveExamState();
-                this.renderQuestion();
-                this.showNotification("Image Uploaded!", "success");
+                // PRACTICE MODE: Just save a placeholder
+                if (this.data.examMode === 'practice') {
+                    this.data.userAnswers[String(q.id)] = "[Image Uploaded - Pending Grading]";
+                    this.saveExamState();
+                    this.showNotification("Image saved. It will be graded when you submit the exam.", "success");
+                    return;
+                }
+
+                const btn = document.getElementById(`submit-image-btn-${qId}`);
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Reading Image...';
+                btn.disabled = true;
+                this.showNotification("AI is reading the handwriting from your image...", "info");
+
+                try {
+                    // 1. Use Tesseract.js to read the text from the image
+                    const { data: { text } } = await Tesseract.recognize(file, 'eng', {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Reading: ${Math.round(m.progress * 100)}%`;
+                            }
+                        }
+                    });
+
+                    const extractedText = text.trim();
+                    
+                    if (!extractedText || extractedText.length < 5) {
+                        throw new Error("Could not read any text from the image. Please try a clearer photo.");
+                    }
+
+                    btn.innerHTML = '<i class="fas fa-brain fa-spin mr-2"></i>Grading...';
+                    this.showNotification("Image read successfully. Grading answer...", "info");
+
+                    // 2. Send the extracted text to your AI Brain for grading
+                    const response = await fetch('/api/ai-brain', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentAnswer: extractedText,
+                            referenceAnswer: q.explanation || q.correct || "General knowledge",
+                            maxMarks: q.maxMarks || 10
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok || result.score === undefined) {
+                        throw new Error(result.error || "AI failed to grade.");
+                    }
+
+                    // 3. Save the result
+                    this.data.userAnswers[String(q.id)] = `[Image Read as]: ${extractedText}`;
+                    this.data.answerRevealed[String(q.id)] = {
+                        isCorrect: result.score >= ((q.maxMarks || 10) * 0.4), 
+                        score: result.score,
+                        explanation: `Model Answer:\n\n"${q.explanation}"\n\nAI Feedback: ${result.reason}`
+                    };
+                    
+                    this.saveExamState();
+                    this.renderQuestion(); 
+                    this.showNotification(`Graded: ${result.score}/${q.maxMarks}`, 'success');
+
+                } catch (error) {
+                    console.error(error);
+                    this.showNotification("OCR Error: " + error.message, "error");
+                    btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
+                    btn.disabled = false;
+                }
             },
 
                         toggleTheoryTab: function(qId, tabName) {
@@ -1607,11 +1665,11 @@ discardSavedExam: function () {
             },
 
 
-                                          submitTheoryText: async function(qId) {
+         submitTheoryText: async function(qId) {
                 const textarea = document.getElementById(`theory-text-input-${qId}`);
                 const answerText = textarea.value.trim();
                 if (!answerText) {
-                    this.showNotification("Please type an answer before submitting.", "warning");
+                    this.showNotification("Please type an answer before saving.", "warning");
                     return;
                 }
 
@@ -1620,17 +1678,23 @@ discardSavedExam: function () {
 
                 this.data.userAnswers[String(q.id)] = answerText; 
 
-                // PRACTICE MODE BYPASS
+                // PRACTICE MODE: Save without grading
                 if (this.data.examMode === 'practice') {
                     this.saveExamState();
-                    this.showNotification("Answer saved. You will see your score after submitting.", "success");
+                    this.showNotification("Answer saved. You can edit and save again.", "success");
+                    
                     const btn = document.getElementById(`submit-text-btn-${qId}`);
-                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>Answer Saved';
-                    btn.disabled = true;
-                    btn.classList.add('opacity-75', 'cursor-not-allowed');
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>Answer Saved!';
+                    
+                    // Reset button after 2 seconds so they know they can save again
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Answer';
+                    }, 2000);
+                    
                     return; 
                 }
 
+                // STUDY MODE: Grade immediately
                 const btn = document.getElementById(`submit-text-btn-${qId}`);
                 btn.innerHTML = '<i class="fas fa-brain fa-spin mr-2"></i>AI is grading...';
                 btn.disabled = true;
@@ -1649,8 +1713,7 @@ discardSavedExam: function () {
 
                     const result = await response.json();
 
-                    // 🛡️ SAFETY CHECK: If the backend failed, throw an error
-                    if (!response.ok || result.score === undefined || result.error) {
+                    if (!response.ok || result.score === undefined) {
                         throw new Error(result.error || "AI failed to return a score.");
                     }
 
@@ -1666,7 +1729,6 @@ discardSavedExam: function () {
 
                 } catch (error) {
                     console.error(error);
-                    // Show the exact error so you know what's wrong
                     this.showNotification("AI Error: " + error.message, "error");
                     btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Submit for AI Grading';
                     btn.disabled = false;
@@ -1709,7 +1771,7 @@ discardSavedExam: function () {
             // SUBMIT TEST
             // ============================================================
 
-                                    submitTestConfirm: function() {
+                                    submitTestConfirm: async function() {
                 const submitBtn = event.target;
                 if (submitBtn) {
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
