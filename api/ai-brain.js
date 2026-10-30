@@ -22,7 +22,6 @@ export default async function handler(req, res) {
                 break;
             }
         }
-        // Fallback: pick any llama/qwen model that exists
         if (!chosenModel) {
             const available = modelsData.data.filter(m => m.id.includes('llama') || m.id.includes('qwen') || m.id.includes('gpt-oss'));
             if (available.length > 0) chosenModel = available[0].id;
@@ -41,7 +40,6 @@ export default async function handler(req, res) {
             Grade the student's answer fairly based on the Admin's answer.
             - If the student's answer is factually wrong or contradicts the Admin, give a low score.
             - If the student's answer has the exact same meaning but uses different words, give a high score.
-            - Do not give points for just using similar words if the logic is wrong.
 
             Return ONLY a valid JSON object:
             {"score": (number from 0 to ${maxMarks}), "reason": "A brief explanation."}
