@@ -1,1152 +1,1159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>eduCBT — Question Builder</title>
-
-  <!-- Tailwind (browser build) with inline dark theme config -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <style type="text/tailwindcss">
-    @theme {
-      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --color-ink-950: #070a12;
-      --color-ink-900: #0b1020;
-      --color-ink-850: #0f1528;
-      --color-ink-800: #131b32;
-      --color-ink-700: #1b2540;
-      --color-ink-600: #263256;
-      --color-ink-500: #36446f;
-      --color-brand-300: #5eead4;
-      --color-brand-400: #2dd4bf;
-      --color-brand-500: #14b8a6;
-      --color-brand-600: #0d9488;
-      --color-brand-700: #0f766e;
-    }
-  </style>
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-
-  <!-- MathJax config (supports $...$ and $$...$$ as well as \( \) and \[ \]) -->
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        packages: { '[+]': ['mhchem', 'ams'] }
-      },
-      loader: { load: ['[tex]/mhchem'] },
-      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
-      startup: { typeset: false }
-    };
-  </script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-
-  <style>
-    html, body { height: 100%; margin: 0; }
-    body { background: #070a12; color: #e2e8f0; overflow: hidden; font-family: var(--font-sans, system-ui, sans-serif); }
-    button:not(:disabled) { cursor: pointer; }
-    * { scrollbar-width: thin; scrollbar-color: #36446f transparent; }
-
-    .fld { width: 100%; background: #0b1020; border: 1px solid #263256; border-radius: .6rem; padding: .55rem .8rem; color: #e2e8f0; font-size: .9rem; outline: none; transition: border-color .15s, box-shadow .15s; }
-    .fld:focus { border-color: #2dd4bf; box-shadow: 0 0 0 3px rgba(45, 212, 191, .2); }
-    textarea.fld { resize: vertical; min-height: 90px; font-family: inherit; line-height: 1.5; }
-    .label { display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b98b8; margin-bottom: .35rem; }
-
-    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border-radius: .6rem; font-size: .8rem; font-weight: 600; border: 1px solid #263256; background: #131b32; color: #cbd5e1; transition: background .15s, border-color .15s; white-space: nowrap; }
-    .btn:hover:not(:disabled) { background: #1b2540; border-color: #36446f; }
-    .btn:disabled { opacity: .4; cursor: not-allowed; }
-    .btn-primary { background: #0d9488; border-color: #14b8a6; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #14b8a6; border-color: #2dd4bf; }
-    .btn-danger { color: #fda4af; border-color: rgba(244, 63, 94, .4); }
-    .btn-danger:hover:not(:disabled) { background: rgba(244, 63, 94, .15); border-color: rgba(244, 63, 94, .6); }
-    .btn-amber { color: #fcd34d; border-color: rgba(245, 158, 11, .4); }
-    .btn-amber:hover:not(:disabled) { background: rgba(245, 158, 11, .14); }
-    .btn-active { background: rgba(245, 158, 11, .2); border-color: #f59e0b; color: #fcd34d; }
-
-    .preview-box { background: #0b1020; border: 1px dashed #263256; border-radius: .6rem; padding: .7rem .9rem; min-height: 2.6rem; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92rem; color: #cbd5e1; }
-    .preview-box:empty::before { content: 'Live preview appears here…'; color: #4b5873; }
-
-    .tree-row { display: flex; align-items: center; gap: .4rem; padding: .35rem .5rem; border-radius: .5rem; cursor: pointer; font-size: .84rem; color: #cbd5e1; min-width: 0; }
-    .tree-row:hover { background: #131b32; }
-    .tree-row.active { background: rgba(20, 184, 166, .16); color: #99f6e4; }
-    .tree-row .acts { opacity: 0; margin-left: auto; display: flex; gap: .2rem; }
-    .tree-row:hover .acts, .tree-row.active .acts { opacity: 1; }
-    .tree-mini { width: 1.5rem; height: 1.5rem; border-radius: .35rem; display: inline-flex; align-items: center; justify-content: center; color: #8b98b8; font-size: .7rem; }
-    .tree-mini:hover { background: #263256; color: #5eead4; }
-    .dot { width: .5rem; height: .5rem; border-radius: 9999px; flex-shrink: 0; }
-    .dot-MCQ { background: #2dd4bf; } .dot-Fill { background: #fbbf24; } .dot-Theory { background: #a78bfa; }
-
-    .seg { display: inline-flex; border: 1px solid #263256; border-radius: .6rem; overflow: hidden; }
-    .seg button { padding: .4rem .9rem; font-size: .8rem; font-weight: 700; background: #0b1020; color: #8b98b8; }
-    .seg button.on { background: #0d9488; color: #fff; }
-
-    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(3, 5, 12, .78); z-index: 70; align-items: center; justify-content: center; padding: 1rem; }
-    .modal-bg.open { display: flex; }
-    .modal-card { background: #0f1528; border: 1px solid #263256; border-radius: 1rem; box-shadow: 0 30px 70px rgba(0, 0, 0, .6); width: 100%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; }
-
-    #sidebar { width: 18rem; flex-shrink: 0; background: #0b1020; border-right: 1px solid #263256; display: flex; flex-direction: column; min-height: 0; }
-    #sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .6); z-index: 35; }
-    @media (max-width: 767px) {
-      #sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; transform: translateX(-100%); transition: transform .25s ease; }
-      #sidebar.open { transform: translateX(0); }
-      #sidebar-backdrop.open { display: block; }
-    }
-    @media (min-width: 768px) { #btn-menu { display: none !important; } }
-
-    .drop-active { border-color: #2dd4bf !important; background: rgba(20, 184, 166, .08) !important; }
-
-    .pv-card { background: #0f1528; border: 1px solid #263256; border-radius: .9rem; padding: 1rem; }
-    .pv-opt { border: 2px solid #263256; border-radius: .6rem; padding: .55rem .75rem; display: flex; gap: .6rem; align-items: flex-start; overflow-wrap: anywhere; }
-    .pv-card.revealed .pv-opt[data-correct="1"] { border-color: #10b981; background: rgba(16, 185, 129, .14); }
-    .pv-answer { filter: blur(7px); user-select: none; transition: filter .2s; }
-    .pv-card.revealed .pv-answer { filter: none; user-select: auto; }
-    .pv-exp { display: none; }
-    .pv-card.revealed .pv-exp { display: block; }
-
-    #toasts { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: .5rem; align-items: center; pointer-events: none; }
-    .toast { background: #1b2540; border: 1px solid #36446f; color: #e2e8f0; padding: .55rem 1rem; border-radius: .6rem; font-size: .85rem; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
-    .toast.err { border-color: #f43f5e; color: #fda4af; }
-    .toast.ok { border-color: #14b8a6; color: #99f6e4; }
-
-    mjx-container { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
-    mjx-container[display="true"] { display: block; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eduCBT — Question Builder</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script>window.tailwind = window.tailwind || {}; window.tailwind.config = { theme: { extend: { colors: { brand: '#6366f1', amber: '#f59e0b', ink: '#0B1020' } } } };</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], packages: { '[+]': ['mhchem', 'ams'] } },
+  options: { ignoreHtmlClass: 'no-mathjax' },
+  startup: { typeset: false }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  html { color-scheme: dark; }
+  body { background: radial-gradient(1000px 520px at 10% -5%, rgba(99,102,241,.15), transparent 60%), radial-gradient(900px 500px at 95% 0%, rgba(245,158,11,.08), transparent 60%), #070A12; }
+  * { scrollbar-width: thin; scrollbar-color: #25304d transparent; }
+  *::-webkit-scrollbar { width: 9px; height: 9px; } *::-webkit-scrollbar-thumb { background:#25304d; border-radius:8px; }
+  .panel { background: #0B1020; border: 1px solid #1e2740; }
+  .field { background:#101830; border:1px solid #26314f; color:#E7EEF6; border-radius:10px; width:100%; padding:9px 12px; font-size:13px; }
+  .field:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
+  .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#8598AC; display:block; margin-bottom:5px; }
+  .btn { display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; border:1px solid transparent; transition:.15s; white-space:nowrap; }
+  .btn-indigo { background:#4f46e5; color:#fff; } .btn-indigo:hover { background:#4338ca; }
+  .btn-amber { background:#f59e0b; color:#1f1300; } .btn-amber:hover { background:#fbbf24; }
+  .btn-ghost { background:#111a2e; color:#B7C6D4; border-color:#26314f; } .btn-ghost:hover { background:#17223a; color:#fff; }
+  .btn-danger { background:rgba(225,29,72,.14); color:#fb7185; border-color:rgba(225,29,72,.35); } .btn-danger:hover { background:rgba(225,29,72,.24); }
+  .chip { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.04em; }
+  .tree-item { display:flex; align-items:center; gap:7px; width:100%; text-align:left; padding:7px 9px; border-radius:8px; font-size:12.5px; color:#B7C6D4; cursor:pointer; transition:.12s; }
+  .tree-item:hover { background:#111a2e; color:#fff; }
+  .tree-item.active { background:rgba(99,102,241,.18); color:#c7d2fe; box-shadow:inset 2px 0 0 #6366f1; }
+  .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex:none; }
+  .modal-shell { position:fixed; inset:0; z-index:80; background:rgba(2,6,15,.8); backdrop-filter:blur(4px); display:flex; align-items:flex-start; justify-content:center; padding:22px 14px; overflow-y:auto; }
+  .modal-card { width:100%; max-width:720px; background:#0B1020; border:1px solid #26314f; border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.6); overflow:hidden; margin:auto; }
+  .hidden { display:none !important; }
+  .fmt { white-space:pre-wrap; word-break:break-word; }
+  .qcard { background:#0B1020; border:1px solid #1e2740; border-radius:14px; }
+  mjx-container { max-width:100% !important; overflow-x:auto; overflow-y:hidden; }
+  mjx-container[display="true"] { display:block !important; width:100% !important; max-width:100% !important; overflow-x:auto !important; }
+  #builder-root, .min-w-0 { min-width:0; }
+  #sidebar { transition: transform .22s ease; }
+  @media (max-width: 767px) {
+    #sidebar { position:fixed; top:62px; bottom:0; left:0; z-index:70; width:280px; transform:translateX(-102%); }
+    #sidebar.open { transform:translateX(0); }
+  }
+  .saved-flash { animation: savedFlash .8s ease; }
+  @keyframes savedFlash { 0% { background:rgba(16,185,129,.35); } 100% { background:rgba(16,185,129,.12); } }
+</style>
 </head>
+<body class="text-slate-100">
+<div id="builder-root" class="min-h-screen"></div>
 
-<body class="flex flex-col">
-
-  <!-- ============================ TOP BAR ============================ -->
-  <header class="h-14 shrink-0 flex items-center gap-2 px-3 border-b border-ink-600 bg-ink-900">
-    <button id="btn-menu" class="btn" onclick="openSidebar()" title="Open tree"><i class="fas fa-bars"></i></button>
-    <div class="flex items-center gap-2 font-bold whitespace-nowrap">
-      <span class="w-8 h-8 rounded-lg bg-brand-600/25 text-brand-300 flex items-center justify-center"><i class="fas fa-layer-group"></i></span>
-      <span class="hidden sm:inline">Question Builder</span>
+<!-- ============ IMPORT MODAL ============ -->
+<div id="import-modal" class="modal-shell hidden">
+  <div class="modal-card">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Import question bank</h2>
+      <button onclick="B.closeModal('import-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
     </div>
-    <input id="bank-name" class="fld !w-40 md:!w-56 ml-1" placeholder="Bank name" oninput="edit(function(){appData.bankName=$('bank-name').value})" />
-    <div class="ml-auto flex items-center gap-1.5">
-      <span id="saved-indicator" class="text-xs text-brand-300 opacity-0 transition-opacity whitespace-nowrap"><i class="fas fa-check-circle"></i> Saved</span>
-      <button id="btn-undo" class="btn" onclick="undo()" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
-      <button id="btn-redo" class="btn" onclick="redo()" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
-      <button id="btn-preview" class="btn" onclick="togglePreview()" title="Toggle preview mode"><i class="fas fa-eye"></i><span class="hidden lg:inline">Preview</span></button>
-      <button class="btn" onclick="openImportModal()"><i class="fas fa-file-import"></i><span class="hidden lg:inline">Import</span></button>
-      <button class="btn" onclick="openExportModal()"><i class="fas fa-file-export"></i><span class="hidden lg:inline">Export</span></button>
-      <button class="btn btn-primary" onclick="openPublishModal()"><i class="fab fa-github"></i><span class="hidden lg:inline">Publish</span></button>
-    </div>
-  </header>
-
-  <!-- ============================ EMPTY VIEW ============================ -->
-  <div id="empty-view" class="flex-1 overflow-auto items-center justify-center p-4" style="display:flex">
-    <div class="max-w-xl w-full text-center">
-      <div class="w-20 h-20 rounded-2xl bg-brand-600/20 text-brand-300 flex items-center justify-center text-4xl mx-auto mb-5"><i class="fas fa-layer-group"></i></div>
-      <h1 class="text-2xl font-extrabold mb-1">Build a question bank</h1>
-      <p class="text-slate-400 mb-6 text-sm">Import an existing <code class="text-brand-300">*-bank.js</code> file, start from scratch, or explore a sample.</p>
-
-      <div id="drop-zone" class="border-2 border-dashed border-ink-500 rounded-2xl p-8 mb-5 bg-ink-900 transition">
-        <i class="fas fa-cloud-upload-alt text-3xl text-slate-500 mb-2"></i>
-        <p class="font-semibold mb-1">Drag &amp; drop a .js bank file here</p>
-        <p class="text-xs text-slate-500 mb-4">or</p>
-        <label class="btn btn-primary cursor-pointer"><i class="fas fa-folder-open"></i> Choose file
-          <input id="file-input" type="file" accept=".js,.txt" class="hidden" />
-        </label>
+    <div class="p-5 space-y-4">
+      <div id="import-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors">
+        <i class="fas fa-cloud-arrow-up text-2xl text-indigo-400"></i>
+        <p class="mt-2 text-sm font-semibold text-slate-200">Drop a <span class="text-amber-400">.js</span> bank file here</p>
+        <p class="text-[11px] text-slate-500 mt-0.5">or click to pick a file</p>
+        <input type="file" id="import-file" accept=".js,.txt" class="hidden" onchange="B.readImportFile(this)">
       </div>
-
-      <div class="flex flex-wrap gap-2 justify-center">
-        <button class="btn" onclick="createBlank()"><i class="fas fa-plus"></i> Create Blank</button>
-        <button class="btn" onclick="loadSample()"><i class="fas fa-flask"></i> Load Sample</button>
-        <button class="btn" onclick="openImportModal()"><i class="fas fa-paste"></i> Paste / GitHub</button>
+      <div>
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <label class="lbl mb-0">Or paste bank code / DSL</label>
+          <button onclick="B.importFromGitHub()" class="btn btn-ghost !py-1.5 !text-[11px]"><i class="fab fa-github"></i> Import from my GitHub Repo</button>
+        </div>
+        <textarea id="import-text" rows="8" class="field font-mono !text-[11.5px]" placeholder="window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];&#10;window.CBT_SUBJECT_BANKS.push(`Subject: Physics&#10;Topic: Mechanics&#10;...`);"></textarea>
       </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="B.previewImport()" class="btn btn-indigo"><i class="fas fa-magnifying-glass"></i> Parse &amp; Preview</button>
+        <span class="text-[11px] text-slate-500">Nothing is applied until you choose Replace or Merge.</span>
+      </div>
+      <div id="import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
+        <div id="import-summary" class="text-sm font-semibold text-slate-200"></div>
+        <div id="import-warnings" class="mt-2 text-[11.5px] text-amber-400 space-y-1"></div>
+        <div class="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-[#1e2740]">
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-300"><input type="radio" name="import-mode" value="replace" checked class="accent-indigo-500"> Replace current bank</label>
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-300"><input type="radio" name="import-mode" value="merge" class="accent-indigo-500"> Merge (dedupe by name)</label>
+          <button onclick="B.applyImport()" class="btn btn-amber ml-auto"><i class="fas fa-check"></i> Apply import</button>
+        </div>
+      </div>
+      <p id="import-status" class="text-[11.5px] text-slate-400"></p>
     </div>
   </div>
+</div>
 
-  <!-- ============================ EDITOR VIEW ============================ -->
-  <div id="editor-view" class="flex-1 min-h-0" style="display:none">
-    <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
-    <aside id="sidebar">
-      <div class="p-3 border-b border-ink-600 flex items-center gap-2">
-        <div class="relative flex-1">
-          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input id="search" class="fld !pl-8" placeholder="Search…" oninput="searchTerm=this.value; renderSidebar()" />
-        </div>
-        <button class="btn md:hidden" onclick="closeSidebar()"><i class="fas fa-times"></i></button>
+<!-- ============ EXPORT MODAL ============ -->
+<div id="export-modal" class="modal-shell hidden">
+  <div class="modal-card !max-w-3xl">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fas fa-file-export text-amber-400 mr-2"></i>Export question bank</h2>
+      <button onclick="B.closeModal('export-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+        <div><label class="lbl">Filename</label><input id="export-filename" class="field font-mono" onchange="B.updateExportPreview()"></div>
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-300 pb-2"><input type="checkbox" id="export-shuffle" class="accent-amber-500" onchange="B.updateExportPreview()"> Shuffle options</label>
       </div>
-      <div id="tree" class="flex-1 overflow-y-auto p-2"></div>
-      <div class="p-3 border-t border-ink-600">
-        <button class="btn btn-primary w-full justify-center" onclick="addSubject()"><i class="fas fa-plus"></i> New Subject</button>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="B.copyExport()" class="btn btn-ghost"><i class="fas fa-copy"></i> Copy to clipboard</button>
+        <button onclick="B.downloadExport()" class="btn btn-amber"><i class="fas fa-download"></i> Download .js</button>
+        <button onclick="B.openPublish()" class="btn btn-indigo ml-auto"><i class="fab fa-github"></i> Publish to GitHub</button>
       </div>
-    </aside>
-
-    <main class="flex-1 min-w-0 flex flex-col">
-      <div id="breadcrumb" class="shrink-0 h-11 px-4 flex items-center gap-2 border-b border-ink-600 bg-ink-900 text-sm overflow-x-auto whitespace-nowrap"></div>
-      <div id="editor-pane" class="flex-1 overflow-y-auto"></div>
-    </main>
-  </div>
-
-  <!-- ============================ IMPORT MODAL ============================ -->
-  <div id="import-modal" class="modal-bg" onclick="if(event.target===this)closeModal('import-modal')">
-    <div class="modal-card max-w-2xl">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-600">
-        <h3 class="font-bold"><i class="fas fa-file-import text-brand-300 mr-2"></i>Import question bank</h3>
-        <button class="btn" onclick="closeModal('import-modal')"><i class="fas fa-times"></i></button>
+      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+        <span id="export-summary"></span><span id="export-size"></span>
       </div>
-      <div class="p-5 overflow-y-auto space-y-4">
-        <div id="import-drop" class="border-2 border-dashed border-ink-500 rounded-xl p-4 text-center text-sm text-slate-400">
-          Drop a <b>.js</b> file here or
-          <label class="text-brand-300 underline cursor-pointer">browse<input id="import-file" type="file" accept=".js,.txt" class="hidden" /></label>
-        </div>
-        <div>
-          <label class="label">…or paste bank code / raw text</label>
-          <textarea id="import-text" class="fld !font-mono !text-xs" rows="8" placeholder="window.CBT_SUBJECT_BANKS.push(`Subject: Physics ...`);"></textarea>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button class="btn" onclick="importFromGitHub()"><i class="fab fa-github"></i> Import from my GitHub Repo</button>
-          <button class="btn btn-primary" onclick="runParse()"><i class="fas fa-cogs"></i> Parse</button>
-        </div>
-        <div id="import-result"></div>
-        <div id="import-options" class="hidden">
-          <label class="label">When importing</label>
-          <div class="flex gap-5 text-sm">
-            <label class="flex items-center gap-2"><input type="radio" name="import-mode" value="replace" class="accent-teal-400" /> Replace current bank</label>
-            <label class="flex items-center gap-2"><input type="radio" name="import-mode" value="merge" class="accent-teal-400" checked /> Merge (dedupe by name)</label>
-          </div>
-        </div>
-      </div>
-      <div class="px-5 py-3 border-t border-ink-600 flex justify-end gap-2">
-        <button class="btn" onclick="closeModal('import-modal')">Cancel</button>
-        <button id="import-confirm" class="btn btn-primary" onclick="confirmImport()" disabled><i class="fas fa-check"></i> Import</button>
-      </div>
+      <pre id="export-preview" class="bg-[#05080f] border border-[#1e2740] rounded-xl p-3.5 text-[11px] leading-relaxed text-emerald-300 overflow-auto max-h-72 font-mono"></pre>
     </div>
   </div>
+</div>
 
-  <!-- ============================ EXPORT MODAL ============================ -->
-  <div id="export-modal" class="modal-bg" onclick="if(event.target===this)closeModal('export-modal')">
-    <div class="modal-card max-w-3xl">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-600">
-        <h3 class="font-bold"><i class="fas fa-file-export text-brand-300 mr-2"></i>Export bank as .js</h3>
-        <button class="btn" onclick="closeModal('export-modal')"><i class="fas fa-times"></i></button>
+<!-- ============ PUBLISH MODAL ============ -->
+<div id="publish-modal" class="modal-shell hidden">
+  <div class="modal-card !max-w-lg">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fab fa-github text-indigo-400 mr-2"></i>Publish to GitHub</h2>
+      <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-3">
+      <p class="text-[11.5px] text-slate-400">Commits <code class="text-amber-300">question-banks/&lt;filename&gt;</code> to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>. The endpoint ignores the token field and uses the deployment&rsquo;s own <code>GITHUB_TOKEN</code>; credentials are saved locally for convenience.</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div><label class="lbl">GitHub owner</label><input id="pub-owner" class="field" placeholder="octocat"></div>
+        <div><label class="lbl">Repository</label><input id="pub-repo" class="field" placeholder="my-question-banks"></div>
       </div>
-      <div class="p-5 overflow-y-auto space-y-4 min-h-0">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-          <div><label class="label">Filename</label><input id="export-filename" class="fld" /></div>
-          <label class="flex items-center gap-2 text-sm pb-2"><input id="export-shuffle" type="checkbox" class="accent-teal-400" onchange="refreshExport()" /> Shuffle options</label>
-        </div>
-        <div class="flex items-center justify-between text-xs text-slate-400">
-          <span id="export-summary"></span><span id="export-size"></span>
-        </div>
-        <pre id="export-preview" class="bg-ink-950 border border-ink-600 rounded-lg p-3 text-xs font-mono text-slate-300 overflow-auto max-h-80 whitespace-pre-wrap break-words"></pre>
+      <div><label class="lbl">Fine-grained token <span class="text-slate-600 normal-case tracking-normal">(stored locally)</span></label><input id="pub-token" type="password" class="field" placeholder="github_pat_…"></div>
+      <div><label class="lbl">Filename</label><input id="pub-filename" class="field font-mono"></div>
+      <div class="flex items-center gap-2">
+        <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber flex-grow justify-center"><i class="fas fa-cloud-arrow-up"></i> Publish bank</button>
       </div>
-      <div class="px-5 py-3 border-t border-ink-600 flex justify-end gap-2">
-        <button class="btn" onclick="copyExport()"><i class="fas fa-copy"></i> Copy</button>
-        <button class="btn btn-primary" onclick="downloadExport()"><i class="fas fa-download"></i> Download .js</button>
-      </div>
+      <p id="pub-status" class="text-[11.5px] text-slate-400"></p>
+      <div id="pub-error" class="hidden rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11.5px] p-2.5"></div>
     </div>
   </div>
+</div>
 
-  <!-- ============================ PUBLISH MODAL ============================ -->
-  <div id="publish-modal" class="modal-bg" onclick="if(event.target===this)closeModal('publish-modal')">
-    <form class="modal-card max-w-md" onsubmit="doPublish(event)">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-600">
-        <h3 class="font-bold"><i class="fab fa-github text-brand-300 mr-2"></i>Publish to GitHub</h3>
-        <button type="button" class="btn" onclick="closeModal('publish-modal')"><i class="fas fa-times"></i></button>
-      </div>
-      <div class="p-5 overflow-y-auto space-y-3">
-        <div><label class="label">GitHub owner</label><input id="pub-owner" class="fld" required placeholder="your-username" /></div>
-        <div><label class="label">Repository name</label><input id="pub-repo" class="fld" required placeholder="educbt" /></div>
-        <div><label class="label">Token (saved locally)</label><input id="pub-token" type="password" class="fld" placeholder="github_pat_…" autocomplete="off" /></div>
-        <div><label class="label">Filename</label><input id="pub-filename" class="fld" required placeholder="physics-bank.js" /></div>
-        <p class="text-xs text-slate-500">The server commits to <code class="text-brand-300">question-banks/&lt;filename&gt;</code> on branch <code class="text-brand-300">main</code> using its own <code>GITHUB_TOKEN</code>.</p>
-        <div id="pub-status" class="text-sm"></div>
-      </div>
-      <div class="px-5 py-3 border-t border-ink-600 flex justify-end gap-2">
-        <button type="button" class="btn" onclick="closeModal('publish-modal')">Close</button>
-        <button id="pub-submit" type="submit" class="btn btn-primary"><i class="fas fa-cloud-upload-alt"></i> Publish</button>
-      </div>
-    </form>
-  </div>
-
-  <div id="toasts"></div>
+<div id="backdrop" class="hidden fixed inset-0 top-[62px] z-[65] bg-black/60 md:hidden" onclick="B.toggleSidebar(false)"></div>
+<div id="toast-layer" class="fixed top-20 right-4 z-[90] flex flex-col gap-2 items-end pointer-events-none"></div>
 
 <script>
-/* ==========================================================================
-   QUESTION BUILDER — all JS is inline (self-contained tool)
-   ========================================================================== */
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const uid = (p) => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const LETTERS = ['A', 'B', 'C', 'D'];
-const STORE_KEY = 'cbt_bank_builder_state';
+(function () {
+  'use strict';
+  var KEY = 'cbt_bank_builder_state';
+  var uid = function (p) { return (p || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
+  var esc = function (s) { return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
 
-/* ----------------------------- state ----------------------------- */
-let appData = { bankName: 'Untitled Bank', subjects: [] };
-let sel = null;                 // { s, t, q }  (ids)
-let previewMode = false;
-let undoStack = [], redoStack = [];
-let expanded = new Set();
-let searchTerm = '';
-let inBurst = false, burstTimer = null, saveTimer = null, savedFlashTimer = null;
-let pendingImport = null;
-let popping = false;
-let lastExportCode = '';
+  var appData = { bankName: 'Untitled Bank', subjects: [] };
+  var selected = { subjectId: null, topicId: null, questionId: null };
+  var previewMode = false;
+  var previewRevealed = {};
+  var searchQuery = '';
+  var undoStack = [], redoStack = [];
+  var lastUndoPush = 0;
+  var pendingImport = null;
+  var saveTimer = null;
+  var exportCode = '';
 
-/* ----------------------------- model ----------------------------- */
-function normSubject(s) {
-  return { id: s.id || uid('s'), name: String(s.name || 'Untitled Subject'), duration: parseInt(s.duration, 10) || 30, topics: (s.topics || []).map(normTopic) };
-}
-function normTopic(t) {
-  return { id: t.id || uid('t'), name: String(t.name || 'Untitled Topic'), questions: (t.questions || []).map(normQuestion) };
-}
-function normQuestion(q) {
-  const tl = String(q.type || 'MCQ').toLowerCase();
-  const type = (tl === 'objective' || tl === 'mcq') ? 'MCQ' : tl === 'fill' ? 'Fill' : tl === 'theory' ? 'Theory' : 'MCQ';
-  const opts = ['', '', '', ''];
-  if (Array.isArray(q.options)) q.options.slice(0, 4).forEach((o, i) => { opts[i] = String(o == null ? '' : o); });
-  else if (q.options && typeof q.options === 'object') LETTERS.forEach((L, i) => { if (q.options[L] != null) opts[i] = String(q.options[L]); });
-  let correct = q.correct == null ? '' : String(q.correct);
-  if (type === 'MCQ') { correct = correct.trim().toUpperCase().charAt(0); if (LETTERS.indexOf(correct) < 0) correct = 'A'; }
-  return {
-    id: q.id || uid('q'), type: type, subTopic: String(q.subTopic || 'General'),
-    question: String(q.question != null ? q.question : (q.text != null ? q.text : '')),
-    options: opts, correct: correct, explanation: String(q.explanation || ''), maxMarks: parseInt(q.maxMarks, 10) || 10
-  };
-}
-function normalizeBank(b) {
-  return { bankName: String(b.bankName || 'Untitled Bank'), subjects: (b.subjects || []).map(normSubject) };
-}
-const newQuestion = (type, subTopic) => normQuestion({ type: type || 'MCQ', subTopic: subTopic || 'General', correct: (type || 'MCQ') === 'MCQ' ? 'A' : '' });
-const newTopic = (name) => ({ id: uid('t'), name: name || 'New Topic', questions: [] });
-const newSubject = (name) => ({ id: uid('s'), name: name || 'New Subject', duration: 30, topics: [] });
+  function newQuestion(type) {
+    type = type || 'MCQ';
+    return {
+      id: uid('q'), type: type, subTopic: 'General', question: '',
+      options: ['', '', '', ''], correct: type === 'MCQ' ? 'A' : '',
+      explanation: '', maxMarks: 10
+    };
+  }
+  function newTopic(name) { return { id: uid('t'), name: name || 'New Topic', questions: [] }; }
+  function newSubject(name) {
+    var t = newTopic('General');
+    var q = newQuestion('MCQ');
+    t.questions.push(q);
+    return { id: uid('s'), name: name || 'New Subject', duration: 30, topics: [t] };
+  }
 
-function findSubject(id) { return appData.subjects.find((s) => s.id === id); }
-function findTopic(sId, tId) { const s = findSubject(sId); return s ? s.topics.find((t) => t.id === tId) : undefined; }
-function findQuestion(sId, tId, qId) { const t = findTopic(sId, tId); return t ? t.questions.find((q) => q.id === qId) : undefined; }
-function curQ() { return sel && sel.q ? findQuestion(sel.s, sel.t, sel.q) : undefined; }
-function pathExists(p) {
-  if (!p || !p.s) return false;
-  if (!findSubject(p.s)) return false;
-  if (p.t && !findTopic(p.s, p.t)) return false;
-  if (p.q && !findQuestion(p.s, p.t, p.q)) return false;
-  return true;
-}
-function qNumbers() {
-  const m = {}; let n = 0;
-  appData.subjects.forEach((s) => s.topics.forEach((t) => t.questions.forEach((q) => { m[q.id] = ++n; })));
-  return m;
-}
-const qLabel = (n) => 'Q' + String(n).padStart(3, '0');
-function countSummary(subjects) {
-  let t = 0, q = 0;
-  subjects.forEach((s) => { t += s.topics.length; s.topics.forEach((x) => { q += x.questions.length; }); });
-  return subjects.length + ' Subject' + (subjects.length === 1 ? '' : 's') + ' · ' + t + ' Topic' + (t === 1 ? '' : 's') + ' · ' + q + ' Question' + (q === 1 ? '' : 's');
-}
-function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function shuffleOpts(q) {
-  if (q.type !== 'MCQ') return;
-  const items = q.options.map((t, i) => ({ t: t, c: LETTERS[i] === q.correct })).filter((x) => String(x.t).trim() !== '');
-  if (items.length < 2) return;
-  shuffleArr(items);
-  const opts = items.map((x) => x.t);
-  while (opts.length < 4) opts.push('');
-  q.options = opts;
-  const ci = items.findIndex((x) => x.c);
-  if (ci >= 0) q.correct = LETTERS[ci];
-}
+  function getSubject(id) { return appData.subjects.find(function (s) { return s.id === id; }); }
+  function getTopic(sid, tid) { var s = getSubject(sid); return s ? s.topics.find(function (t) { return t.id === tid; }) : null; }
+  function getQuestion(sid, tid, qid) { var t = getTopic(sid, tid); return t ? t.questions.find(function (q) { return q.id === qid; }) : null; }
+  function currentSubject() { return getSubject(selected.subjectId); }
+  function currentTopic() { return getTopic(selected.subjectId, selected.topicId); }
+  function currentQuestion() { return getQuestion(selected.subjectId, selected.topicId, selected.questionId); }
 
-/* --------------------------- toast / modal --------------------------- */
-function toast(msg, kind) {
-  const el = document.createElement('div');
-  el.className = 'toast ' + (kind || '');
-  el.textContent = msg;
-  $('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 3200);
-}
-function openModal(id) { $(id).classList.add('open'); }
-function closeModal(id) { $(id).classList.remove('open'); }
+  var B = {
+    /* ------------- persistence ------------- */
+    start: function () {
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.subjects)) appData = parsed;
+          if (!appData.bankName) appData.bankName = 'Untitled Bank';
+        }
+      } catch (e) { console.warn('builder load failed', e); }
+      if (appData.subjects.length) {
+        var s = appData.subjects[0];
+        selected.subjectId = s.id;
+        if (s.topics[0]) {
+          selected.topicId = s.topics[0].id;
+          if (s.topics[0].questions[0]) selected.questionId = s.topics[0].questions[0].id;
+        }
+      }
+      try { history.replaceState(null, '', '#builder'); } catch (e) {}
+      window.addEventListener('popstate', function (e) {
+        if (!appData.subjects.length) { B.render(); return; }
+        if (e.state && getSubject(e.state.subjectId)) {
+          selected.subjectId = e.state.subjectId;
+          selected.topicId = e.state.topicId || null;
+          selected.questionId = e.state.questionId || null;
+          previewMode = false;
+          B.render();
+        } else {
+          selected = { subjectId: null, topicId: null, questionId: null };
+          previewMode = false;
+          B.render();
+        }
+      });
+      window.addEventListener('keydown', function (e) {
+        if (!(e.ctrlKey || e.metaKey)) return;
+        if (e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) B.redo(); else B.undo(); }
+        else if (e.key.toLowerCase() === 'y') { e.preventDefault(); B.redo(); }
+      });
+      B.render();
+      B.bindDropZone();
+      var exportInput = document.getElementById('export-filename');
+      if (exportInput) exportInput.value = B.defaultFilename();
+    },
 
-/* --------------------------- persistence --------------------------- */
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) { const p = JSON.parse(raw); if (p && Array.isArray(p.subjects)) appData = normalizeBank(p); }
-  } catch (e) { console.warn('Could not load builder state', e); }
-}
-function scheduleSave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(appData)); flashSaved(); }
-    catch (e) { toast('Auto-save failed: ' + e.message, 'err'); }
-  }, 500);
-}
-function flashSaved() {
-  const el = $('saved-indicator');
-  el.classList.remove('opacity-0');
-  clearTimeout(savedFlashTimer);
-  savedFlashTimer = setTimeout(() => el.classList.add('opacity-0'), 1500);
-}
+    scheduleSave: function () {
+      var pill = document.getElementById('saved-pill');
+      if (pill) { pill.textContent = 'Saving…'; pill.className = 'chip bg-amber-500/15 text-amber-400'; }
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () {
+        try { localStorage.setItem(KEY, JSON.stringify(appData)); } catch (e) { console.warn(e); }
+        var p = document.getElementById('saved-pill');
+        if (p) { p.textContent = 'Saved'; p.className = 'chip bg-emerald-500/15 text-emerald-400 saved-flash'; }
+      }, 500);
+    },
 
-/* --------------------------- undo / redo --------------------------- */
-function snapshot() { return JSON.stringify({ d: appData, sel: sel }); }
-function pushUndoState() {
-  undoStack.push(snapshot());
-  if (undoStack.length > 50) undoStack.shift();
-  redoStack = [];
-  updateUndoButtons();
-}
-function restoreSnapshot(snap) {
-  const o = JSON.parse(snap);
-  appData = o.d;
-  sel = (o.sel && pathExists(o.sel)) ? o.sel : null;
-  inBurst = false;
-  render();
-  scheduleSave();
-}
-function undo() {
-  if (!undoStack.length) return;
-  redoStack.push(snapshot());
-  if (redoStack.length > 50) redoStack.shift();
-  restoreSnapshot(undoStack.pop());
-}
-function redo() {
-  if (!redoStack.length) return;
-  undoStack.push(snapshot());
-  if (undoStack.length > 50) undoStack.shift();
-  restoreSnapshot(redoStack.pop());
-}
-function updateUndoButtons() { $('btn-undo').disabled = !undoStack.length; $('btn-redo').disabled = !redoStack.length; }
+    pushUndoState: function (coalesce) {
+      var now = Date.now();
+      if (coalesce && now - lastUndoPush < 700) { lastUndoPush = now; B.scheduleSave(); return; }
+      lastUndoPush = now;
+      undoStack.push(JSON.stringify(appData));
+      if (undoStack.length > 50) undoStack.shift();
+      redoStack = [];
+      B.scheduleSave();
+    },
 
-// typing bursts count as ONE undo step; discrete actions always push first
-function edit(fn) {
-  if (!inBurst) { pushUndoState(); inBurst = true; }
-  clearTimeout(burstTimer);
-  burstTimer = setTimeout(() => { inBurst = false; }, 900);
-  fn();
-  scheduleSave();
-}
-function act(fn) {
-  pushUndoState();
-  inBurst = false;
-  fn();
-  scheduleSave();
-  render();
-}
-document.addEventListener('keydown', (e) => {
-  if (!(e.ctrlKey || e.metaKey)) return;
-  const k = e.key.toLowerCase();
-  if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-  else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
-});
+    undo: function () {
+      if (!undoStack.length) return B.toast('Nothing to undo', 'info');
+      redoStack.push(JSON.stringify(appData));
+      appData = JSON.parse(undoStack.pop());
+      B.ensureSelection();
+      B.render(); B.scheduleSave(); B.toast('Undo applied', 'info');
+    },
+    redo: function () {
+      if (!redoStack.length) return B.toast('Nothing to redo', 'info');
+      undoStack.push(JSON.stringify(appData));
+      appData = JSON.parse(redoStack.pop());
+      B.ensureSelection();
+      B.render(); B.scheduleSave(); B.toast('Redo applied', 'info');
+    },
 
-/* --------------------------- MathJax --------------------------- */
-const pendingTypeset = new Set();
-let typesetTimer = null, typesetTries = 0;
-function typeset(el) {
-  if (el) pendingTypeset.add(el);
-  clearTimeout(typesetTimer);
-  typesetTimer = setTimeout(runTypeset, 150);
-}
-function runTypeset() {
-  if (!(window.MathJax && MathJax.typesetPromise)) { if (typesetTries++ < 40) typesetTimer = setTimeout(runTypeset, 300); return; }
-  const els = Array.from(pendingTypeset).filter((e) => document.body.contains(e));
-  pendingTypeset.clear();
-  if (!els.length) return;
-  try { if (MathJax.typesetClear) MathJax.typesetClear(els); } catch (e) { /* ignore */ }
-  MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise(els)).catch(() => {});
-}
-function queuePreview(id, text) { const el = $(id); if (el) { el.textContent = text; typeset(el); } }
+    ensureSelection: function () {
+      if (!getSubject(selected.subjectId)) selected = { subjectId: null, topicId: null, questionId: null };
+      if (selected.subjectId && selected.topicId && !getTopic(selected.subjectId, selected.topicId)) { selected.topicId = null; selected.questionId = null; }
+      if (selected.topicId && selected.questionId && !getQuestion(selected.subjectId, selected.topicId, selected.questionId)) selected.questionId = null;
+      if (!selected.subjectId && appData.subjects[0]) selected.subjectId = appData.subjects[0].id;
+    },
 
-/* --------------------------- selection / history --------------------------- */
-function selectPath(p) {
-  sel = p || null;
-  if (sel) { expanded.add(sel.s); if (sel.t) expanded.add(sel.t); }
-  if (!popping) history.pushState({ path: sel }, '', '#builder');
-  if (window.innerWidth < 768) closeSidebar();
-  render();
-  const pane = $('editor-pane'); if (pane) pane.scrollTop = 0;
-}
-window.addEventListener('popstate', (e) => {
-  popping = true;
-  const p = e.state && e.state.path;
-  sel = (p && pathExists(p)) ? p : null;
-  if (sel) { expanded.add(sel.s); if (sel.t) expanded.add(sel.t); }
-  render();
-  popping = false;
-});
-function openSidebar() { $('sidebar').classList.add('open'); $('sidebar-backdrop').classList.add('open'); }
-function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebar-backdrop').classList.remove('open'); }
-function toggleExpand(id, ev) { ev.stopPropagation(); if (expanded.has(id)) expanded.delete(id); else expanded.add(id); renderSidebar(); }
+    toast: function (msg, type) {
+      var layer = document.getElementById('toast-layer');
+      if (!layer) return;
+      var el = document.createElement('div');
+      var color = type === 'error' ? 'bg-rose-600' : (type === 'success' ? 'bg-emerald-600' : 'bg-indigo-600');
+      el.className = 'cbt-toast pointer-events-auto text-white text-xs font-bold px-3.5 py-2.5 rounded-lg shadow-2xl ' + color;
+      el.textContent = msg;
+      layer.appendChild(el);
+      setTimeout(function () { el.remove(); }, 3000);
+    },
 
-/* --------------------------- rendering --------------------------- */
-function render() {
-  const has = appData.subjects.length > 0;
-  $('empty-view').style.display = has ? 'none' : 'flex';
-  $('editor-view').style.display = has ? 'flex' : 'none';
-  if (document.activeElement !== $('bank-name')) $('bank-name').value = appData.bankName;
-  $('btn-preview').classList.toggle('btn-active', previewMode);
-  updateUndoButtons();
-  if (!has) return;
-  renderSidebar();
-  renderBreadcrumb();
-  renderPane();
-}
-function refreshChrome() { renderSidebar(); renderBreadcrumb(); }
+    bindDropZone: function () {
+      var dz = document.getElementById('import-drop');
+      var input = document.getElementById('import-file');
+      if (dz && input) {
+        dz.onclick = function () { input.click(); };
+        dz.ondragover = function (e) { e.preventDefault(); dz.classList.add('border-indigo-500'); };
+        dz.ondragleave = function () { dz.classList.remove('border-indigo-500'); };
+        dz.ondrop = function (e) {
+          e.preventDefault(); dz.classList.remove('border-indigo-500');
+          var f = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) B.readImportFileData(f);
+        };
+      }
+    },
 
-function renderSidebar() {
-  const term = searchTerm.trim().toLowerCase();
-  const nums = qNumbers();
-  let html = '';
-  appData.subjects.forEach((s) => {
-    const sMatch = !term || s.name.toLowerCase().indexOf(term) >= 0;
-    let topicsHtml = '';
-    let anyVisible = sMatch;
-    s.topics.forEach((t) => {
-      const tMatch = sMatch || t.name.toLowerCase().indexOf(term) >= 0;
-      const qs = t.questions.filter((q) => tMatch || (q.question || '').toLowerCase().indexOf(term) >= 0 || (q.subTopic || '').toLowerCase().indexOf(term) >= 0);
-      if (term && !tMatch && !qs.length) return;
-      anyVisible = true;
-      const open = term ? true : expanded.has(t.id);
-      const tActive = sel && sel.t === t.id && !sel.q;
-      topicsHtml += `
-        <div class="tree-row ${tActive ? 'active' : ''}" style="padding-left:1.3rem" onclick="selectPath({s:'${s.id}',t:'${t.id}'})">
-          <i class="fas fa-chevron-${open ? 'down' : 'right'} text-[10px] w-3 text-slate-500" onclick="toggleExpand('${t.id}',event)"></i>
-          <i class="fas fa-folder text-amber-400/80 text-xs"></i>
-          <span class="truncate">${esc(t.name)}</span>
-          <span class="text-[10px] text-slate-500">${t.questions.length}</span>
-          <span class="acts"><button class="tree-mini" title="Add question" onclick="event.stopPropagation();addQuestion('MCQ','${s.id}','${t.id}')"><i class="fas fa-plus"></i></button></span>
-        </div>`;
-      if (open) {
-        qs.forEach((q) => {
-          const qActive = sel && sel.q === q.id;
-          topicsHtml += `
-            <div class="tree-row ${qActive ? 'active' : ''}" style="padding-left:2.6rem" onclick="selectPath({s:'${s.id}',t:'${t.id}',q:'${q.id}'})">
-              <span class="dot dot-${q.type}"></span>
-              <span class="text-[11px] font-mono text-slate-500">${qLabel(nums[q.id])}</span>
-              <span class="truncate">${esc((q.question || '(empty question)').slice(0, 60))}</span>
-            </div>`;
+    /* ------------- navigation ------------- */
+    pushHistory: function () {
+      try {
+        history.pushState({ subjectId: selected.subjectId, topicId: selected.topicId, questionId: selected.questionId }, '', '#' + (selected.questionId || selected.topicId || selected.subjectId || 'builder'));
+      } catch (e) {}
+    },
+    selectSubject: function (sid) {
+      selected = { subjectId: sid, topicId: null, questionId: null };
+      previewMode = false; B.pushHistory(); B.render(); B.toggleSidebar(false);
+    },
+    selectTopic: function (sid, tid) {
+      selected = { subjectId: sid, topicId: tid, questionId: null };
+      previewMode = false; B.pushHistory(); B.render(); B.toggleSidebar(false);
+    },
+    selectQuestion: function (sid, tid, qid) {
+      selected = { subjectId: sid, topicId: tid, questionId: qid };
+      previewMode = false; B.pushHistory(); B.render(); B.toggleSidebar(false);
+    },
+    openPreview: function () { previewMode = true; B.render(); B.toggleSidebar(false); },
+    closePreview: function () { previewMode = false; B.render(); },
+    reveal: function (qid) { previewRevealed[qid] = !previewRevealed[qid]; B.render(); B.typeset(); },
+
+    toggleSidebar: function (force) {
+      var sb = document.getElementById('sidebar');
+      var bd = document.getElementById('backdrop');
+      if (!sb) return;
+      var open = typeof force === 'boolean' ? force : !sb.classList.contains('open');
+      sb.classList.toggle('open', open);
+      if (bd) bd.classList.toggle('hidden', !open);
+    },
+
+    /* ------------- empty view ------------- */
+    createBlank: function () {
+      B.pushUndoState();
+      appData = { bankName: 'Untitled Bank', subjects: [newSubject('New Subject')] };
+      var s = appData.subjects[0];
+      selected = { subjectId: s.id, topicId: s.topics[0].id, questionId: s.topics[0].questions[0].id };
+      previewMode = false; B.render(); B.scheduleSave(); B.toast('Blank bank created', 'success');
+    },
+
+    loadSample: function () {
+      B.pushUndoState();
+      var physics = {
+        id: uid('s'), name: 'Physics', duration: 45,
+        topics: [
+          {
+            id: uid('t'), name: 'Thermodynamics', questions: [
+              { id: uid('q'), type: 'MCQ', subTopic: 'First Law', question: 'A gas absorbs 300 J of heat and does 120 J of work. What is the change in internal energy?', options: ['420 J', '180 J', '-180 J', '120 J'], correct: 'B', explanation: 'First law: $\\Delta U = Q - W = 300 - 120 = 180$ J.', maxMarks: 10 },
+              { id: uid('q'), type: 'Fill', subTopic: 'Processes', question: 'A process at constant pressure is called an ______ process.', options: ['', '', '', ''], correct: 'isobaric', explanation: 'Isobaric means constant pressure, so $W = P\\Delta V$.', maxMarks: 10 },
+              { id: uid('q'), type: 'Theory', subTopic: 'First Law', question: 'State the first law of thermodynamics and explain what happens when a gas is compressed adiabatically.', options: ['', '', '', ''], correct: '', explanation: '$\\Delta U = Q - W$. With $Q=0$, work done on the gas raises its internal energy and temperature.', maxMarks: 10 }
+            ]
+          },
+          {
+            id: uid('t'), name: 'Mechanics', questions: [
+              { id: uid('q'), type: 'MCQ', subTopic: "Newton's Laws", question: 'A 5 kg mass accelerates at 3 m/s2. What net force acts on it?', options: ['8 N', '15 N', '1.67 N', '45 N'], correct: 'B', explanation: '$F = ma = 5 \\times 3 = 15$ N.', maxMarks: 10 }
+            ]
+          }
+        ]
+      };
+      appData = { bankName: 'Physics Sample Bank', subjects: [physics] };
+      selected = { subjectId: physics.id, topicId: physics.topics[0].id, questionId: physics.topics[0].questions[0].id };
+      previewMode = false; B.render(); B.scheduleSave(); B.toast('Physics sample loaded', 'success');
+    },
+
+    /* ------------- structural CRUD ------------- */
+    updateBankName: function (v) { B.pushUndoState(true); appData.bankName = v; B.scheduleSave(); },
+    addSubject: function () {
+      B.pushUndoState();
+      var s = newSubject('New Subject');
+      appData.subjects.push(s);
+      selected = { subjectId: s.id, topicId: s.topics[0].id, questionId: s.topics[0].questions[0].id };
+      B.pushHistory(); B.render(); B.scheduleSave();
+    },
+    updateSubjectName: function (v) { B.pushUndoState(true); var s = currentSubject(); if (s) s.name = v; B.refreshSidebar(); B.scheduleSave(); },
+    updateDuration: function (v) { B.pushUndoState(true); var s = currentSubject(); if (s) s.duration = Number(v) || 30; B.scheduleSave(); },
+    deleteSubject: function () {
+      var s = currentSubject(); if (!s) return;
+      if (!confirm('Delete subject "' + s.name + '" and all of its topics? This cannot be undone except with Undo.')) return;
+      B.pushUndoState();
+      appData.subjects = appData.subjects.filter(function (x) { return x.id !== s.id; });
+      selected = { subjectId: appData.subjects[0] ? appData.subjects[0].id : null, topicId: null, questionId: null };
+      B.render(); B.scheduleSave();
+    },
+    addTopic: function () {
+      var s = currentSubject(); if (!s) return;
+      B.pushUndoState();
+      var t = newTopic('New Topic');
+      s.topics.push(t);
+      selected = { subjectId: s.id, topicId: t.id, questionId: null };
+      B.pushHistory(); B.render(); B.scheduleSave();
+    },
+    updateTopicName: function (v) { B.pushUndoState(true); var t = currentTopic(); if (t) t.name = v; B.refreshSidebar(); B.scheduleSave(); },
+    deleteTopic: function () {
+      var s = currentSubject(), t = currentTopic(); if (!s || !t) return;
+      if (!confirm('Delete topic "' + t.name + '" and its ' + t.questions.length + ' question(s)?')) return;
+      B.pushUndoState();
+      s.topics = s.topics.filter(function (x) { return x.id !== t.id; });
+      selected.topicId = null; selected.questionId = null;
+      B.render(); B.scheduleSave();
+    },
+    addQuestion: function (type) {
+      var s = currentSubject(), t = currentTopic();
+      if (!s) return;
+      if (!t) { t = newTopic('General'); s.topics.push(t); selected.topicId = t.id; }
+      B.pushUndoState();
+      var q = newQuestion(type || 'MCQ');
+      t.questions.push(q);
+      selected.questionId = q.id;
+      previewMode = false;
+      B.pushHistory(); B.render(); B.scheduleSave();
+    },
+    addQuestionBelow: function () { B.addQuestion('MCQ'); },
+    duplicateQuestion: function () {
+      var t = currentTopic(), q = currentQuestion(); if (!t || !q) return;
+      B.pushUndoState();
+      var copy = clone(q); copy.id = uid('q');
+      var idx = t.questions.findIndex(function (x) { return x.id === q.id; });
+      t.questions.splice(idx + 1, 0, copy);
+      selected.questionId = copy.id;
+      B.render(); B.scheduleSave(); B.toast('Question duplicated', 'success');
+    },
+    deleteQuestion: function () {
+      var t = currentTopic(), q = currentQuestion(); if (!t || !q) return;
+      if (!confirm('Delete this question?')) return;
+      B.pushUndoState();
+      var idx = t.questions.findIndex(function (x) { return x.id === q.id; });
+      t.questions = t.questions.filter(function (x) { return x.id !== q.id; });
+      q = t.questions[Math.min(idx, t.questions.length - 1)] || null;
+      selected.questionId = q ? q.id : null;
+      B.render(); B.scheduleSave();
+    },
+
+    changeType: function (type) {
+      var q = currentQuestion(); if (!q) return;
+      B.pushUndoState();
+      q.type = type;
+      if (!Array.isArray(q.options) || q.options.length < 4) q.options = (q.options || []).concat(['', '', '', '']).slice(0, 4);
+      if (type === 'MCQ' && (!q.correct || q.correct.length > 1)) q.correct = 'A';
+      if (type !== 'MCQ' && ['A', 'B', 'C', 'D'].indexOf(String(q.correct).toUpperCase()) !== -1) q.correct = '';
+      B.render(); B.scheduleSave();
+    },
+    updateQField: function (field, value) {
+      var q = currentQuestion(); if (!q) return;
+      B.pushUndoState(true);
+      q[field] = field === 'maxMarks' ? (Number(value) || 0) : value;
+      if (field === 'question') B.updatePreviewText('question-preview', value);
+      if (field === 'explanation') B.updatePreviewText('explanation-preview', value);
+      B.refreshSidebar();
+      B.scheduleSave();
+    },
+    updateOption: function (i, value) {
+      var q = currentQuestion(); if (!q) return;
+      B.pushUndoState(true);
+      if (!Array.isArray(q.options)) q.options = ['', '', '', ''];
+      q.options[i] = value;
+      B.scheduleSave();
+    },
+    setCorrect: function (value) { B.pushUndoState(true); var q = currentQuestion(); if (q) q.correct = value; B.scheduleSave(); },
+    shuffleQuestionOptions: function () {
+      var q = currentQuestion(); if (!q || q.type !== 'MCQ') return;
+      B.pushUndoState();
+      var correctVal = q.options[['A', 'B', 'C', 'D'].indexOf(String(q.correct).toUpperCase())];
+      var pairs = q.options.slice(0, 4).map(function (v, i) { return { v: v, letter: 'ABCD'[i] }; });
+      B.shuffle(pairs);
+      q.options = pairs.map(function (p) { return p.v; });
+      var idx = pairs.findIndex(function (p) { return p.letter === String(q.correct).toUpperCase(); });
+      q.correct = 'ABCD'[idx >= 0 ? idx : 0];
+      q.options[q.correct.charCodeAt(0) - 65] = correctVal;
+      B.render(); B.scheduleSave(); B.toast('Options shuffled', 'success');
+    },
+    shuffleTopicOptions: function () {
+      var t = currentTopic(); if (!t) return;
+      B.pushUndoState();
+      t.questions.forEach(function (q) {
+        if (q.type !== 'MCQ') return;
+        var opts = Array.isArray(q.options) ? q.options.slice(0, 4) : ['', '', '', ''];
+        var correctVal = opts[Math.max(0, 'ABCD'.indexOf(String(q.correct).toUpperCase()))];
+        var pairs = opts.map(function (v, i) { return { v: v, letter: 'ABCD'[i] }; });
+        B.shuffle(pairs);
+        q.options = pairs.map(function (p) { return p.v; });
+        q.correct = 'ABCD'[pairs.findIndex(function (p) { return p.v === correctVal; })] || 'A';
+      });
+      B.render(); B.scheduleSave(); B.toast('Options shuffled for the whole topic', 'success');
+    },
+    shuffle: function (arr) { for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; },
+
+    refreshSidebar: function () {
+      var sb = document.getElementById('sidebar-body');
+      if (sb) sb.innerHTML = B.treeHTML();
+      var bc = document.getElementById('breadcrumb');
+      if (bc) bc.innerHTML = B.breadcrumbHTML();
+    },
+
+    updatePreviewText: function (id, value) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = value ? B.renderMathText(value) : '<span class="text-slate-500 italic">Preview appears here…</span>';
+      B.typeset();
+    },
+    renderMathText: function (value) {
+      return esc(value).replace(/\n/g, '<br>');
+    },
+    typeset: function () {
+      if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        try { window.MathJax.typesetPromise([document.getElementById('builder-root')]).catch(function () {}); } catch (e) {}
+      }
+    },
+
+    /* ------------- rendering ------------- */
+    render: function () {
+      B.ensureSelection();
+      var root = document.getElementById('builder-root');
+      if (!root) return;
+      root.innerHTML = B.headerHTML() + (appData.subjects.length ? B.editorHTML() : B.emptyHTML());
+      B.bindDropZone();
+      B.typeset();
+    },
+
+    headerHTML: function () {
+      var hasBank = appData.subjects.length > 0;
+      return '<header class="h-[62px] sticky top-0 z-[75] border-b border-[#1e2740] bg-[#080d18]/95 backdrop-blur flex items-center gap-3 px-3 md:px-5">' +
+        '<button onclick="B.toggleSidebar()" class="md:hidden w-9 h-9 rounded-lg bg-[#131c31] text-slate-300"><i class="fas fa-bars"></i></button>' +
+        '<div class="flex items-center gap-2.5 min-w-0">' +
+        '<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shrink-0"><i class="fas fa-pen-ruler text-white text-sm"></i></div>' +
+        '<div class="min-w-0 hidden sm:block"><div class="font-extrabold text-sm leading-tight">Question Builder</div><div class="text-[10px] text-slate-500 leading-tight">authoring studio</div></div>' +
+        '</div>' +
+        (hasBank ? '<div class="hidden lg:flex items-center gap-2 min-w-0 ml-3"><input value="' + esc(appData.bankName) + '" oninput="B.updateBankName(this.value)" class="bg-transparent border-b border-transparent hover:border-[#33405f] focus:border-indigo-500 outline-none text-xs font-bold text-slate-200 px-1 py-1 min-w-0 w-[190px]" aria-label="Bank name"></div>' : '') +
+        '<span id="saved-pill" class="chip bg-emerald-500/15 text-emerald-400 hidden sm:inline-flex">Ready</span>' +
+        '<div class="flex items-center gap-1.5 ml-auto">' +
+        (hasBank ? '<button onclick="B.undo()" class="btn btn-ghost !px-2.5" title="Undo (Ctrl+Z)"><i class="fas fa-rotate-left"></i></button>' +
+          '<button onclick="B.redo()" class="btn btn-ghost !px-2.5" title="Redo (Ctrl+Y)"><i class="fas fa-rotate-right"></i></button>' : '') +
+        '<button onclick="B.openModal(\'import-modal\')" class="btn btn-ghost"><i class="fas fa-file-import"></i><span class="hidden sm:inline">Import</span></button>' +
+        (hasBank ? '<button onclick="B.openExport()" class="btn btn-ghost"><i class="fas fa-file-export"></i><span class="hidden sm:inline">Export</span></button>' +
+          '<button onclick="B.openPublish()" class="btn btn-amber"><i class="fab fa-github"></i><span class="hidden sm:inline">Publish</span></button>' : '') +
+        '<a href="index.html" class="btn btn-ghost" title="Open the exam app"><i class="fas fa-arrow-up-right-from-square"></i></a>' +
+        '</div></header>';
+    },
+
+    emptyHTML: function () {
+      return '<main class="max-w-3xl mx-auto px-4 py-10 md:py-16">' +
+        '<div class="text-center mb-8">' +
+        '<div class="mx-auto w-16 h-16 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-2xl text-indigo-300"><i class="fas fa-pen-ruler"></i></div>' +
+        '<h1 class="text-2xl md:text-3xl font-extrabold mt-4">Author a question bank</h1>' +
+        '<p class="text-sm text-slate-400 mt-2 max-w-xl mx-auto">Build subjects, topics and questions, preview them exactly as candidates will see them, then export or publish to your repository. No build step — everything is stored locally.</p>' +
+        '</div>' +
+        '<div class="panel rounded-2xl p-6">' +
+        '<div id="empty-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#080d18] p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="B.openModal(\'import-modal\')">' +
+        '<i class="fas fa-cloud-arrow-up text-3xl text-indigo-400"></i>' +
+        '<p class="mt-3 font-bold text-sm">Drag &amp; drop a <span class="text-amber-400">.js</span> question bank</p>' +
+        '<p class="text-[11.5px] text-slate-500 mt-1">or click anywhere in this area to open the importer</p></div>' +
+        '<div class="grid sm:grid-cols-2 gap-3 mt-4">' +
+        '<button onclick="B.createBlank()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-plus"></i> Create blank bank</button>' +
+        '<button onclick="B.loadSample()" class="btn btn-ghost justify-center !py-3"><i class="fas fa-flask"></i> Load Physics sample</button>' +
+        '</div></div>' +
+        '<div class="grid sm:grid-cols-3 gap-3 mt-5 text-[11.5px] text-slate-400">' +
+        '<div class="panel rounded-xl p-3"><i class="fas fa-code text-indigo-400 mr-1.5"></i><strong class="text-slate-200">DSL native</strong><br>Export a JS bank file ready for <code class="text-amber-300">question-banks/</code>.</div>' +
+        '<div class="panel rounded-xl p-3"><i class="fas fa-eye text-violet-400 mr-1.5"></i><strong class="text-slate-200">Live preview</strong><br>See study cards with reveal buttons before publishing.</div>' +
+        '<div class="panel rounded-xl p-3"><i class="fab fa-github text-amber-400 mr-1.5"></i><strong class="text-slate-200">One-click publish</strong><br>Commit straight to <code class="text-amber-300">main</code> via the API.</div>' +
+        '</div></main>';
+    },
+
+    editorHTML: function () {
+      return '<div class="flex min-h-[calc(100vh-62px)]">' +
+        B.sidebarHTML() +
+        '<div class="flex-grow min-w-0 flex flex-col">' + B.breadcrumbHTML() + '<div class="flex-grow overflow-y-auto p-3 md:p-5">' +
+        (previewMode ? B.previewHTML() : B.contextHTML()) +
+        '</div></div></div>';
+    },
+
+    sidebarHTML: function () {
+      return '<aside id="sidebar" class="w-[280px] shrink-0 border-r border-[#1e2740] bg-[#0a0f1d] flex flex-col md:static">' +
+        '<div class="p-3 border-b border-[#1e2740]">' +
+        '<div class="relative"><i class="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[11px]"></i>' +
+        '<input id="tree-search" value="' + esc(searchQuery) + '" oninput="B.search(this.value)" placeholder="Search subjects, topics, questions…" class="field !pl-8 !text-[12px]"></div>' +
+        '<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center mt-2.5"><i class="fas fa-folder-plus"></i> New Subject</button>' +
+        '</div><div id="sidebar-body" class="flex-grow overflow-y-auto p-2.5">' + B.treeHTML() + '</div>' +
+        '<div class="p-2.5 border-t border-[#1e2740] text-[10px] text-slate-500 flex items-center justify-between"><span>' + B.counts().subjects + ' subjects · ' + B.counts().questions + ' questions</span><span class="text-emerald-500"><i class="fas fa-circle text-[6px]"></i> local</span></div></aside>';
+    },
+
+    counts: function () {
+      var subjects = appData.subjects.length;
+      var topics = 0, questions = 0;
+      appData.subjects.forEach(function (s) { topics += s.topics.length; s.topics.forEach(function (t) { questions += t.questions.length; }); });
+      return { subjects: subjects, topics: topics, questions: questions };
+    },
+
+    treeHTML: function () {
+      var q = searchQuery.toLowerCase().trim();
+      var html = '';
+      appData.subjects.forEach(function (s) {
+        var topicMatch = !q || s.name.toLowerCase().indexOf(q) !== -1;
+        var topicsHTML = s.topics.map(function (t) {
+          var showTopic = topicMatch || t.name.toLowerCase().indexOf(q) !== -1;
+          var questionsHTML = t.questions.map(function (question, i) {
+            var showQ = topicMatch || t.name.toLowerCase().indexOf(q) !== -1 || (question.question || '').toLowerCase().indexOf(q) !== -1;
+            if (!showQ) return '';
+            var dotColor = question.type === 'MCQ' ? '#6366f1' : (question.type === 'Fill' ? '#f59e0b' : '#a78bfa');
+            var active = selected.questionId === question.id;
+            return '<button onclick="B.selectQuestion(\'' + s.id + '\',\'' + t.id + '\',\'' + question.id + '\')" class="tree-item !pl-7 ' + (active ? 'active' : '') + '">' +
+              '<span class="dot" style="background:' + dotColor + '"></span>' +
+              '<span class="truncate min-w-0">' + esc((question.question || '(untitled)').slice(0, 46) || '(untitled)') + '</span>' +
+              (question.type === 'Theory' ? '<i class="fas fa-pen-nib text-[9px] text-violet-400 ml-auto shrink-0"></i>' : '') + '</button>';
+          }).join('');
+          if (!showTopic) {
+            var anyQ = t.questions.some(function (question) { return (question.question || '').toLowerCase().indexOf(q) !== -1; });
+            if (!anyQ) return '';
+          }
+          return '<button onclick="B.selectTopic(\'' + s.id + '\',\'' + t.id + '\')" class="tree-item !pl-6 !text-[12px] ' + (selected.topicId === t.id && !selected.questionId ? 'active' : '') + '">' +
+            '<i class="fas fa-folder text-[10px] text-amber-500/80"></i><span class="truncate min-w-0">' + esc(t.name) + '</span>' +
+            '<span class="ml-auto text-[9px] text-slate-500">' + t.questions.length + '</span></button>' + questionsHTML;
+        }).join('');
+        if (!topicMatch && !topicsHTML) return;
+        return '<div class="mb-1.5">' +
+          '<button onclick="B.selectSubject(\'' + s.id + '\')" class="tree-item font-bold ' + (selected.subjectId === s.id && !selected.topicId ? 'active' : '') + '">' +
+          '<i class="fas fa-book text-[11px] text-indigo-400"></i><span class="truncate min-w-0">' + esc(s.name) + '</span>' +
+          '<span class="ml-auto text-[9px] text-slate-500">' + s.topics.length + '</span></button>' +
+          '<div class="ml-1 border-l border-[#1a2339] pl-1">' + topicsHTML + '</div></div>';
+      });
+      return html || '<div class="p-4 text-center text-[11.5px] text-slate-500"><i class="fas fa-search mr-1"></i>No matches.</div>';
+    },
+
+    search: function (v) { searchQuery = v; var sb = document.getElementById('sidebar-body'); if (sb) sb.innerHTML = B.treeHTML(); },
+
+    breadcrumbHTML: function () {
+      var s = currentSubject(), t = currentTopic(), q = currentQuestion();
+      var crumb = '<div class="flex items-center gap-1.5 text-[11.5px] text-slate-500 min-w-0 overflow-hidden">' +
+        '<i class="fas fa-layer-group text-indigo-400"></i>' +
+        (s ? '<span class="text-slate-300 font-semibold truncate">' + esc(s.name) + '</span>' : '<span>No subject</span>') +
+        (t ? '<i class="fas fa-chevron-right text-[8px]"></i><span class="text-slate-300 font-semibold truncate">' + esc(t.name) + '</span>' : '') +
+        (q ? '<i class="fas fa-chevron-right text-[8px]"></i><span class="text-amber-400 font-bold">Q' + String(t.questions.indexOf(q) + 1).padStart(3, '0') + '</span>' : '') +
+        '</div>';
+      return '<div id="breadcrumb" class="sticky top-[62px] z-[55] flex items-center gap-2 flex-wrap px-3 md:px-5 py-2.5 bg-[#080d18]/95 backdrop-blur border-b border-[#1e2740]">' + crumb +
+        '<div class="ml-auto flex items-center gap-1.5">' +
+        (previewMode ? '<span class="chip bg-violet-500/15 text-violet-300"><i class="fas fa-eye"></i> Preview Mode</span>' : '') +
+        '<button onclick="' + (previewMode ? 'B.closePreview()' : 'B.openPreview()') + '" class="btn ' + (previewMode ? 'btn-ghost' : 'btn-ghost') + ' !py-1.5">' +
+        '<i class="fas fa-eye"></i><span class="hidden sm:inline">' + (previewMode ? 'Exit Preview' : 'Preview Mode') + '</span></button>' +
+        (selected.subjectId && !previewMode ? '<button onclick="B.addQuestion(\'MCQ\')" class="btn btn-indigo !py-1.5"><i class="fas fa-plus"></i><span class="hidden sm:inline">Question</span></button>' : '') +
+        '</div></div>';
+    },
+
+    contextHTML: function () {
+      if (!selected.subjectId) {
+        return '<div class="panel rounded-2xl p-8 text-center"><div class="text-3xl mb-2">👈</div><p class="text-sm text-slate-400">Pick a subject from the sidebar, or create a new one.</p><button onclick="B.addSubject()" class="btn btn-indigo mt-3"><i class="fas fa-folder-plus"></i> New Subject</button></div>';
+      }
+      if (selected.questionId && currentQuestion()) return B.questionEditorHTML();
+      if (selected.topicId && currentTopic()) return B.topicEditorHTML();
+      return B.subjectEditorHTML();
+    },
+
+    subjectEditorHTML: function () {
+      var s = currentSubject(); if (!s) return '';
+      var questions = 0; s.topics.forEach(function (t) { questions += t.questions.length; });
+      var topics = s.topics.map(function (t) {
+        return '<button onclick="B.selectTopic(\'' + s.id + '\',\'' + t.id + '\')" class="w-full text-left panel rounded-xl p-3.5 hover:border-indigo-500 transition-colors">' +
+          '<div class="flex items-center justify-between gap-2"><span class="font-bold text-sm text-slate-200"><i class="fas fa-folder text-amber-500/80 mr-2"></i>' + esc(t.name) + '</span>' +
+          '<span class="chip bg-[#131c31] text-slate-400">' + t.questions.length + ' Q</span></div></button>';
+      }).join('');
+      return '<div class="max-w-3xl space-y-4">' +
+        '<div class="panel rounded-2xl p-5">' +
+        '<div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h2 class="font-extrabold text-lg"><i class="fas fa-book text-indigo-400 mr-2"></i>Subject settings</h2><span class="chip bg-indigo-500/15 text-indigo-300">' + questions + ' questions</span></div>' +
+        '<div class="grid sm:grid-cols-[1fr_160px] gap-3">' +
+        '<div><label class="lbl">Subject name</label><input class="field" value="' + esc(s.name) + '" oninput="B.updateSubjectName(this.value)"></div>' +
+        '<div><label class="lbl">Exam duration (minutes)</label><input type="number" min="1" max="999" class="field" value="' + (s.duration || 30) + '" oninput="B.updateDuration(this.value)"></div>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-2 mt-4"><button onclick="B.addTopic()" class="btn btn-ghost"><i class="fas fa-folder-plus"></i> New Topic</button>' +
+        '<button onclick="B.deleteSubject()" class="btn btn-danger ml-auto"><i class="fas fa-trash"></i> Delete subject</button></div></div>' +
+        '<div class="panel rounded-2xl p-5"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">Topics</h3><span class="text-[11px] text-slate-500">' + s.topics.length + ' total</span></div>' +
+        '<div class="space-y-2">' + (topics || '<p class="text-sm text-slate-500">No topics yet — create one to start adding questions.</p>') + '</div></div></div>';
+    },
+
+    topicEditorHTML: function () {
+      var s = currentSubject(), t = currentTopic(); if (!s || !t) return '';
+      return '<div class="max-w-3xl space-y-4">' +
+        '<div class="panel rounded-2xl p-5">' +
+        '<div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h2 class="font-extrabold text-lg"><i class="fas fa-folder text-amber-400 mr-2"></i>Topic settings</h2><span class="chip bg-[#131c31] text-slate-400">' + t.questions.length + ' questions</span></div>' +
+        '<label class="lbl">Topic name</label><input class="field" value="' + esc(t.name) + '" oninput="B.updateTopicName(this.value)">' +
+        '<div class="flex flex-wrap gap-2 mt-4">' +
+        '<button onclick="B.addQuestion(\'MCQ\')" class="btn btn-indigo"><i class="fas fa-list-check"></i> Add MCQ</button>' +
+        '<button onclick="B.addQuestion(\'Fill\')" class="btn btn-ghost"><i class="fas fa-keyboard"></i> Add Fill</button>' +
+        '<button onclick="B.addQuestion(\'Theory\')" class="btn btn-ghost"><i class="fas fa-pen-nib"></i> Add Theory</button>' +
+        '<button onclick="B.shuffleTopicOptions()" class="btn btn-ghost"><i class="fas fa-shuffle"></i> Shuffle Options</button>' +
+        '<button onclick="B.deleteTopic()" class="btn btn-danger ml-auto"><i class="fas fa-trash"></i> Delete topic</button></div></div>' +
+        '<div class="panel rounded-2xl p-5"><h3 class="font-bold text-sm mb-3">Questions</h3>' +
+        '<div class="space-y-2">' + (t.questions.map(function (question, i) {
+          var chipCls = question.type === 'MCQ' ? 'bg-indigo-500/15 text-indigo-300' : (question.type === 'Fill' ? 'bg-amber-500/15 text-amber-300' : 'bg-violet-500/15 text-violet-300');
+          return '<div class="flex items-center gap-2 rounded-xl bg-[#0d1526] border border-[#1e2740] p-2.5">' +
+            '<button onclick="B.selectQuestion(\'' + s.id + '\',\'' + t.id + '\',\'' + question.id + '\')" class="flex items-center gap-2.5 min-w-0 flex-grow text-left">' +
+            '<span class="chip ' + chipCls + '">' + esc(question.type) + '</span>' +
+            '<span class="text-[12.5px] text-slate-300 truncate min-w-0">Q' + String(i + 1).padStart(3, '0') + ' · ' + esc((question.question || '(untitled)').slice(0, 70)) + '</span></button>' +
+            '<button onclick="B.selectQuestion(\'' + s.id + '\',\'' + t.id + '\',\'' + question.id + '\')" class="btn btn-ghost !px-2 !py-1.5"><i class="fas fa-pen"></i></button></div>';
+        }).join('') || '<p class="text-sm text-slate-500">No questions in this topic yet.</p>') + '</div></div></div>';
+    },
+
+    questionEditorHTML: function () {
+      var s = currentSubject(), t = currentTopic(), q = currentQuestion(); if (!s || !t || !q) return '';
+      var idx = t.questions.indexOf(q);
+      var letters = ['A', 'B', 'C', 'D'];
+      var typeBtn = function (type, icon) {
+        return '<button onclick="B.changeType(\'' + type + '\')" class="btn ' + (q.type === type ? 'btn-indigo' : 'btn-ghost') + '"><i class="' + icon + '"></i>' + type + '</button>';
+      };
+      var optionsHTML = '';
+      if (q.type === 'MCQ') {
+        optionsHTML = '<div class="space-y-2.5">' + letters.map(function (l, i) {
+          return '<div class="flex items-center gap-2.5">' +
+            '<label class="flex items-center justify-center w-9 h-9 rounded-lg bg-[#131c31] border border-[#26314f] cursor-pointer shrink-0" title="Mark ' + l + ' correct">' +
+            '<input type="radio" name="correct-option" value="' + l + '" ' + (String(q.correct).toUpperCase() === l ? 'checked' : '') + ' onchange="B.setCorrect(\'' + l + '\')" class="accent-amber-500">' +
+            '</label>' +
+            '<span class="w-5 text-center text-xs font-extrabold ' + (String(q.correct).toUpperCase() === l ? 'text-amber-400' : 'text-slate-500') + '">' + l + '</span>' +
+            '<input class="field" value="' + esc(q.options[i] || '') + '" oninput="B.updateOption(' + i + ', this.value)" placeholder="Option ' + l + '">' +
+            '</div>';
+        }).join('') + '</div>' +
+          '<div class="flex flex-wrap items-center gap-2 mt-3"><button onclick="B.shuffleQuestionOptions()" class="btn btn-ghost"><i class="fas fa-shuffle"></i> Shuffle options</button>' +
+          '<span class="text-[11px] text-slate-500">Correct answer: <strong class="text-amber-400">' + esc(q.correct || '—') + '</strong></span></div>';
+      } else if (q.type === 'Fill') {
+        optionsHTML = '<div><label class="lbl">Exact accepted answer (case-insensitive)</label><input class="field" value="' + esc(q.correct) + '" oninput="B.updateQField(\'correct\', this.value)" placeholder="e.g. adiabatic"></div>' +
+          '<p class="text-[11px] text-slate-500 mt-2"><i class="fas fa-circle-info mr-1"></i>Answers are compared after trimming and lower-casing; internal spaces are preserved.</p>';
+      } else {
+        optionsHTML = '<div class="rounded-xl border border-violet-500/25 bg-violet-500/5 p-3 text-[11.5px] text-violet-200"><i class="fas fa-robot mr-1.5"></i>Theory answers are graded by AI out of the marks below. The explanation is used as the model answer.</div>';
+        optionsHTML += '<div class="mt-3"><label class="lbl">Maximum marks</label><input type="number" min="1" max="100" class="field !w-32" value="' + (q.maxMarks || 10) + '" oninput="B.updateQField(\'maxMarks\', this.value)"></div>';
+      }
+      return '<div class="max-w-4xl space-y-4">' +
+        '<div class="panel rounded-2xl p-4 md:p-5">' +
+        '<div class="flex flex-wrap items-center justify-between gap-2 mb-4">' +
+        '<h2 class="font-extrabold text-base"><i class="fas fa-circle-question text-indigo-400 mr-2"></i>Q' + String(idx + 1).padStart(3, '0') + '</h2>' +
+        '<div class="flex flex-wrap items-center gap-1.5">' + typeBtn('MCQ', 'fas fa-list-check') + typeBtn('Fill', 'fas fa-keyboard') + typeBtn('Theory', 'fas fa-pen-nib') + '</div></div>' +
+        '<div class="grid sm:grid-cols-[1fr_180px] gap-3">' +
+        '<div><label class="lbl">Question text</label><textarea rows="3" class="field" oninput="B.updateQField(\'question\', this.value)" placeholder="Type the question…">' + esc(q.question) + '</textarea></div>' +
+        '<div><label class="lbl">Sub-topic</label><input class="field" value="' + esc(q.subTopic || 'General') + '" oninput="B.updateQField(\'subTopic\', this.value)"><p class="text-[10.5px] text-slate-500 mt-1.5">Groups candidates on the login form.</p></div>' +
+        '</div>' +
+        '<div class="mt-2 rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300"><div class="lbl !mb-1 !text-[9.5px]">LaTeX live preview</div><div id="question-preview" class="fmt">' + (q.question ? B.renderMathText(q.question) : '<span class="text-slate-500 italic">Preview appears here…</span>') + '</div></div>' +
+        '</div>' +
+        '<div class="panel rounded-2xl p-4 md:p-5"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">Answer configuration</h3><span class="chip bg-[#131c31] text-slate-400">' + esc(q.type) + '</span></div>' + optionsHTML + '</div>' +
+        '<div class="panel rounded-2xl p-4 md:p-5">' +
+        '<label class="lbl">Explanation / model answer</label>' +
+        '<textarea rows="4" class="field" oninput="B.updateQField(\'explanation\', this.value)" placeholder="Explain the reasoning. LaTeX with $…$ is supported.">' + esc(q.explanation) + '</textarea>' +
+        '<div class="mt-2 rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300"><div class="lbl !mb-1 !text-[9.5px]">Preview</div><div id="explanation-preview" class="fmt">' + (q.explanation ? B.renderMathText(q.explanation) : '<span class="text-slate-500 italic">Explanation preview appears here…</span>') + '</div></div>' +
+        '<div class="flex flex-wrap gap-2 mt-4">' +
+        '<button onclick="B.duplicateQuestion()" class="btn btn-ghost"><i class="fas fa-copy"></i> Duplicate</button>' +
+        '<button onclick="B.addQuestionBelow()" class="btn btn-ghost"><i class="fas fa-plus"></i> Add question</button>' +
+        '<button onclick="B.deleteQuestion()" class="btn btn-danger ml-auto"><i class="fas fa-trash"></i> Delete question</button></div></div></div>';
+    },
+
+    /* ------------- preview ------------- */
+    scopeQuestions: function () {
+      var out = [];
+      appData.subjects.forEach(function (s) {
+        if (selected.subjectId && s.id !== selected.subjectId) return;
+        s.topics.forEach(function (t) {
+          if (selected.topicId && t.id !== selected.topicId) return;
+          t.questions.forEach(function (q) { out.push({ s: s, t: t, q: q }); });
+        });
+      });
+      return out;
+    },
+    previewHTML: function () {
+      var items = B.scopeQuestions();
+      var cards = items.map(function (item, i) {
+        var q = item.q, revealed = !!previewRevealed[q.id];
+        var opts = '';
+        if (q.type === 'MCQ') {
+          opts = '<div class="grid sm:grid-cols-2 gap-2 mt-3">' + ['A', 'B', 'C', 'D'].map(function (l, idx) {
+            var correct = String(q.correct).toUpperCase() === l;
+            var cls = revealed && correct ? 'border-emerald-500 bg-emerald-500/10' : 'border-[#26314f] bg-[#0d1526]';
+            return '<div class="rounded-lg border p-2.5 text-[12.5px] ' + cls + '"><span class="font-extrabold mr-1.5 ' + (revealed && correct ? 'text-emerald-400' : 'text-slate-400') + '">' + l + '</span>' + esc(q.options[idx] || '') + (revealed && correct ? ' <i class="fas fa-check text-emerald-400 ml-1"></i>' : '') + '</div>';
+          }).join('') + '</div>';
+        } else if (q.type === 'Fill') {
+          opts = '<div class="mt-3 rounded-lg bg-[#0d1526] border border-[#26314f] p-2.5 text-[12.5px]"><span class="text-slate-500">Answer: </span><span class="' + (revealed ? 'text-emerald-400 font-bold' : 'blur-sm select-none text-slate-500') + '">' + esc(q.correct || '—') + '</span></div>';
+        }
+        var explanation = revealed
+          ? '<div class="mt-3 rounded-lg border-l-4 border-amber-500 bg-amber-500/5 p-3 text-[12.5px] text-slate-300 fmt">📚 ' + B.renderMathText(q.explanation || 'No explanation provided.') + '</div>'
+          : '';
+        return '<div class="qcard p-4">' +
+          '<div class="flex flex-wrap items-center gap-2 mb-2.5">' +
+          '<span class="text-[11px] font-extrabold text-slate-500">Q' + String(i + 1).padStart(2, '0') + '</span>' +
+          '<span class="chip bg-indigo-500/15 text-indigo-300">' + esc(q.type) + '</span>' +
+          '<span class="chip bg-[#131c31] text-slate-400">' + esc(item.t.name) + '</span>' +
+          '<span class="chip bg-violet-500/10 text-violet-300">' + esc(q.subTopic || 'General') + '</span>' +
+          '<button onclick="B.reveal(\'' + q.id + '\')" class="btn ' + (revealed ? 'btn-ghost' : 'btn-amber') + ' !py-1 !px-2.5 !text-[11px] ml-auto"><i class="fas fa-eye' + (revealed ? '-slash' : '') + '"></i>' + (revealed ? 'Hide' : 'Reveal') + '</button></div>' +
+          '<p class="text-[13.5px] font-medium text-slate-200 fmt">' + B.renderMathText(q.question || '(untitled question)') + '</p>' +
+          opts + explanation + '</div>';
+      }).join('');
+      return '<div class="max-w-3xl mx-auto space-y-3"><div class="flex items-center gap-2 flex-wrap mb-1"><h2 class="font-extrabold"><i class="fas fa-eye text-violet-400 mr-2"></i>Study preview</h2>' +
+        '<span class="chip bg-violet-500/15 text-violet-300">' + items.length + ' questions</span>' +
+        '<span class="text-[11px] text-slate-500">' + (selected.topicId ? 'Topic scope' : (selected.subjectId ? 'Subject scope' : 'Whole bank')) + '</span></div>' +
+        (cards || '<div class="panel rounded-xl p-8 text-center text-sm text-slate-500">No questions in this scope.</div>') + '</div>';
+    },
+
+    /* ------------- modals ------------- */
+    openModal: function (id) { var el = document.getElementById(id); if (el) el.classList.remove('hidden'); },
+    closeModal: function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); },
+
+    readImportFile: function (input) { var f = input.files && input.files[0]; if (f) B.readImportFileData(f); },
+    readImportFileData: function (f) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var ta = document.getElementById('import-text');
+        if (ta) ta.value = e.target.result;
+        B.toast('Loaded ' + f.name + ' · now parse & preview', 'success');
+        B.previewImport();
+      };
+      reader.readAsText(f);
+    },
+    importFromGitHub: async function () {
+      var owner = localStorage.getItem('gh_owner');
+      var repo = localStorage.getItem('gh_repo');
+      if (!owner) { owner = prompt('GitHub owner (username or organisation):'); if (!owner) return; localStorage.setItem('gh_owner', owner.trim()); }
+      if (!repo) { repo = prompt('GitHub repository name:'); if (!repo) return; localStorage.setItem('gh_repo', repo.trim()); }
+      var filename = prompt('Filename inside question-banks/ (e.g. physics-bank.js):');
+      if (!filename) return;
+      var status = document.getElementById('import-status');
+      if (status) status.textContent = 'Fetching raw.githubusercontent.com…';
+      try {
+        var url = 'https://raw.githubusercontent.com/' + encodeURIComponent(owner.trim()) + '/' + encodeURIComponent(repo.trim()) + '/main/question-banks/' + encodeURIComponent(filename.trim());
+        var res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var text = await res.text();
+        var ta = document.getElementById('import-text');
+        if (ta) ta.value = text;
+        if (status) status.textContent = 'Fetched ' + filename + ' from GitHub.';
+        B.previewImport();
+      } catch (err) {
+        if (status) status.textContent = 'GitHub fetch failed: ' + err.message;
+        B.toast('GitHub fetch failed: ' + err.message, 'error');
+      }
+    },
+
+    parseDSL: function (text) {
+      var subjects = [], warnings = [];
+      var subject = null, topic = null, q = null, subTopic = 'General', explanationMode = false;
+      var lines = String(text || '').split(/\r?\n/);
+      function ensureSubject(name) { var s = { id: uid('s'), name: String(name || 'Untitled').trim(), duration: 30, topics: [] }; subjects.push(s); return s; }
+      function ensureTopic(name) {
+        var tname = String(name || 'General').trim();
+        var found = subject.topics.find(function (t) { return t.name.toLowerCase() === tname.toLowerCase(); });
+        if (!found) { found = { id: uid('t'), name: tname, questions: [] }; subject.topics.push(found); }
+        return found;
+      }
+      lines.forEach(function (raw) {
+        var line = raw.trim();
+        if (!line || line.indexOf('===') === 0) return;
+        if (/^Subject\s*:/i.test(line)) { subject = ensureSubject(line.replace(/^Subject\s*:/i, '')); topic = null; q = null; return; }
+        if (/^Duration\s*:/i.test(line)) { if (subject) subject.duration = Number(line.replace(/^Duration\s*:/i, '')) || 30; return; }
+        if (/^Topic\s*:/i.test(line)) { if (!subject) subject = ensureSubject('Untitled'); topic = ensureTopic(line.replace(/^Topic\s*:/i, '')); q = null; subTopic = 'General'; return; }
+        if (/^SubTopic\s*:/i.test(line)) { subTopic = line.replace(/^SubTopic\s*:/i, '').trim() || 'General'; q = null; explanationMode = false; return; }
+        if (/^Type\s*:/i.test(line)) {
+          if (!subject) subject = ensureSubject('Untitled');
+          if (!topic) topic = ensureTopic('General');
+          var rawType = line.replace(/^Type\s*:/i, '').trim();
+          var type = /theory/i.test(rawType) ? 'Theory' : (/fill/i.test(rawType) ? 'Fill' : 'MCQ');
+          q = newQuestion(type);
+          q.subTopic = subTopic;
+          topic.questions.push(q);
+          explanationMode = false;
+          return;
+        }
+        if (/^Q\d+\s*:/i.test(line)) {
+          if (!subject) subject = ensureSubject('Untitled');
+          if (!topic) topic = ensureTopic('General');
+          if (!q) { q = newQuestion('MCQ'); q.subTopic = subTopic; topic.questions.push(q); warnings.push('Q line without Type: — assumed MCQ in "' + topic.name + '".'); }
+          q.question = line.replace(/^Q\d+\s*:/i, '').trim();
+          explanationMode = false;
+          return;
+        }
+        if (/^Marks\s*:/i.test(line)) { if (q) q.maxMarks = Number(line.replace(/^Marks\s*:/i, '')) || 10; return; }
+        if (/^Option\s*:/i.test(line)) {
+          if (!q) { warnings.push('Option line before any question — skipped.'); return; }
+          if (!Array.isArray(q.options)) q.options = ['', '', '', ''];
+          var rest = line.replace(/^Option\s*:/i, '').trim();
+          var m = rest.match(/^([A-Da-d])\s*:\s*([\s\S]*)$/);
+          if (m) q.options['ABCD'.indexOf(m[1].toUpperCase())] = m[2].trim();
+          else {
+            var next = q.options.findIndex(function (v) { return !v; });
+            if (next >= 0) q.options[next] = rest;
+          }
+          explanationMode = false;
+          return;
+        }
+        if (/^Answer\s*:/i.test(line)) { if (q) q.correct = line.replace(/^Answer\s*:/i, '').trim(); explanationMode = false; return; }
+        if (/^Explanation\s*:/i.test(line)) { if (q) q.explanation = line.replace(/^Explanation\s*:/i, '').trim(); explanationMode = true; return; }
+        if (explanationMode && q) { q.explanation = (q.explanation ? q.explanation + ' ' : '') + line; return; }
+        if (!subject && line) {
+          /* smart recovery: raw text passed without a Subject tag */
+          subject = ensureSubject(line);
+          subject.__recovered = true;
+          return;
+        }
+        warnings.push('Ignored unrecognised line: "' + line.slice(0, 60) + '"');
+      });
+
+      subjects.forEach(function (s) {
+        s.topics.forEach(function (t) {
+          t.questions = t.questions.filter(function (question) {
+            var ok = question.type === 'MCQ' ? (question.options || []).filter(function (v) { return v && String(v).trim(); }).length >= 2 && !!question.correct
+              : question.type === 'Fill' ? !!question.correct
+                : !!question.question;
+            if (!ok) warnings.push('Skipped an incomplete ' + question.type + ' in "' + t.name + '".');
+            return ok;
+          });
+          if (!Array.isArray(t.questions)) t.questions = [];
+        });
+        s.topics = s.topics.filter(function (t) { return t.questions.length; });
+        if (!s.topics.length) s.topics.push(newTopic('General'));
+        delete s.__recovered;
+      });
+      return { subjects: subjects, warnings: warnings };
+    },
+
+    previewImport: function () {
+      var text = (document.getElementById('import-text') || {}).value || '';
+      if (!text.trim()) { B.toast('Paste bank code or choose a file first.', 'error'); return; }
+      var parsed = B.parseImportCode(text);
+      pendingImport = parsed;
+      var subjects = parsed.subjects || [];
+      var topics = 0, questions = 0;
+      subjects.forEach(function (s) { topics += s.topics.length; s.topics.forEach(function (t) { questions += t.questions.length; }); });
+      var panel = document.getElementById('import-preview');
+      if (panel) panel.classList.remove('hidden');
+      var summary = document.getElementById('import-summary');
+      if (summary) summary.innerHTML = '<i class="fas fa-circle-check text-emerald-400 mr-1.5"></i>Parsed <strong>' + subjects.length + '</strong> subject(s) · <strong>' + topics + '</strong> topic(s) · <strong>' + questions + '</strong> question(s)';
+      var warnings = document.getElementById('import-warnings');
+      if (warnings) warnings.innerHTML = (parsed.warnings || []).slice(0, 8).map(function (w) { return '<div><i class="fas fa-triangle-exclamation mr-1"></i>' + esc(w) + '</div>'; }).join('');
+      if (parsed.error) { if (summary) summary.innerHTML = '<span class="text-rose-400"><i class="fas fa-circle-xmark mr-1"></i>' + esc(parsed.error) + '</span>'; }
+    },
+
+    parseImportCode: function (code) {
+      var banks;
+      try {
+        banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + code + '\nreturn window.CBT_SUBJECT_BANKS;')();
+      } catch (e) {
+        banks = [code];
+      }
+      if (!Array.isArray(banks)) banks = [code];
+      var merged = { subjects: [], warnings: [] };
+      banks.forEach(function (item) {
+        if (typeof item === 'string') {
+          var parsed = B.parseDSL(item);
+          parsed.subjects.forEach(function (s) { merged.subjects.push(s); });
+          merged.warnings = merged.warnings.concat(parsed.warnings);
+        } else if (item && Array.isArray(item.topics)) {
+          merged.subjects.push(B.normalizeSubject(item));
+        } else if (item && item.subjects && Array.isArray(item.subjects)) {
+          item.subjects.forEach(function (s) { merged.subjects.push(B.normalizeSubject(s)); });
+        } else {
+          merged.warnings.push('Unrecognised bank entry skipped.');
+        }
+      });
+      if (!merged.subjects.length) {
+        merged.warnings.push('No subjects found. Falling back to raw-text DSL parse.');
+        var fallback = B.parseDSL(String(code));
+        merged.subjects = fallback.subjects;
+        merged.warnings = merged.warnings.concat(fallback.warnings);
+      }
+      if (!merged.subjects.length) merged.error = 'Nothing could be parsed from this source.';
+      return merged;
+    },
+
+    normalizeSubject: function (raw) {
+      var s = {
+        id: uid('s'), name: String(raw.name || 'Untitled').trim(), duration: Number(raw.duration) || 30,
+        topics: (raw.topics || []).map(function (t) {
+          return {
+            id: uid('t'), name: String(t.name || 'General').trim(),
+            questions: (t.questions || []).map(function (q) {
+              return {
+                id: uid('q'),
+                type: q.type === 'objective' ? 'MCQ' : (q.type === 'fill' ? 'Fill' : (q.type === 'theory' ? 'Theory' : (q.type || 'MCQ'))),
+                subTopic: q.subTopic || 'General',
+                question: q.question || q.text || '',
+                options: Array.isArray(q.options) ? q.options.slice(0, 4).concat(['', '', '', '']).slice(0, 4) : (q.options && typeof q.options === 'object' ? ['A', 'B', 'C', 'D'].map(function (l) { return q.options[l] || ''; }) : ['', '', '', '']),
+                correct: q.correct || '',
+                explanation: q.explanation || '',
+                maxMarks: Number(q.maxMarks) || 10
+              };
+            })
+          };
+        })
+      };
+      if (!s.topics.length) s.topics.push({ id: uid('t'), name: 'General', questions: [] });
+      return s;
+    },
+
+    applyImport: function () {
+      if (!pendingImport || !pendingImport.subjects || !pendingImport.subjects.length) { B.toast('Parse a source with subjects first.', 'error'); return; }
+      var modeEl = document.querySelector('input[name="import-mode"]:checked');
+      var mode = modeEl ? modeEl.value : 'replace';
+      B.pushUndoState();
+      if (mode === 'replace') {
+        appData.subjects = clone(pendingImport.subjects);
+        appData.bankName = appData.subjects[0] ? appData.subjects[0].name + ' Bank' : appData.bankName;
+      } else {
+        pendingImport.subjects.forEach(function (incoming) {
+          var existing = appData.subjects.find(function (s) { return s.name.toLowerCase() === incoming.name.toLowerCase(); });
+          if (!existing) { appData.subjects.push(clone(incoming)); return; }
+          incoming.topics.forEach(function (it) {
+            var et = existing.topics.find(function (t) { return t.name.toLowerCase() === it.name.toLowerCase(); });
+            if (!et) existing.topics.push(clone(it));
+            else it.questions.forEach(function (q) { et.questions.push(clone(q)); });
+          });
         });
       }
-    });
-    if (term && !anyVisible) return;
-    const open = term ? true : expanded.has(s.id);
-    const sActive = sel && sel.s === s.id && !sel.t;
-    html += `
-      <div class="tree-row ${sActive ? 'active' : ''} font-semibold" onclick="selectPath({s:'${s.id}'})">
-        <i class="fas fa-chevron-${open ? 'down' : 'right'} text-[10px] w-3 text-slate-500" onclick="toggleExpand('${s.id}',event)"></i>
-        <i class="fas fa-book text-brand-400 text-xs"></i>
-        <span class="truncate">${esc(s.name)}</span>
-        <span class="acts"><button class="tree-mini" title="Add topic" onclick="event.stopPropagation();addTopic('${s.id}')"><i class="fas fa-plus"></i></button></span>
-      </div>${open ? topicsHtml : ''}`;
-  });
-  $('tree').innerHTML = html || '<div class="p-4 text-sm text-slate-500">No matches.</div>';
-}
+      B.closeModal('import-modal');
+      var first = appData.subjects[0];
+      selected = first ? { subjectId: first.id, topicId: first.topics[0] ? first.topics[0].id : null, questionId: null } : { subjectId: null, topicId: null, questionId: null };
+      previewMode = false;
+      B.render(); B.scheduleSave();
+      B.toast('Imported ' + pendingImport.subjects.length + ' subject(s) · ' + mode, 'success');
+      pendingImport = null;
+    },
 
-function renderBreadcrumb() {
-  const parts = [];
-  if (sel) {
-    const s = findSubject(sel.s);
-    if (s) parts.push(esc(s.name));
-    const t = sel.t ? findTopic(sel.s, sel.t) : null;
-    if (t) parts.push(esc(t.name));
-    if (sel.q) { const nums = qNumbers(); parts.push(qLabel(nums[sel.q] || 0)); }
-  }
-  const crumbs = parts.length ? parts.map((p, i) => `<span class="${i === parts.length - 1 ? 'text-brand-300 font-semibold' : 'text-slate-400'}">${p}</span>`).join('<i class="fas fa-chevron-right text-[9px] text-slate-600"></i>') : '<span class="text-slate-500">Select a subject, topic or question</span>';
-  $('breadcrumb').innerHTML = crumbs + (previewMode ? '<span class="ml-auto btn btn-active !py-1 cursor-pointer" onclick="togglePreview()"><i class="fas fa-eye"></i> Preview Mode</span>' : '');
-}
+    /* ------------- export ------------- */
+    defaultFilename: function () {
+      var base = (appData.subjects[0] && appData.subjects[0].name) || 'question';
+      return B.slug(base) + '-bank.js';
+    },
+    slug: function (s) { return String(s || 'question').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'question'; },
+    openExport: function () {
+      B.openModal('export-modal');
+      var input = document.getElementById('export-filename');
+      if (input && !input.value) input.value = B.defaultFilename();
+      B.updateExportPreview();
+    },
+    fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },
+    sanitize: function (s) { return String(s === undefined || s === null ? '' : s).replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\r?\n/g, ' ').trim(); },
+    generateExportJSCode: function (shuffleOptions) {
+      var data = clone(appData);
+      if (shuffleOptions) {
+        data.subjects.forEach(function (s) {
+          s.topics.forEach(function (t) {
+            t.questions.forEach(function (q) {
+              if (q.type !== 'MCQ') return;
+              var originalCorrectValue = (q.options || [])['ABCD'.indexOf(String(q.correct).toUpperCase())] || '';
+              var wanted = B.sanitize(originalCorrectValue);
+              var pairs = (q.options || []).slice(0, 4).map(function (v, i) { return { v: B.sanitize(v), i: i }; });
+              B.shuffle(pairs);
+              q.options = pairs.map(function (p) { return p.v; });
+              var idx = q.options.findIndex(function (v) { return v === wanted; });
+              q.correct = 'ABCD'[idx >= 0 ? idx : 0];
+            });
+          });
+        });
+      }
 
-function renderPane() {
-  const pane = $('editor-pane');
-  if (previewMode) { pane.innerHTML = previewHtml(); typeset(pane); return; }
-  if (!sel) { pane.innerHTML = '<div class="h-full flex items-center justify-center text-slate-500 p-10 text-center"><div><i class="fas fa-hand-point-left text-4xl mb-3 opacity-50"></i><p>Pick something from the tree to start editing.</p></div></div>'; return; }
-  const s = findSubject(sel.s);
-  if (!s) { sel = null; renderPane(); return; }
-  if (!sel.t) { pane.innerHTML = subjectEditorHtml(s); return; }
-  const t = findTopic(sel.s, sel.t);
-  if (!t) { sel = { s: sel.s }; renderPane(); return; }
-  if (!sel.q) { pane.innerHTML = topicEditorHtml(s, t); return; }
-  const q = findQuestion(sel.s, sel.t, sel.q);
-  if (!q) { sel = { s: sel.s, t: sel.t }; renderPane(); return; }
-  pane.innerHTML = questionEditorHtml(s, t, q);
-  queuePreview('qp-text', q.question);
-  queuePreview('qp-exp', q.explanation);
-}
-
-/* --------------------------- editors --------------------------- */
-function subjectEditorHtml(s) {
-  const qCount = s.topics.reduce((n, t) => n + t.questions.length, 0);
-  return `
-  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-brand-600/20 text-brand-300 flex items-center justify-center"><i class="fas fa-book"></i></div>
-      <div><h2 class="text-lg font-bold">Subject</h2><p class="text-xs text-slate-500">${s.topics.length} topics · ${qCount} questions</p></div>
-    </div>
-    <div><label class="label">Subject name</label><input class="fld" value="${esc(s.name)}" oninput="setSubjectField('${s.id}','name',this.value)"></div>
-    <div><label class="label">Default duration (minutes)</label><input type="number" min="1" max="999" class="fld" value="${s.duration}" oninput="setSubjectField('${s.id}','duration',this.value)"></div>
-    <div>
-      <label class="label">Topics</label>
-      <div class="space-y-2">${s.topics.map((t) => `
-        <button class="w-full text-left bg-ink-900 border border-ink-600 hover:border-brand-500 rounded-lg px-3 py-2 flex items-center gap-2" onclick="selectPath({s:'${s.id}',t:'${t.id}'})">
-          <i class="fas fa-folder text-amber-400/80"></i><span class="font-semibold truncate">${esc(t.name)}</span><span class="ml-auto text-xs text-slate-500">${t.questions.length} Q</span>
-        </button>`).join('') || '<p class="text-sm text-slate-500">No topics yet.</p>'}</div>
-    </div>
-    <div class="flex flex-wrap gap-2">
-      <button class="btn btn-primary" onclick="addTopic('${s.id}')"><i class="fas fa-plus"></i> Add Topic</button>
-      <button class="btn btn-amber" onclick="setPreview(true)"><i class="fas fa-eye"></i> Preview subject</button>
-      <button class="btn btn-danger ml-auto" onclick="deleteSubject('${s.id}')"><i class="fas fa-trash"></i> Delete Subject</button>
-    </div>
-  </div>`;
-}
-
-function topicEditorHtml(s, t) {
-  const nums = qNumbers();
-  return `
-  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-amber-400/15 text-amber-300 flex items-center justify-center"><i class="fas fa-folder"></i></div>
-      <div><h2 class="text-lg font-bold">Topic</h2><p class="text-xs text-slate-500">${esc(s.name)} · ${t.questions.length} questions</p></div>
-    </div>
-    <div><label class="label">Topic name</label><input class="fld" value="${esc(t.name)}" oninput="setTopicField('${s.id}','${t.id}',this.value)"></div>
-    <div>
-      <label class="label">Add a question</label>
-      <div class="flex flex-wrap gap-2">
-        <button class="btn" onclick="addQuestion('MCQ')"><span class="dot dot-MCQ"></span> MCQ</button>
-        <button class="btn" onclick="addQuestion('Fill')"><span class="dot dot-Fill"></span> Fill in gap</button>
-        <button class="btn" onclick="addQuestion('Theory')"><span class="dot dot-Theory"></span> Theory</button>
-      </div>
-    </div>
-    <div>
-      <label class="label">Questions</label>
-      <div class="space-y-2">${t.questions.map((q) => `
-        <button class="w-full text-left bg-ink-900 border border-ink-600 hover:border-brand-500 rounded-lg px-3 py-2 flex items-center gap-2 min-w-0" onclick="selectPath({s:'${s.id}',t:'${t.id}',q:'${q.id}'})">
-          <span class="dot dot-${q.type}"></span><span class="text-xs font-mono text-slate-500">${qLabel(nums[q.id])}</span>
-          <span class="truncate">${esc((q.question || '(empty question)').slice(0, 90))}</span>
-          <span class="ml-auto text-[10px] text-slate-500 shrink-0">${esc(q.subTopic)}</span>
-        </button>`).join('') || '<p class="text-sm text-slate-500">No questions yet.</p>'}</div>
-    </div>
-    <div class="flex flex-wrap gap-2">
-      <button class="btn" onclick="shuffleTopicOptions('${s.id}','${t.id}')"><i class="fas fa-random"></i> Shuffle Options</button>
-      <button class="btn btn-amber" onclick="setPreview(true)"><i class="fas fa-eye"></i> Preview topic</button>
-      <button class="btn btn-danger ml-auto" onclick="deleteTopic('${s.id}','${t.id}')"><i class="fas fa-trash"></i> Delete Topic</button>
-    </div>
-  </div>`;
-}
-
-function questionEditorHtml(s, t, q) {
-  const nums = qNumbers();
-  const seg = ['MCQ', 'Fill', 'Theory'].map((ty) => `<button class="${q.type === ty ? 'on' : ''}" onclick="setQType('${ty}')">${ty}</button>`).join('');
-  let body = '';
-  if (q.type === 'MCQ') {
-    body = `
-      <div>
-        <div class="flex items-center justify-between mb-1"><label class="label !mb-0">Options (select the correct one)</label>
-          <button class="btn !py-1" onclick="shuffleThisQuestion()"><i class="fas fa-random"></i> Shuffle</button></div>
-        <div class="space-y-2">${LETTERS.map((L, i) => `
-          <div class="flex items-center gap-2">
-            <input type="radio" name="correct-opt" class="accent-teal-400 w-4 h-4 shrink-0" ${q.correct === L ? 'checked' : ''} onchange="setCorrect('${L}')" title="Mark ${L} as correct">
-            <span class="w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 ${q.correct === L ? 'bg-brand-600 text-white' : 'bg-ink-700 text-slate-300'}">${L}</span>
-            <input class="fld" value="${esc(q.options[i])}" placeholder="Option ${L}" oninput="setOption(${i},this.value)">
-          </div>`).join('')}</div>
-      </div>`;
-  } else if (q.type === 'Fill') {
-    body = `<div><label class="label">Correct answer (exact text)</label><input class="fld" value="${esc(q.correct)}" oninput="qField('correct',this.value)"></div>`;
-  } else {
-    body = `<div><label class="label">Maximum marks</label><input type="number" min="1" max="100" class="fld !w-32" value="${q.maxMarks}" oninput="qField('maxMarks',parseInt(this.value,10)||10)">
-      <p class="text-xs text-slate-500 mt-1">Use the explanation below as the model answer the AI grades against.</p></div>`;
-  }
-  return `
-  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm font-mono text-slate-400">${qLabel(nums[q.id])}</span>
-      <div class="seg">${seg}</div>
-      <div class="ml-auto flex gap-2">
-        <button class="btn" onclick="duplicateQuestion()"><i class="fas fa-clone"></i><span class="hidden sm:inline">Duplicate</span></button>
-        <button class="btn btn-danger" onclick="deleteQuestion()"><i class="fas fa-trash"></i><span class="hidden sm:inline">Delete</span></button>
-      </div>
-    </div>
-    <div><label class="label">SubTopic</label><input class="fld" value="${esc(q.subTopic)}" placeholder="General" oninput="qField('subTopic',this.value)"></div>
-    <div>
-      <label class="label">Question (LaTeX: $x^2$ or \\(x^2\\))</label>
-      <textarea class="fld" rows="4" oninput="qField('question',this.value)">${esc(q.question)}</textarea>
-      <div id="qp-text" class="preview-box mt-2"></div>
-    </div>
-    ${body}
-    <div>
-      <label class="label">${q.type === 'Theory' ? 'Model answer / explanation' : 'Explanation'}</label>
-      <textarea class="fld" rows="4" oninput="qField('explanation',this.value)">${esc(q.explanation)}</textarea>
-      <div id="qp-exp" class="preview-box mt-2"></div>
-    </div>
-  </div>`;
-}
-
-/* --------------------------- editor handlers --------------------------- */
-function setSubjectField(id, field, value) {
-  edit(() => { const s = findSubject(id); if (s) s[field] = field === 'duration' ? (parseInt(value, 10) || 30) : value; });
-  refreshChrome();
-}
-function setTopicField(sId, tId, value) { edit(() => { const t = findTopic(sId, tId); if (t) t.name = value; }); refreshChrome(); }
-function qField(field, value) {
-  edit(() => { const q = curQ(); if (q) q[field] = value; });
-  if (field === 'question') queuePreview('qp-text', value);
-  if (field === 'explanation') queuePreview('qp-exp', value);
-  if (field === 'question' || field === 'subTopic') refreshChrome();
-}
-function setOption(i, value) { edit(() => { const q = curQ(); if (q) q.options[i] = value; }); }
-function setCorrect(L) { act(() => { const q = curQ(); if (q) q.correct = L; }); }
-function setQType(type) {
-  act(() => {
-    const q = curQ(); if (!q || q.type === type) return;
-    const idx = LETTERS.indexOf(q.correct);
-    if (q.type === 'MCQ' && type === 'Fill') q.correct = (idx >= 0 && q.options[idx]) ? q.options[idx] : '';
-    if (type === 'MCQ') q.correct = 'A';
-    if (type === 'Theory') { q.correct = ''; q.maxMarks = q.maxMarks || 10; }
-    q.type = type;
-  });
-}
-function shuffleThisQuestion() { act(() => { const q = curQ(); if (q) shuffleOpts(q); }); }
-function shuffleTopicOptions(sId, tId) {
-  act(() => { const t = findTopic(sId, tId); if (t) t.questions.forEach(shuffleOpts); });
-  toast('Options shuffled for every MCQ in this topic', 'ok');
-}
-
-function addSubject() {
-  pushUndoState(); inBurst = false;
-  const s = newSubject('New Subject');
-  appData.subjects.push(s);
-  scheduleSave();
-  selectPath({ s: s.id });
-}
-function addTopic(sId) {
-  const s = findSubject(sId || (sel && sel.s)); if (!s) return;
-  pushUndoState(); inBurst = false;
-  const t = newTopic('New Topic');
-  s.topics.push(t);
-  scheduleSave();
-  selectPath({ s: s.id, t: t.id });
-}
-function addQuestion(type, sId, tId) {
-  const s = sId || (sel && sel.s), tt = tId || (sel && sel.t);
-  const t = findTopic(s, tt); if (!t) return;
-  pushUndoState(); inBurst = false;
-  const last = t.questions[t.questions.length - 1];
-  const q = newQuestion(type, last ? last.subTopic : 'General');
-  t.questions.push(q);
-  scheduleSave();
-  selectPath({ s: s, t: tt, q: q.id });
-}
-function duplicateQuestion() {
-  const t = findTopic(sel.s, sel.t); const q = curQ(); if (!t || !q) return;
-  pushUndoState(); inBurst = false;
-  const copy = JSON.parse(JSON.stringify(q));
-  copy.id = uid('q');
-  t.questions.splice(t.questions.indexOf(q) + 1, 0, copy);
-  scheduleSave();
-  selectPath({ s: sel.s, t: sel.t, q: copy.id });
-}
-function deleteQuestion() {
-  if (!confirm('Delete this question?')) return;
-  const t = findTopic(sel.s, sel.t); const q = curQ(); if (!t || !q) return;
-  pushUndoState(); inBurst = false;
-  t.questions.splice(t.questions.indexOf(q), 1);
-  scheduleSave();
-  selectPath({ s: sel.s, t: sel.t });
-}
-function deleteTopic(sId, tId) {
-  if (!confirm('Delete this topic and all of its questions?')) return;
-  const s = findSubject(sId); if (!s) return;
-  pushUndoState(); inBurst = false;
-  s.topics = s.topics.filter((t) => t.id !== tId);
-  scheduleSave();
-  selectPath({ s: sId });
-}
-function deleteSubject(sId) {
-  if (!confirm('Delete this subject, all its topics and questions?')) return;
-  pushUndoState(); inBurst = false;
-  appData.subjects = appData.subjects.filter((s) => s.id !== sId);
-  scheduleSave();
-  selectPath(null);
-}
-
-/* --------------------------- preview mode --------------------------- */
-function setPreview(on) { previewMode = on; render(); }
-function togglePreview() { setPreview(!previewMode); }
-function scopeQuestions() {
-  const items = [];
-  appData.subjects.forEach((s) => {
-    if (sel && sel.s && s.id !== sel.s) return;
-    s.topics.forEach((t) => {
-      if (sel && sel.t && t.id !== sel.t) return;
-      t.questions.forEach((q) => { if (sel && sel.q && q.id !== sel.q) return; items.push({ s: s, t: t, q: q }); });
-    });
-  });
-  return items;
-}
-function previewHtml() {
-  const items = scopeQuestions();
-  const nums = qNumbers();
-  if (!items.length) return '<div class="p-10 text-center text-slate-500">No questions in this scope yet.</div>';
-  return `<div class="max-w-3xl mx-auto p-4 space-y-4">${items.map((it) => {
-    const q = it.q;
-    let ans = '';
-    if (q.type === 'MCQ') {
-      ans = `<div class="space-y-2 mt-3">${LETTERS.map((L, i) => q.options[i] ? `
-        <div class="pv-opt" data-correct="${q.correct === L ? 1 : 0}"><span class="font-bold text-slate-400">${L}</span><span class="min-w-0">${esc(q.options[i])}</span></div>` : '').join('')}</div>
-        ${q.explanation ? `<div class="pv-exp mt-3 p-3 rounded-lg bg-amber-400/10 border-l-4 border-amber-400 text-sm whitespace-pre-wrap">${esc(q.explanation)}</div>` : ''}`;
-    } else if (q.type === 'Fill') {
-      ans = `<div class="mt-3 text-sm"><span class="text-slate-400">Answer: </span><span class="pv-answer font-bold text-brand-300">${esc(q.correct) || '(none)'}</span></div>
-        ${q.explanation ? `<div class="pv-exp mt-3 p-3 rounded-lg bg-amber-400/10 border-l-4 border-amber-400 text-sm whitespace-pre-wrap">${esc(q.explanation)}</div>` : ''}`;
-    } else {
-      ans = `<div class="mt-3 text-sm"><div class="text-slate-400 mb-1">Model answer (${q.maxMarks} marks)</div><div class="pv-answer whitespace-pre-wrap">${esc(q.explanation) || '(none)'}</div></div>`;
-    }
-    return `
-      <div class="pv-card">
-        <div class="flex items-center gap-2 text-xs text-slate-400 mb-2 flex-wrap">
-          <span class="dot dot-${q.type}"></span><span class="font-mono">${qLabel(nums[q.id])}</span><span>· ${q.type}</span>
-          <span>· ${esc(q.subTopic)}</span><span class="ml-auto truncate max-w-[50%]">${esc(it.s.name)} › ${esc(it.t.name)}</span>
-        </div>
-        <div class="whitespace-pre-wrap break-words">${esc(q.question) || '<em class="text-slate-500">(empty question)</em>'}</div>
-        ${ans}
-        <button class="btn btn-amber mt-3" onclick="togglePv(this)"><i class="fas fa-eye"></i> Reveal</button>
-      </div>`;
-  }).join('')}</div>`;
-}
-function togglePv(btn) {
-  const card = btn.closest('.pv-card');
-  const on = card.classList.toggle('revealed');
-  btn.innerHTML = on ? '<i class="fas fa-eye-slash"></i> Hide' : '<i class="fas fa-eye"></i> Reveal';
-}
-
-/* --------------------------- empty view actions --------------------------- */
-function createBlank() {
-  pushUndoState();
-  const s = newSubject('New Subject'); const t = newTopic('New Topic'); const q = newQuestion('MCQ', 'General');
-  t.questions.push(q); s.topics.push(t);
-  appData = { bankName: 'Untitled Bank', subjects: [s] };
-  scheduleSave();
-  selectPath({ s: s.id, t: t.id, q: q.id });
-}
-function loadSample() {
-  const code = `window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
-window.CBT_SUBJECT_BANKS.push(\`Subject: Physics
-Duration: 45
-
-Topic: Thermodynamics
-
-SubTopic: First Law & Energy
-Type: MCQ
-Q001: A gas absorbs 500 J of heat and does 200 J of work. What is \\\\( \\\\Delta U \\\\)?
-Option: A: 200 J
-Option: B: 300 J
-Option: C: 500 J
-Option: D: 700 J
-Answer: B
-Explanation: By the first law, \\\\( \\\\Delta U = Q - W = 500 - 200 = 300 \\\\) J.
-
-Type: Fill
-Q002: A process with no heat exchange is called an ____ process.
-Answer: adiabatic
-Explanation: In an adiabatic process \\\\( Q = 0 \\\\).
-
-Type: Theory
-Q003: State the first law of thermodynamics.
-Marks: 10
-Explanation: Energy is conserved: the change in internal energy equals heat added to the system minus work done by the system.
-\`);`;
-  const warnings = [];
-  const subjects = parseImportCode(code, warnings);
-  pushUndoState();
-  appData = { bankName: 'Sample Physics Bank', subjects: subjects };
-  scheduleSave();
-  const s = subjects[0], t = s.topics[0];
-  selectPath({ s: s.id, t: t.id, q: t.questions[0].id });
-}
-
-/* --------------------------- IMPORT --------------------------- */
-function mergeSubjects(target, incoming) {
-  const same = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
-  incoming.forEach((inS) => {
-    const s = target.find((x) => same(x.name, inS.name));
-    if (!s) { target.push(inS); return; }
-    inS.topics.forEach((inT) => {
-      const t = s.topics.find((x) => same(x.name, inT.name));
-      if (!t) { s.topics.push(inT); return; }
-      inT.questions.forEach((q) => { if (!t.questions.some((e) => e.question.trim() === q.question.trim())) t.questions.push(q); });
-    });
-  });
-}
-
-function parseDSL(text, warnings) {
-  const subjects = [];
-  let S = null, T = null, subT = 'General', Q = null, inExp = false;
-  const short = (s) => String(s || '').slice(0, 40);
-  const ensureT = (name) => {
-    if (!S) { S = normSubject({ name: 'Imported Subject' }); subjects.push(S); }
-    let t = S.topics.find((x) => x.name === name);
-    if (!t) { t = normTopic({ name: name }); S.topics.push(t); }
-    return t;
-  };
-  const flush = () => {
-    if (!Q) return;
-    if (Q.type === 'MCQ') {
-      if (Q.options.filter((o) => o.trim()).length < 2) warnings.push('MCQ "' + short(Q.question) + '" has fewer than 2 options.');
-      if (!Q.correct) { warnings.push('MCQ "' + short(Q.question) + '" has no Answer — defaulted to A.'); Q.correct = 'A'; }
-    } else if (Q.type === 'Fill' && !Q.correct) warnings.push('Fill "' + short(Q.question) + '" has no Answer.');
-    else if (Q.type === 'Theory' && !Q.question) warnings.push('A Theory question has no text.');
-    Q = null; inExp = false;
-  };
-  const lines = String(text).split(/\r?\n/);
-  for (let n = 0; n < lines.length; n++) {
-    const line = lines[n].trim();
-    if (!line || line.indexOf('===') === 0 || line.indexOf('//') === 0) continue;
-    let m;
-    if ((m = line.match(/^Subject:\s*(.*)$/i))) { flush(); S = normSubject({ name: m[1].trim() || 'Untitled Subject' }); subjects.push(S); T = null; subT = 'General'; continue; }
-    if (!Q && (m = line.match(/^Duration:\s*(\d+)/i))) { if (S) S.duration = parseInt(m[1], 10) || 30; continue; }
-    if ((m = line.match(/^Topic:\s*(.*)$/i))) { flush(); T = ensureT(m[1].trim() || 'General'); subT = 'General'; continue; }
-    if ((m = line.match(/^SubTopic:\s*(.*)$/i))) { flush(); subT = m[1].trim() || 'General'; continue; }
-    if ((m = line.match(/^Type:\s*(MCQ|Theory|Fill)\b/i))) {
-      flush(); if (!T) T = ensureT('General');
-      const tl = m[1].toLowerCase();
-      Q = { id: uid('q'), type: tl === 'mcq' ? 'MCQ' : tl === 'fill' ? 'Fill' : 'Theory', subTopic: subT, question: '', options: ['', '', '', ''], correct: '', explanation: '', maxMarks: 10 };
-      T.questions.push(Q); continue;
-    }
-    if ((m = line.match(/^Q\d+:\s*(.*)$/i))) { if (!Q) { warnings.push('Question text without a Type: line was ignored.'); continue; } Q.question = m[1].trim(); inExp = false; continue; }
-    if ((m = line.match(/^Marks:\s*(\d+)/i))) { if (Q) Q.maxMarks = parseInt(m[1], 10) || 10; continue; }
-    if ((m = line.match(/^Option:\s*([A-Za-z])\s*[:.)]\s*(.*)$/i))) {
-      if (Q) { const i = LETTERS.indexOf(m[1].toUpperCase()); if (i >= 0) Q.options[i] = m[2].trim(); else warnings.push('Option ' + m[1].toUpperCase() + ' ignored (only A–D supported).'); }
-      inExp = false; continue;
-    }
-    if (Q && Q.type === 'MCQ' && !inExp && (m = line.match(/^([A-D])\s*[:.)]\s*(.*)$/))) { Q.options[LETTERS.indexOf(m[1])] = m[2].trim(); continue; }
-    if ((m = line.match(/^Answer:\s*(.*)$/i))) { if (Q) Q.correct = Q.type === 'MCQ' ? m[1].trim().toUpperCase().charAt(0) : m[1].trim(); inExp = false; continue; }
-    if ((m = line.match(/^Explanation:\s*(.*)$/i))) { if (Q) { Q.explanation = m[1].trim(); inExp = true; } continue; }
-    // smart recovery: unknown line + no subject yet => treat it as the subject name
-    if (!S && !Q) { S = normSubject({ name: line }); subjects.push(S); warnings.push('No "Subject:" tag found — assumed "' + short(line) + '" is the subject name.'); continue; }
-    if (Q && inExp) { Q.explanation += (Q.explanation ? ' ' : '') + line; continue; }
-    if (Q && Q.question && !Q.options.some((o) => o) && !Q.correct) { Q.question += '\n' + line; continue; }
-    warnings.push('Ignored unrecognised line: "' + short(line) + '"');
-  }
-  flush();
-  return subjects;
-}
-
-function normalizeObjects(item, warnings) {
-  let subs = [];
-  if (Array.isArray(item)) subs = item;
-  else if (item && Array.isArray(item.subjects)) subs = item.subjects;
-  else if (item && Array.isArray(item.topics)) subs = [item];
-  else { warnings.push('An unsupported bank entry was skipped.'); return []; }
-  return subs.map((s) => {
-    const ns = normSubject({ name: s.name, duration: s.duration, topics: [] });
-    ns.topics = (s.topics || []).map((t) => {
-      const nt = normTopic({ name: t.name, questions: [] });
-      nt.questions = (t.questions || []).map((q) => normQuestion(Object.assign({}, q, { id: undefined })));
-      return nt;
-    });
-    return ns;
-  });
-}
-
-function parseImportCode(code, warnings) {
-  let banks = null;
-  try {
-    banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + code + '\nreturn window.CBT_SUBJECT_BANKS;')();
-  } catch (e) {
-    warnings.push('Could not execute as JavaScript (' + e.message + ') — treating the input as raw bank text.');
-    banks = null;
-  }
-  if (!Array.isArray(banks) || !banks.length) {
-    if (banks !== null) warnings.push('No CBT_SUBJECT_BANKS entries found — parsed the text as a raw bank.');
-    banks = [code];
-  }
-  const out = [];
-  banks.forEach((item) => {
-    if (typeof item === 'string') mergeSubjects(out, parseDSL(item, warnings));
-    else mergeSubjects(out, normalizeObjects(item, warnings));
-  });
-  return out;
-}
-
-function openImportModal(text, filename) {
-  pendingImport = null;
-  $('import-text').value = text || '';
-  $('import-result').innerHTML = '';
-  $('import-options').classList.add('hidden');
-  $('import-confirm').disabled = true;
-  const merge = document.querySelector('input[name="import-mode"][value="merge"]');
-  const replace = document.querySelector('input[name="import-mode"][value="replace"]');
-  (appData.subjects.length ? merge : replace).checked = true;
-  openModal('import-modal');
-  if (text) runParse(filename);
-}
-function runParse(filename) {
-  const code = $('import-text').value;
-  if (!code.trim()) { toast('Paste or load some bank code first.', 'err'); return; }
-  const warnings = [];
-  let subjects = [];
-  try { subjects = parseImportCode(code, warnings); } catch (e) { warnings.push('Parser error: ' + e.message); }
-  const total = subjects.reduce((n, s) => n + s.topics.reduce((m, t) => m + t.questions.length, 0), 0);
-  pendingImport = total ? { subjects: subjects, filename: typeof filename === 'string' ? filename : (pendingImport && pendingImport.filename) } : null;
-  $('import-result').innerHTML = `
-    <div class="rounded-lg border ${total ? 'border-brand-600/60 bg-brand-600/10' : 'border-rose-500/50 bg-rose-500/10'} p-3 text-sm">
-      <div class="font-semibold ${total ? 'text-brand-300' : 'text-rose-300'}">${total ? '<i class="fas fa-check-circle"></i> ' + countSummary(subjects) : '<i class="fas fa-exclamation-triangle"></i> No questions could be parsed.'}</div>
-      ${warnings.length ? `<ul class="mt-2 text-xs text-amber-300 list-disc pl-5 space-y-0.5 max-h-32 overflow-y-auto">${warnings.slice(0, 40).map((w) => '<li>' + esc(w) + '</li>').join('')}</ul>` : ''}
-    </div>`;
-  $('import-options').classList.toggle('hidden', !total);
-  $('import-confirm').disabled = !total;
-}
-function confirmImport() {
-  if (!pendingImport) return;
-  const mode = (document.querySelector('input[name="import-mode"]:checked') || {}).value || 'merge';
-  pushUndoState(); inBurst = false;
-  if (mode === 'replace' || !appData.subjects.length) {
-    appData.subjects = pendingImport.subjects;
-    if (pendingImport.filename) appData.bankName = pendingImport.filename.replace(/\.(js|txt)$/i, '');
-  } else {
-    mergeSubjects(appData.subjects, pendingImport.subjects);
-  }
-  pendingImport = null;
-  closeModal('import-modal');
-  scheduleSave();
-  const s = appData.subjects[0];
-  selectPath(s ? { s: s.id } : null);
-  toast('Import complete', 'ok');
-}
-async function importFromGitHub() {
-  let owner = localStorage.getItem('gh_owner');
-  let repo = localStorage.getItem('gh_repo');
-  if (!owner) { owner = (prompt('GitHub username / owner:') || '').trim(); if (!owner) return; localStorage.setItem('gh_owner', owner); }
-  if (!repo) { repo = (prompt('Repository name:') || '').trim(); if (!repo) return; localStorage.setItem('gh_repo', repo); }
-  const filename = (prompt('Bank filename inside question-banks/ (e.g. physics-bank.js):', 'physics-bank.js') || '').trim();
-  if (!filename) return;
-  try {
-    const url = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/main/question-banks/' + filename;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — check owner, repo and filename.');
-    $('import-text').value = await res.text();
-    runParse(filename);
-  } catch (e) { toast('GitHub import failed: ' + e.message, 'err'); }
-}
-
-/* drag & drop + file pickers */
-function readFileThen(file, cb) {
-  const r = new FileReader();
-  r.onload = () => cb(String(r.result), file.name);
-  r.onerror = () => toast('Could not read the file.', 'err');
-  r.readAsText(file);
-}
-function wireDrop(el, cb) {
-  ['dragenter', 'dragover'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.add('drop-active'); }));
-  ['dragleave', 'drop'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.remove('drop-active'); }));
-  el.addEventListener('drop', (e) => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) readFileThen(f, cb); });
-}
-wireDrop($('drop-zone'), (text, name) => openImportModal(text, name));
-wireDrop($('import-drop'), (text, name) => { $('import-text').value = text; runParse(name); });
-$('file-input').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) readFileThen(f, (t, n) => openImportModal(t, n)); e.target.value = ''; });
-$('import-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) readFileThen(f, (t, n) => { $('import-text').value = t; runParse(n); }); e.target.value = ''; });
-
-/* --------------------------- EXPORT --------------------------- */
-// LaTeX backslashes (and template-literal specials) must be escaped because the output sits inside a JS template literal.
-function fixMath(s) {
-  return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
-}
-function generateExportJSCode(shuffle) {
-  const data = JSON.parse(JSON.stringify(appData));
-  if (shuffle) data.subjects.forEach((s) => s.topics.forEach((t) => t.questions.forEach(shuffleOpts)));
-  let n = 0;
-  const blocks = data.subjects.map((s) => {
-    let b = 'Subject: ' + fixMath(s.name) + '\nDuration: ' + (s.duration || 30) + '\n\n';
-    s.topics.forEach((t) => {
-      b += 'Topic: ' + fixMath(t.name) + '\n\n';
-      let lastSub = null;
-      t.questions.forEach((q) => {
-        n++;
-        const sub = String(q.subTopic || 'General').trim() || 'General';
-        if (sub !== lastSub) { b += 'SubTopic: ' + fixMath(sub) + '\n'; lastSub = sub; }
-        b += 'Type: ' + q.type + '\n';
-        b += 'Q' + String(n).padStart(3, '0') + ': ' + fixMath(q.question) + '\n';
-        if (q.type === 'MCQ') {
-          LETTERS.forEach((L, i) => { if (String(q.options[i]).trim()) b += 'Option: ' + L + ': ' + fixMath(q.options[i]) + '\n'; });
-          b += 'Answer: ' + q.correct + '\n';
-        } else if (q.type === 'Fill') {
-          b += 'Answer: ' + fixMath(q.correct) + '\n';
-        } else {
-          b += 'Marks: ' + (q.maxMarks || 10) + '\n';
-        }
-        if (String(q.explanation).trim()) b += 'Explanation: ' + fixMath(q.explanation) + '\n';
-        b += '\n';
+      var blocks = [];
+      data.subjects.forEach(function (s) {
+        var lines = ['Subject: ' + B.sanitize(s.name)];
+        if (Number(s.duration) && Number(s.duration) !== 30) lines.push('Duration: ' + (Number(s.duration) || 30));
+        s.topics.forEach(function (t) {
+          lines.push('', 'Topic: ' + B.sanitize(t.name));
+          t.questions.forEach(function (q, i) {
+            lines.push('');
+            lines.push('SubTopic: ' + B.fixMath(B.sanitize(q.subTopic || 'General')));
+            lines.push('Type: ' + (q.type || 'MCQ'));
+            lines.push('Q' + String(i + 1).padStart(3, '0') + ': ' + B.fixMath(B.sanitize(q.question)));
+            if (q.type === 'MCQ') {
+              (q.options || []).slice(0, 4).forEach(function (opt, oi) {
+                if (opt && String(opt).trim()) lines.push('Option: ' + 'ABCD'[oi] + ': ' + B.fixMath(B.sanitize(opt)));
+              });
+              lines.push('Answer: ' + B.sanitize(q.correct || 'A'));
+            } else if (q.type === 'Fill') {
+              lines.push('Answer: ' + B.fixMath(B.sanitize(q.correct)));
+            } else {
+              lines.push('Marks: ' + (q.maxMarks || 10));
+            }
+            if (q.explanation && String(q.explanation).trim()) lines.push('Explanation: ' + B.fixMath(B.sanitize(q.explanation)));
+          });
+        });
+        blocks.push(lines.join('\n'));
       });
-    });
-    return b;
-  });
-  return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' +
-    blocks.map((b) => 'window.CBT_SUBJECT_BANKS.push(`' + b + '`);\n').join('\n');
-}
-const slug = (s) => String(s || 'question').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'question';
-function exportFilename() { const f = appData.subjects[0]; return slug(f ? f.name : 'question') + '-bank.js'; }
-function openExportModal() {
-  if (!appData.subjects.length) { toast('Nothing to export yet.', 'err'); return; }
-  $('export-filename').value = exportFilename();
-  $('export-shuffle').checked = false;
-  refreshExport();
-  openModal('export-modal');
-}
-function refreshExport() {
-  lastExportCode = generateExportJSCode($('export-shuffle').checked);
-  $('export-preview').textContent = lastExportCode;
-  $('export-size').textContent = (new Blob([lastExportCode]).size / 1024).toFixed(1) + ' KB';
-  $('export-summary').textContent = countSummary(appData.subjects);
-}
-function copyExport() {
-  const done = () => toast('Copied to clipboard', 'ok');
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lastExportCode).then(done, () => toast('Copy failed', 'err'));
-  else { const ta = document.createElement('textarea'); ta.value = lastExportCode; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); }
-}
-function downloadExport() {
-  let name = $('export-filename').value.trim() || exportFilename();
-  if (!/\.js$/i.test(name)) name += '.js';
-  const url = URL.createObjectURL(new Blob([lastExportCode], { type: 'text/javascript' }));
-  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+      return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' +
+        blocks.map(function (b) { return 'window.CBT_SUBJECT_BANKS.push(`' + b + '\n`);'; }).join('\n\n') + '\n';
+    },
+    updateExportPreview: function () {
+      var shuffleEl = document.getElementById('export-shuffle');
+      exportCode = B.generateExportJSCode(!!(shuffleEl && shuffleEl.checked));
+      var pre = document.getElementById('export-preview');
+      if (pre) pre.textContent = exportCode;
+      var counts = B.counts();
+      var summary = document.getElementById('export-summary');
+      if (summary) summary.textContent = counts.subjects + ' Subjects · ' + counts.topics + ' Topics · ' + counts.questions + ' Questions';
+      var size = document.getElementById('export-size');
+      if (size) size.textContent = '~' + (new Blob([exportCode]).size / 1024).toFixed(1) + ' KB';
+    },
+    copyExport: async function () {
+      if (!exportCode) B.updateExportPreview();
+      try { await navigator.clipboard.writeText(exportCode); B.toast('Copied export code to clipboard', 'success'); }
+      catch (e) {
+        var ta = document.createElement('textarea'); ta.value = exportCode; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); B.toast('Copied export code', 'success'); } catch (err) { B.toast('Copy failed — select the preview manually', 'error'); }
+        ta.remove();
+      }
+    },
+    downloadExport: function () {
+      var input = document.getElementById('export-filename');
+      var filename = (input && input.value.trim()) || B.defaultFilename();
+      if (!/\.js$/i.test(filename)) filename += '.js';
+      var blob = new Blob([exportCode || B.generateExportJSCode(false)], { type: 'text/javascript' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+      B.toast('Downloaded ' + filename, 'success');
+    },
 
-/* --------------------------- PUBLISH --------------------------- */
-function openPublishModal() {
-  if (!appData.subjects.length) { toast('Nothing to publish yet.', 'err'); return; }
-  $('pub-owner').value = localStorage.getItem('gh_owner') || '';
-  $('pub-repo').value = localStorage.getItem('gh_repo') || '';
-  $('pub-token').value = localStorage.getItem('gh_token') || '';
-  $('pub-filename').value = exportFilename();
-  $('pub-status').innerHTML = '';
-  openModal('publish-modal');
-}
-async function doPublish(ev) {
-  ev.preventDefault();
-  const owner = $('pub-owner').value.trim(), repo = $('pub-repo').value.trim();
-  const token = $('pub-token').value.trim();
-  let filename = $('pub-filename').value.trim();
-  if (!/\.js$/i.test(filename)) filename += '.js';
-  localStorage.setItem('gh_owner', owner);
-  localStorage.setItem('gh_repo', repo);
-  if (token) localStorage.setItem('gh_token', token);
-  const btn = $('pub-submit'), status = $('pub-status');
-  btn.disabled = true;
-  status.innerHTML = '<span class="text-slate-400"><i class="fas fa-spinner fa-spin"></i> Publishing…</span>';
-  try {
-    const res = await fetch('/api/publish-bank', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: filename, code: generateExportJSCode(false), githubToken: token, repoOwner: owner, repoName: repo })
-    });
-    let data = {};
-    try { data = await res.json(); } catch (e) { /* ignore */ }
-    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-    status.innerHTML = '<span class="text-brand-300"><i class="fas fa-check-circle"></i> ' + esc(data.message || 'Published!') + '</span>' +
-      (data.commitUrl ? ' <a class="underline text-brand-300" target="_blank" rel="noopener" href="' + esc(data.commitUrl) + '">View commit</a>' : '');
-  } catch (e) {
-    status.innerHTML = '<span class="text-rose-300"><i class="fas fa-exclamation-triangle"></i> ' + esc(e.message) + '</span>';
-  } finally { btn.disabled = false; }
-}
+    /* ------------- publish ------------- */
+    openPublish: function () {
+      B.openModal('publish-modal');
+      document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
+      document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
+      document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
+      document.getElementById('pub-filename').value = B.defaultFilename();
+      var err = document.getElementById('pub-error');
+      if (err) err.classList.add('hidden');
+      var st = document.getElementById('pub-status');
+      if (st) st.textContent = '';
+    },
+    submitPublish: async function () {
+      var owner = document.getElementById('pub-owner').value.trim();
+      var repo = document.getElementById('pub-repo').value.trim();
+      var token = document.getElementById('pub-token').value.trim();
+      var filename = document.getElementById('pub-filename').value.trim();
+      var status = document.getElementById('pub-status');
+      var errBox = document.getElementById('pub-error');
+      var btn = document.getElementById('pub-submit');
+      if (!owner || !repo || !token || !filename) {
+        if (errBox) { errBox.textContent = 'Owner, repository, token and filename are all required.'; errBox.classList.remove('hidden'); }
+        return;
+      }
+      localStorage.setItem('gh_owner', owner); localStorage.setItem('gh_repo', repo); localStorage.setItem('gh_token', token);
+      var code = B.generateExportJSCode(false);
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing…'; }
+      if (errBox) errBox.classList.add('hidden');
+      if (status) status.textContent = 'Committing to question-banks/' + filename + ' on main…';
+      try {
+        var res = await fetch('/api/publish-bank', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: filename, code: code, githubToken: token, repoOwner: owner, repoName: repo })
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
+        if (status) status.innerHTML = '<span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>' + esc(data.message || 'Published successfully.') + '</span>' + (data.commitUrl ? ' <a href="' + esc(data.commitUrl) + '" target="_blank" rel="noopener" class="text-indigo-400 underline">View commit</a>' : '');
+        B.toast('Published to GitHub', 'success');
+      } catch (err) {
+        if (errBox) { errBox.textContent = err.message; errBox.classList.remove('hidden'); }
+        if (status) status.textContent = '';
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish bank'; }
+      }
+    }
+  };
 
-/* --------------------------- boot --------------------------- */
-history.replaceState(null, '', '#builder');
-loadState();
-render();
+  window.B = B;
+  B.start();
+})();
 </script>
 </body>
 </html>
