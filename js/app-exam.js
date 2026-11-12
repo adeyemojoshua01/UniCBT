@@ -1,468 +1,421 @@
-/* ==========================================================================
+/* ============================================================
    app-exam.js — timer, test UI, renderQuestion, answer handling
-   ========================================================================== */
-Object.assign(window.app, {
+   ============================================================ */
+(function () {
+  'use strict';
 
-  /* ------------------------------------------------------------------ *
-   *  TIMER
-   * ------------------------------------------------------------------ */
-  startTimer: function () {
-    if (this.data.timer) clearInterval(this.data.timer);
-    if (!this.data.endTime) this.data.endTime = Date.now() + this.data.timeLeft * 1000;
-    this.data.timer = setInterval(() => {
-      const remaining = Math.max(0, Math.round((this.data.endTime - Date.now()) / 1000));
-      if (remaining === this.data.timeLeft) return;        // skip no-op
-      this.data.timeLeft = remaining;
+  function isAnswered(app, q) {
+    var v = app.data.userAnswers[q.id];
+    return v !== undefined && v !== null && String(v).trim() !== '';
+  }
+
+  var examMethods = {
+
+    /* ---------------- timer ---------------- */
+    startTimer: function () {
+      if (this.data.timer) clearInterval(this.data.timer);
+      if (!this.data.endTime) this.data.endTime = Date.now() + this.data.timeLeft * 1000;
       this.updateTimerDisplay();
       this.saveExamState();
-      if (remaining <= 0) {
-        clearInterval(this.data.timer);
-        this.data.timer = null;
-        this.submitTest();
+      this.data.timer = setInterval(function () {
+        var remaining = Math.max(0, Math.round((app.data.endTime - Date.now()) / 1000));
+        if (remaining === app.data.timeLeft) return;   // skip no-op
+        app.data.timeLeft = remaining;
+        app.updateTimerDisplay();
+        app.saveExamState();
+        if (remaining <= 0) {
+          clearInterval(app.data.timer);
+          app.data.timer = null;
+          app.submitTest();
+        }
+      }, 250);
+    },
+
+    stopTimer: function () {
+      if (this.data.timer) clearInterval(this.data.timer);
+      this.data.timer = null;
+      this.data.endTime = null;
+    },
+
+    updateTimerDisplay: function () {
+      var el = document.getElementById('timer-display');
+      if (!el) return;
+      var txt = this.formatSeconds(this.data.timeLeft);
+      el.innerHTML = '<i class="fas fa-clock text-sm"></i>' + txt;
+      el.classList.remove('text-red-500', 'animate-pulse');
+      if (this.data.timeLeft < 60) el.classList.add('text-red-500', 'animate-pulse');
+    },
+
+    /* ---------------- test shell ---------------- */
+    showTestInterface: function () {
+      this.data.mode = 'test';
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      this.updateHeader();
+      this.renderQuestion();
+      this.saveExamState();
+    },
+
+    navigatorHTML: function () {
+      var d = this.data;
+      var out = '';
+      for (var i = 0; i < d.questions.length; i++) {
+        var q = d.questions[i];
+        var answered = isAnswered(this, q);
+        var active = i === d.currentQuestionIndex;
+        var cls = active
+          ? 'bg-blue-600 text-white border-blue-700 shadow-md'
+          : (answered ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200');
+        out += '<button onclick="app.jumpToQuestion(' + i + ')" title="Question ' + (i + 1) + (answered ? ' · answered' : ' · unanswered') + '" class="h-8 w-8 rounded-lg border text-[11px] font-bold transition-colors ' + cls + '">' + (i + 1) + '</button>';
       }
-    }, 250);
-  },
+      return out;
+    },
 
-  stopTimer: function () {
-    if (this.data.timer) clearInterval(this.data.timer);
-    this.data.timer = null;
-    this.data.endTime = null;   // a fresh startTimer() recalculates from timeLeft
-  },
+    theoryMarkup: function (q) {
+      var d = this.data;
+      var isStudy = d.examMode === 'study';
+      var revealed = d.answerRevealed[q.id];
+      var answer = d.userAnswers[q.id];
+      var maxMarks = q.maxMarks || 10;
 
-  updateTimerDisplay: function () {
-    const el = document.getElementById('timer-display');
-    if (!el) return;
-    const t = Math.max(0, this.data.timeLeft);
-    const mm = String(Math.floor(t / 60)).padStart(2, '0');
-    const ss = String(t % 60).padStart(2, '0');
-    el.textContent = mm + ':' + ss;
-    el.classList.toggle('text-red-500', t < 60);
-    el.classList.toggle('animate-pulse', t < 60);
-  },
+      if (isStudy && revealed && revealed.score !== undefined) {
+        var submitted = answer && String(answer).startsWith('data:image')
+          ? '<img src="' + answer + '" alt="Submitted answer" class="max-h-64 rounded-lg border border-gray-200">'
+          : '<div class="text-sm text-gray-700 whitespace-pre-wrap break-words bg-white rounded-lg border border-gray-200 p-3">' + app.esc(answer || 'No answer submitted') + '</div>';
+        return '<div class="mt-4 rounded-xl border-2 border-purple-300 bg-purple-50 p-4">' +
+          '<div class="flex items-center justify-between gap-2 flex-wrap">' +
+          '<h4 class="font-bold text-purple-800 flex items-center gap-2"><i class="fas fa-robot"></i>AI Marks Awarded</h4>' +
+          '<span class="px-3 py-1 rounded-lg bg-purple-600 text-white text-sm font-extrabold">' + revealed.score + ' / ' + maxMarks + '</span></div>' +
+          '<div class="mt-3"><div class="text-[11px] uppercase tracking-wider font-bold text-purple-700 mb-1">Your submitted answer</div>' + submitted + '</div>' +
+          '<div class="mt-3"><div class="text-[11px] uppercase tracking-wider font-bold text-purple-700 mb-1">Model answer &amp; AI feedback</div>' +
+          '<div class="explanation-box text-sm">' + app.esc(revealed.explanation || '').replace(/\n/g, '<br>') + '</div></div>' +
+          '<button onclick="app.openFullScreenExplanation(this)" class="fullscreen-explain-btn blink-btn"><i class="fas fa-expand"></i> View in full screen</button>' +
+          '</div>';
+      }
 
-  /* ------------------------------------------------------------------ *
-   *  TEST INTERFACE
-   * ------------------------------------------------------------------ */
-  showTestInterface: function () {
-    this._setMode('test');
-    this._lastRenderedIdx = -1;
-    document.getElementById('app-container').innerHTML = `
-      <div class="flex h-full gap-3 p-2 md:p-4">
-        <div class="flex-grow flex flex-col min-h-0 min-w-0">
-          <div id="question-card" class="bg-white border border-gray-200 rounded-xl shadow-lg flex flex-col flex-grow min-h-0 overflow-hidden"></div>
-        </div>
-        <aside class="hidden md:flex flex-col w-64 shrink-0 bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-h-0">
-          <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide"><i class="fas fa-th mr-2"></i>Questions</h3>
-          <div id="navigator-grid" class="grid grid-cols-5 gap-2 overflow-y-auto content-start"></div>
-          <div class="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-500 space-y-1">
-            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span>Current</div>
-            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-green-100 border border-green-500 inline-block"></span>Answered</div>
-            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-gray-200 inline-block"></span>Unanswered</div>
-          </div>
-        </aside>
-      </div>`;
-    this.renderQuestion();
-    this.updateTimerDisplay();
-    this.saveExamState();
-  },
+      var textVal = answer && !String(answer).startsWith('data:image') ? answer : (d._theoryDrafts && d._theoryDrafts[q.id] ? d._theoryDrafts[q.id] : '');
+      var imageVal = answer && String(answer).startsWith('data:image') ? answer : '';
 
-  _isAnswered: function (q) {
-    const a = this.data.userAnswers[q.id];
-    return a !== undefined && a !== null && String(a).trim() !== '';
-  },
+      return '<div class="mt-4 rounded-xl border border-gray-200 overflow-hidden">' +
+        '<div class="flex border-b border-gray-200 bg-gray-50">' +
+        '<button type="button" id="theory-tab-' + q.id + '-text" class="theory-tab-btn flex-1 px-4 py-2.5 text-sm font-bold ' + (imageVal ? '' : 'theory-tab-active') + '" onclick="app.toggleTheoryTab(' + q.id + ',\'text\')"><i class="fas fa-keyboard mr-1.5"></i>Type Answer</button>' +
+        '<button type="button" id="theory-tab-' + q.id + '-image" class="theory-tab-btn flex-1 px-4 py-2.5 text-sm font-bold ' + (imageVal ? 'theory-tab-active' : '') + '" onclick="app.toggleTheoryTab(' + q.id + ',\'image\')"><i class="fas fa-camera mr-1.5"></i>Upload Photo</button>' +
+        '</div>' +
+        '<div id="theory-pane-' + q.id + '-text" class="theory-pane p-4 ' + (imageVal ? 'theory-pane-hidden' : '') + '">' +
+        '<textarea id="theory-text-input-' + q.id + '" rows="5" placeholder="Write your answer here… LaTeX such as \\( x^2 \\) is supported." class="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm" oninput="app.cacheTheoryDraft(' + q.id + ', this.value)">' + app.esc(textVal) + '</textarea>' +
+        '<div class="flex flex-wrap items-center justify-between gap-2 mt-3">' +
+        '<span class="text-xs text-gray-500"><i class="fas fa-circle-info mr-1"></i>' + (isStudy ? 'AI grades against the model answer.' : 'Save your work — graded on submission.') + '</span>' +
+        '<button type="button" id="theory-text-btn-' + q.id + '" onclick="app.submitTheoryText(' + q.id + ')" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg ' + (isStudy ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700') + ' text-white text-sm font-bold">' +
+        '<i class="fas ' + (isStudy ? 'fa-robot' : 'fa-save') + '"></i>' + (isStudy ? 'Submit for AI Grading' : 'Save Answer') + '</button>' +
+        '</div></div>' +
+        '<div id="theory-pane-' + q.id + '-image" class="theory-pane p-4 ' + (imageVal ? '' : 'theory-pane-hidden') + '">' +
+        '<input type="file" accept="image/*" capture="environment" id="theory-image-input-' + q.id + '" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-purple-600 file:text-white file:text-sm file:font-bold" onchange="app.previewTheoryImage(' + q.id + ', this)">' +
+        '<div id="theory-image-preview-container-' + q.id + '" class="mt-3 ' + (imageVal ? '' : 'hidden') + '">' +
+        '<img id="theory-image-preview-' + q.id + '" src="' + (imageVal || '') + '" alt="Theory answer preview" class="max-h-64 rounded-lg border border-gray-200">' +
+        '</div>' +
+        '<div class="flex flex-wrap items-center justify-between gap-2 mt-3">' +
+        '<span class="text-xs text-gray-500"><i class="fas fa-camera mr-1"></i>Rear camera on mobile · images are compressed.</span>' +
+        '<button type="button" id="theory-image-btn-' + q.id + '" onclick="app.submitTheoryImage(' + q.id + ')" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg ' + (isStudy ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700') + ' text-white text-sm font-bold">' +
+        '<i class="fas fa-paper-plane"></i>' + (isStudy ? 'Submit Photo for Grading' : 'Save Answer') + '</button>' +
+        '</div></div></div>';
+    },
 
-  _navHtml: function (mobile) {
-    const d = this.data;
-    return d.questions.map((q, i) => {
-      let cls = 'bg-gray-200 text-gray-700';
-      if (i === d.currentQuestionIndex) cls = 'bg-blue-600 text-white';
-      else if (this._isAnswered(q)) cls = 'bg-green-100 text-green-800';
-      const click = mobile
-        ? `app.jumpToQuestion(${i}); document.getElementById('mobile-grid-modal').classList.add('hidden');`
-        : `app.jumpToQuestion(${i})`;
-      return `<button type="button" onclick="${click}" class="h-10 rounded-lg font-semibold text-sm ${cls}">${i + 1}</button>`;
-    }).join('');
-  },
+    renderQuestion: function () {
+      var container = document.getElementById('app-container');
+      if (!container) return;
+      var d = this.data;
+      var q = d.questions[d.currentQuestionIndex];
+      this.updateHeader();
+      if (!q) {
+        container.innerHTML = '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center shadow-lg">' +
+          '<div class="text-4xl mb-3">📄</div><p class="text-gray-600 font-semibold">No questions in this exam.</p>' +
+          '<button onclick="app.showLanding()" class="mt-4 px-4 py-2 rounded-lg bg-green-600 text-white font-bold text-sm">Return Home</button></div>';
+        return;
+      }
+      var subject = this.currentSubject();
+      var typeLabel = q.type === 'objective' ? 'MCQ' : (q.type === 'theory' ? 'Theory' : 'Fill in Gap');
+      var total = d.questions.length;
+      var revealed = d.answerRevealed[q.id];
+      var isStudy = d.examMode === 'study';
+      var userAnswer = d.userAnswers[q.id];
+      var answerHtml = '';
 
-  renderNavigator: function () {
-    const grid = document.getElementById('navigator-grid');
-    if (grid) grid.innerHTML = this._navHtml(false);
-    const modal = document.getElementById('mobile-grid-modal');
-    const mg = document.getElementById('mobile-grid-container');
-    if (modal && mg && !modal.classList.contains('hidden')) mg.innerHTML = this._navHtml(true);
-  },
+      /* -------- objective -------- */
+      if (q.type === 'objective') {
+        var opts = q.options || {};
+        var keys = ['A', 'B', 'C', 'D'].filter(function (k) { return opts[k] !== undefined && opts[k] !== null && String(opts[k]) !== ''; });
+        if (isStudy && !revealed) {
+          answerHtml = '<div class="space-y-2.5">' + keys.map(function (k) {
+            return '<div class="study-option flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-colors" onclick="app.handleStudyAnswerClick(' + q.id + ',\'' + k + '\')">' +
+              '<span class="w-7 h-7 rounded-lg bg-gray-200 text-gray-700 flex items-center justify-center text-xs font-extrabold shrink-0">' + k + '</span>' +
+              '<span class="text-sm font-medium text-gray-700 break-words min-w-0">' + app.esc(opts[k]) + '</span></div>';
+          }).join('') + '</div>' +
+            '<p class="text-xs text-gray-500 mt-3"><i class="fas fa-hand-pointer mr-1"></i>Click on your answer to reveal correct answer and explanation.</p>';
+        } else if (isStudy && revealed) {
+          answerHtml = '<div class="space-y-2.5">' + keys.map(function (k) {
+            var isCorrectOption = String(q.correct || '').toUpperCase() === k;
+            var isWrongSelected = !isCorrectOption && String(userAnswer || '').toUpperCase() === k;
+            var cls = isCorrectOption ? 'correct-option-highlight border-green-500' : (isWrongSelected ? 'wrong-answer-selected border-red-400' : 'border-gray-200');
+            return '<div class="flex items-start gap-3 p-4 rounded-xl border-2 ' + cls + '">' +
+              '<span class="w-7 h-7 rounded-lg ' + (isCorrectOption ? 'bg-green-500 text-white' : (isWrongSelected ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700')) + ' flex items-center justify-center text-xs font-extrabold shrink-0">' + k + '</span>' +
+              '<span class="text-sm font-medium text-gray-700 break-words min-w-0 flex-grow">' + app.esc(opts[k]) + '</span>' +
+              (isCorrectOption ? '<span class="correct-badge shrink-0">✔ Correct Answer</span>' : '') +
+              (isWrongSelected ? '<span class="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold shrink-0">Your choice</span>' : '') +
+              '</div>';
+          }).join('') + '</div>';
+        } else {
+          answerHtml = '<div class="space-y-2.5">' + keys.map(function (k) {
+            var checked = String(userAnswer || '').toUpperCase() === k ? 'checked' : '';
+            return '<div>' +
+              '<input type="radio" name="option" id="opt-' + q.id + '-' + k + '" value="' + k + '" class="cbt-radio" ' + checked + ' onchange="app.selectAnswer(' + q.id + ',\'' + k + '\')">' +
+              '<label for="opt-' + q.id + '-' + k + '" class="cbt-option-label flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors">' +
+              '<span class="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-extrabold shrink-0">' + k + '</span>' +
+              '<span class="text-sm font-medium text-gray-700 break-words min-w-0">' + app.esc(opts[k]) + '</span>' +
+              '</label></div>';
+          }).join('') + '</div>';
+        }
+      }
 
-  toggleMobileGrid: function () {
-    const modal = document.getElementById('mobile-grid-modal');
-    const mg = document.getElementById('mobile-grid-container');
-    if (!modal || !mg) return;
-    if (!modal.classList.contains('hidden')) { modal.classList.add('hidden'); return; }
-    mg.innerHTML = this._navHtml(true);
-    modal.classList.remove('hidden');
-  },
+      /* -------- fill in gap -------- */
+      else if (q.type === 'fill') {
+        var fillVal = (!String(userAnswer || '').startsWith('data:image')) ? (userAnswer || '') : '';
+        if (isStudy && !revealed) {
+          answerHtml = '<div class="space-y-2.5">' +
+            '<input type="text" id="fill-answer-' + q.id + '" value="' + app.esc(fillVal) + '" placeholder="Type the missing word or value…" class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none font-medium">' +
+            '<button type="button" onclick="app.handleStudyAnswerClick(' + q.id + ', null, true)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-bold"><i class="fas fa-check"></i> Check Answer</button>' +
+            '<p class="text-xs text-gray-500"><i class="fas fa-hand-pointer mr-1"></i>Click on your answer to reveal correct answer and explanation.</p></div>';
+        } else if (isStudy && revealed) {
+          answerHtml = '<div class="space-y-2.5">' +
+            '<div class="text-sm text-gray-500">Your answer: <span class="font-bold text-gray-800">' + app.esc(fillVal || '(blank)') + '</span></div>' +
+            (revealed.isCorrect
+              ? '<div class="fill-correct-highlight">✓ Correct! ' + app.esc(fillVal) + '</div>'
+              : '<div class="rounded-xl border-2 border-red-400 bg-red-50 p-3"><div class="text-sm font-bold text-red-700 mb-1.5">✗ Not quite</div>' +
+                '<div class="fill-correct-highlight" onclick="app.openFullScreenExplanation(this)">✓ Click to see correct answer</div>' +
+                '<p class="text-sm text-gray-700 mt-2">Correct answer: <span class="font-bold">' + app.esc(q.correct) + '</span></p></div>') +
+            '</div>';
+        } else {
+          answerHtml = '<input type="text" id="fill-answer-' + q.id + '" value="' + app.esc(fillVal) + '" placeholder="Type your answer…" class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none font-medium" oninput="app.selectAnswer(' + q.id + ', this.value)">';
+        }
+      }
 
-  _materialButtons: function (q) {
-    const d = this.data;
-    const s = this.getSubject();
-    const sid = this.esc(d.currentSubjectId || '');
-    const tid = this.esc(q.topicId || '');
-    const out = [];
-    const imgs = d.images[d.currentSubjectId];
-    if (imgs && imgs.length) {
-      out.push(`<button type="button" onclick="app.showImageModal()" class="bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 px-3 py-2 rounded-lg text-sm font-semibold"><i class="fas fa-images mr-2"></i>View Reference Images</button>`);
+      /* -------- theory -------- */
+      else {
+        answerHtml = this.theoryMarkup(q);
+      }
+
+      /* -------- explanation -------- */
+      var explanationHtml = '';
+      if (isStudy && revealed) {
+        explanationHtml = '<div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">' +
+          '<div class="flex items-center gap-2 font-bold ' + (revealed.isCorrect ? 'text-green-600' : 'text-red-500') + '">' +
+          '<i class="fas ' + (revealed.isCorrect ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i>' +
+          '<span>' + (revealed.isCorrect ? '✓ Correct!' : '✗ Incorrect') + '</span>' +
+          (revealed.score !== undefined ? '<span class="ml-auto text-xs px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-600">Score: ' + revealed.score + '</span>' : '') + '</div>' +
+          (q.explanation ? '<div class="mt-3"><div class="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1.5">📚 Explanation</div>' +
+            '<div class="explanation-box">' + app.esc(q.explanation).replace(/\n/g, '<br>') +
+            '<button onclick="app.openFullScreenExplanation(this)" class="fullscreen-explain-btn blink-btn"><i class="fas fa-expand"></i> View in full screen</button></div></div>' : '') +
+          ((!revealed.isCorrect && q.type === 'objective') ?
+            '<div class="mt-3 rounded-lg border-l-4 border-green-500 bg-green-50 p-3 text-sm text-green-800">' +
+            '<i class="fas fa-circle-check mr-1.5"></i>Correct answer: <span class="font-bold">' + app.esc(q.correct) + ': ' + app.esc((q.options || {})[q.correct] || '') + '</span></div>' : '') +
+          '</div>';
+      }
+
+      /* -------- material buttons -------- */
+      var materials = '';
+      var refImages = (d.images && d.images[d.currentSubjectId]) ? d.images[d.currentSubjectId] : [];
+      if (refImages.length) {
+        materials += '<button onclick="app.showImageModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200"><i class="fas fa-images"></i> View Reference Images</button>';
+      }
+      if (subject && subject.notes && subject.notes[q.topicId] && String(subject.notes[q.topicId]).trim() !== '') {
+        materials += '<button onclick="app.viewTopicNote(\'' + d.currentSubjectId + '\',\'' + q.topicId + '\',\'' + app.esc(q.topicId).replace(/'/g, "\\'") + '\')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-bold hover:bg-blue-200"><i class="fas fa-file-lines"></i> View Topic Notes</button>';
+      }
+      var tImgs = (subject && subject.topicImages && subject.topicImages[q.topicId]) ? subject.topicImages[q.topicId] : [];
+      if (tImgs.length) {
+        materials += '<button onclick="app.viewTopicImages(\'' + d.currentSubjectId + '\',\'' + q.topicId + '\')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200"><i class="fas fa-image"></i> View Topic Images (' + tImgs.length + ')</button>';
+      }
+
+      var navHTML = this.navigatorHTML();
+      var isLast = d.currentQuestionIndex === total - 1;
+      var progress = Math.round(((d.currentQuestionIndex + 1) / total) * 100);
+
+      container.innerHTML = '<div class="grid md:grid-cols-[minmax(0,1fr)_72px] gap-4 items-start">' +
+        '<div class="min-w-0">' +
+        '<div class="rounded-2xl bg-white border border-gray-200 shadow-xl overflow-hidden">' +
+        '<div class="p-5 md:p-6 border-b border-gray-200">' +
+        '<div class="flex flex-wrap items-center gap-2 justify-between">' +
+        '<div class="flex flex-wrap items-center gap-2">' +
+        '<span class="text-sm font-bold text-gray-500">Question <span class="text-gray-800">' + (d.currentQuestionIndex + 1) + '</span> of ' + total + '</span>' +
+        '<span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-extrabold uppercase tracking-wider">' + typeLabel + '</span>' +
+        '<span class="px-2 py-0.5 rounded-md ' + (isStudy ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700') + ' text-[10px] font-extrabold uppercase tracking-wider">' + (isStudy ? 'Study' : 'Practice') + '</span>' +
+        (q.subTopic ? '<span class="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold">' + app.esc(q.subTopic) + '</span>' : '') +
+        '</div>' +
+        '<button onclick="app.submitTestConfirm(this)" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"><i class="fas fa-paper-plane mr-1"></i>Finish</button>' +
+        '</div>' +
+        '<div class="mt-3 h-1.5 rounded-full bg-gray-100 overflow-hidden"><div class="h-full bg-green-500 transition-all" style="width:' + progress + '%"></div></div>' +
+        '</div>' +
+        '<div class="p-5 md:p-7">' +
+        '<p class="text-base md:text-lg font-medium text-gray-800 whitespace-pre-wrap break-words leading-relaxed">' + app.esc(q.text) + '</p>' +
+        (materials ? '<div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">' + materials + '</div>' : '') +
+        '<div class="mt-5">' + answerHtml + '</div>' +
+        explanationHtml +
+        '</div>' +
+        '<div class="flex items-center justify-between gap-3 p-4 border-t border-gray-200 bg-gray-50">' +
+        '<button onclick="app.prevQuestion()" ' + (d.currentQuestionIndex === 0 ? 'disabled' : '') + ' class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed"><i class="fas fa-arrow-left"></i> Previous</button>' +
+        (isLast
+          ? '<button id="submit-test-btn" onclick="app.submitTestConfirm(this)" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold shadow"><i class="fas fa-paper-plane"></i> Submit Test</button>'
+          : '<button onclick="app.nextQuestion()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold shadow">Next <i class="fas fa-arrow-right"></i></button>') +
+        '</div></div></div>' +
+
+        '<aside class="hidden md:block sticky top-2">' +
+        '<div class="w-16 rounded-2xl bg-white border border-gray-200 shadow-lg p-2">' +
+        '<div class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 text-center mb-2">Q</div>' +
+        '<div class="grid grid-cols-1 gap-1.5">' + navHTML + '</div>' +
+        '</div>' +
+        '<button onclick="app.submitTestConfirm(this)" class="mt-2 w-16 rounded-xl bg-red-50 border border-red-200 text-red-600 p-2 text-[10px] font-bold hover:bg-red-100 leading-tight"><i class="fas fa-paper-plane block mb-0.5"></i>Submit</button>' +
+        '</aside>' +
+        '</div>';
+
+      this.triggerMathJax();
+    },
+
+    /* ---------------- answer handling ---------------- */
+    cacheTheoryDraft: function (qId, value) {
+      if (!this.data._theoryDrafts) this.data._theoryDrafts = {};
+      this.data._theoryDrafts[qId] = value;
+    },
+
+    checkAnswer: function (qId, value) {
+      var q = this.data.questions.find(function (x) { return x.id === qId; });
+      if (!q) return false;
+      var userVal = value === null || value === undefined ? '' : String(value);
+      if (q.type === 'objective') {
+        return userVal.toUpperCase() === String(q.correct || '').toUpperCase();
+      }
+      return userVal.trim().toLowerCase() === String(q.correct || '').trim().toLowerCase();
+    },
+
+    selectAnswer: function (qId, value) {
+      this.data.userAnswers[qId] = value;
+      this.saveExamState();
+      this.updateNavigatorColors();
+    },
+
+    updateNavigatorColors: function () {
+      var d = this.data;
+      /* paint the desktop navigator without re-rendering the question card */
+      var desktopBtns = document.querySelectorAll('aside .grid button');
+      if (desktopBtns.length === d.questions.length) {
+        d.questions.forEach(function (q, i) {
+          if (i === d.currentQuestionIndex) return;
+          var b = desktopBtns[i];
+          if (!b) return;
+          var answered = isAnswered(app, q);
+          b.className = 'h-8 w-8 rounded-lg border text-[11px] font-bold transition-colors ' +
+            (answered ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200');
+        });
+      }
+      /* refresh mobile modal if open */
+      var modal = document.getElementById('mobile-grid-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        var container = document.getElementById('mobile-grid-container');
+        if (container) {
+          var html = '';
+          for (var i = 0; i < d.questions.length; i++) {
+            var q = d.questions[i];
+            var ans = isAnswered(app, q);
+            var active = i === d.currentQuestionIndex;
+            var cls = active ? 'bg-blue-600 text-white border-blue-700' : (ans ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-600 border-gray-300');
+            html += '<button onclick="app.jumpToQuestion(' + i + '); document.getElementById(\'mobile-grid-modal\').classList.add(\'hidden\')" class="h-10 rounded-lg border font-bold text-sm ' + cls + '">' + (i + 1) + '</button>';
+          }
+          container.innerHTML = html;
+        }
+      }
+    },
+
+    handleStudyAnswerClick: function (qId, selectedValue, isFill) {
+      var q = this.data.questions.find(function (x) { return x.id === qId; });
+      if (!q) return;
+      if (isFill) {
+        var input = document.getElementById('fill-answer-' + qId);
+        selectedValue = input ? input.value : '';
+      }
+      this.data.userAnswers[qId] = selectedValue;
+      var isCorrect = this.checkAnswer(qId, selectedValue);
+      this.data.answerRevealed[qId] = {
+        isCorrect: isCorrect,
+        score: isCorrect ? 100 : 0,
+        explanation: q.explanation
+      };
+      this.saveExamState();
+      this.renderQuestion();
+    },
+
+    previewTheoryImage: function (qId, input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var preview = document.getElementById('theory-image-preview-' + qId);
+      var container = document.getElementById('theory-image-preview-container-' + qId);
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        if (preview) preview.src = e.target.result;
+        if (container) container.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    },
+
+    toggleTheoryTab: function (qId, tab) {
+      ['text', 'image'].forEach(function (t) {
+        var btn = document.getElementById('theory-tab-' + qId + '-' + t);
+        var pane = document.getElementById('theory-pane-' + qId + '-' + t);
+        if (!btn || !pane) return;
+        if (t === tab) {
+          btn.classList.add('theory-tab-active');
+          pane.classList.remove('theory-pane-hidden');
+        } else {
+          btn.classList.remove('theory-tab-active');
+          pane.classList.add('theory-pane-hidden');
+        }
+      });
+    },
+
+    nextQuestion: function () {
+      if (this.data.currentQuestionIndex < this.data.questions.length - 1) {
+        this.data.currentQuestionIndex++;
+        this.saveExamState();
+        this.renderQuestion();
+      }
+    },
+
+    prevQuestion: function () {
+      if (this.data.currentQuestionIndex > 0) {
+        this.data.currentQuestionIndex--;
+        this.saveExamState();
+        this.renderQuestion();
+      }
+    },
+
+    jumpToQuestion: function (i) {
+      if (i < 0 || i >= this.data.questions.length) return;
+      this.data.currentQuestionIndex = i;
+      this.saveExamState();
+      this.renderQuestion();
+    },
+
+    submitTestConfirm: function (btn) {
+      var answered = 0;
+      var self = this;
+      this.data.questions.forEach(function (q) { if (isAnswered(self, q)) answered++; });
+      var ok = window.confirm('Submit your exam now?\n\nAnswered ' + answered + ' of ' + this.data.questions.length + ' questions.\n\nYou cannot change your answers after submitting.');
+      if (!ok) return;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Submitting…';
+      }
+      this.submitTest();
     }
-    if (s && this._hasNotes(s, q.topicId)) {
-      out.push(`<button type="button" onclick="app.viewTopicNote('${sid}','${tid}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-200 px-3 py-2 rounded-lg text-sm font-semibold"><i class="fas fa-file-alt mr-2"></i>View Topic Notes</button>`);
-    }
-    if (s && this._hasTopicImages(s, q.topicId)) {
-      out.push(`<button type="button" onclick="app.viewTopicImages('${sid}','${tid}')" class="bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 px-3 py-2 rounded-lg text-sm font-semibold"><i class="fas fa-image mr-2"></i>View Topic Images (${s.topicImages[q.topicId].length})</button>`);
-    }
-    return out.length ? `<div class="flex flex-wrap gap-2 mt-4">${out.join('')}</div>` : '';
-  },
+  };
 
-  renderQuestion: function () {
-    const d = this.data;
-    const card = document.getElementById('question-card');
-    if (!card) return;
-    const q = d.questions[d.currentQuestionIndex];
-    if (!q) return;
-    const idx = d.currentQuestionIndex;
-    const total = d.questions.length;
-    const isLast = idx === total - 1;
-
-    // keep scroll position when re-rendering the same question (e.g. after reveal)
-    const oldBody = document.getElementById('question-body');
-    const keepScroll = (this._lastRenderedIdx === idx && oldBody) ? oldBody.scrollTop : 0;
-    this._lastRenderedIdx = idx;
-
-    const typeLabel = { objective: 'MCQ', theory: 'Theory', fill: 'Fill in Gap' }[q.type] || q.type;
-    const modeBadge = d.examMode === 'study'
-      ? '<span class="px-2 py-1 rounded-md text-xs font-bold bg-green-100 text-green-800">Study</span>'
-      : '<span class="px-2 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-800">Practice</span>';
-
-    let answerHtml = '';
-    if (q.type === 'objective') answerHtml = this._renderObjective(q);
-    else if (q.type === 'fill') answerHtml = this._renderFill(q);
-    else answerHtml = this._renderTheory(q);
-
-    card.innerHTML = `
-      <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center gap-2 flex-wrap shrink-0">
-        <h2 class="font-bold text-gray-800">Question ${idx + 1} of ${total}</h2>
-        <span class="px-2 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-700">${typeLabel}</span>
-        ${modeBadge}
-      </div>
-      <div id="question-body" class="flex-1 overflow-y-auto p-4 md:p-6 min-h-0">
-        <div class="text-base md:text-lg text-gray-800 whitespace-pre-wrap break-words leading-relaxed">${this.esc(q.text)}</div>
-        ${this._materialButtons(q)}
-        <div class="mt-5">${answerHtml}</div>
-        ${this._renderExplanation(q)}
-      </div>
-      <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between gap-3 shrink-0">
-        <button type="button" onclick="app.prevQuestion()" ${idx === 0 ? 'disabled' : ''} class="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold"><i class="fas fa-chevron-left mr-2"></i>Previous</button>
-        ${isLast
-          ? `<button type="button" onclick="app.submitTestConfirm()" class="px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold"><i class="fas fa-paper-plane mr-2"></i>Submit</button>`
-          : `<button type="button" onclick="app.nextQuestion()" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold">Next<i class="fas fa-chevron-right ml-2"></i></button>`}
-      </div>`;
-
-    if (keepScroll) {
-      const nb = document.getElementById('question-body');
-      if (nb) nb.scrollTop = keepScroll;
-    }
-    this.renderNavigator();
-    this.triggerMathJax();
-  },
-
-  /* ---------- OBJECTIVE ---------- */
-  _optionLetters: function (q) {
-    return Object.keys(q.options || {})
-      .filter((k) => q.options[k] != null && String(q.options[k]).trim() !== '')
-      .sort();
-  },
-
-  _renderObjective: function (q) {
-    const d = this.data;
-    const study = d.examMode === 'study';
-    const revealed = d.answerRevealed[q.id];
-    const sel = String(d.userAnswers[q.id] || '').toUpperCase();
-    const correct = String(q.correct || '').toUpperCase();
-    const letters = this._optionLetters(q);
-
-    if (!study) {
-      return `<div class="flex flex-col gap-3">${letters.map((L) => `
-        <input type="radio" name="option" id="opt-${L}" value="${L}" class="cbt-radio hidden" ${sel === L ? 'checked' : ''} onchange="app.selectAnswer(${q.id},'${L}')">
-        <label for="opt-${L}" class="block p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-          <div class="flex items-start gap-3">
-            <span class="font-bold text-gray-700 w-7 h-7 shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-sm">${L}</span>
-            <span class="min-w-0 break-words text-gray-800 pt-0.5">${this.esc(q.options[L])}</span>
-          </div>
-        </label>`).join('')}</div>`;
-    }
-
-    if (!revealed) {
-      return `
-        <div class="text-sm text-gray-500 mb-3"><i class="fas fa-hand-pointer mr-2"></i>Click on your answer to reveal correct answer and explanation</div>
-        <div class="flex flex-col gap-3">${letters.map((L) => `
-          <div class="study-option block p-4 border-2 border-gray-200 rounded-lg bg-white" onclick="app.handleStudyAnswerClick(${q.id},'${L}')">
-            <div class="flex items-start gap-3">
-              <span class="font-bold text-gray-700 w-7 h-7 shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-sm">${L}</span>
-              <span class="min-w-0 break-words text-gray-800 pt-0.5">${this.esc(q.options[L])}</span>
-            </div>
-          </div>`).join('')}</div>`;
-    }
-
-    return `<div class="flex flex-col gap-3">${letters.map((L) => {
-      const isCorrect = L === correct;
-      const isSel = L === sel;
-      let cls = 'border-gray-200 bg-white';
-      if (isCorrect) cls = 'correct-option-highlight';
-      else if (isSel) cls = 'wrong-answer-selected';
-      return `
-        <div class="study-option block p-4 border-2 rounded-lg ${cls}" style="cursor:default">
-          <div class="flex items-start gap-3">
-            <span class="font-bold text-gray-700 w-7 h-7 shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-sm">${L}</span>
-            <span class="min-w-0 break-words text-gray-800 pt-0.5">${this.esc(q.options[L])}${isCorrect ? '<span class="correct-badge">✔ Correct Answer</span>' : ''}</span>
-          </div>
-        </div>`;
-    }).join('')}</div>`;
-  },
-
-  /* ---------- FILL ---------- */
-  _renderFill: function (q) {
-    const d = this.data;
-    const study = d.examMode === 'study';
-    const revealed = d.answerRevealed[q.id];
-    const val = d.userAnswers[q.id] || '';
-    const inputCls = 'w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-lg';
-
-    if (!study) {
-      return `<input type="text" id="fill-answer-${q.id}" autocomplete="off" placeholder="Type your answer here" value="${this.esc(val)}" oninput="app.selectAnswer(${q.id}, this.value)" class="${inputCls}">`;
-    }
-    if (!revealed) {
-      return `
-        <input type="text" id="fill-answer-${q.id}" autocomplete="off" placeholder="Type your answer here" value="${this.esc(val)}" onkeydown="if(event.key==='Enter'){app.handleStudyAnswerClick(${q.id}, null, true)}" class="${inputCls}">
-        <button type="button" onclick="app.handleStudyAnswerClick(${q.id}, null, true)" class="mt-3 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold"><i class="fas fa-check mr-2"></i>Check Answer</button>`;
-    }
-    if (revealed.isCorrect) {
-      return `
-        <input type="text" id="fill-answer-${q.id}" value="${this.esc(val)}" disabled class="${inputCls}">
-        <div class="mt-3 p-4 rounded-lg border-2 border-green-500 bg-green-50 text-green-700 font-semibold break-words"><i class="fas fa-check-circle mr-2"></i>Your answer: ${this.esc(val)}</div>`;
-    }
-    return `
-      <input type="text" id="fill-answer-${q.id}" value="${this.esc(val)}" disabled class="${inputCls}">
-      <div class="mt-3 p-4 rounded-lg border-2 border-red-500 bg-red-50 text-red-600 font-semibold break-words"><i class="fas fa-times-circle mr-2"></i>Your answer: ${this.esc(val) || '<em>(blank)</em>'}</div>
-      <div class="mt-3">
-        <span class="fill-correct-highlight" onclick="this.nextElementSibling.classList.toggle('hidden')">✓ Click to see correct answer</span>
-        <div class="hidden mt-2 p-3 rounded-lg bg-green-50 border border-green-500 text-green-700 font-bold break-words">Correct answer: ${this.esc(q.correct)}</div>
-      </div>`;
-  },
-
-  /* ---------- THEORY ---------- */
-  _renderTheory: function (q) {
-    const d = this.data;
-    const study = d.examMode === 'study';
-    const revealed = d.answerRevealed[q.id];
-    const ans = d.userAnswers[q.id];
-    const isImg = String(ans || '').startsWith('data:image');
-    const maxMarks = q.maxMarks || 10;
-
-    if (study && revealed) {
-      const submitted = isImg
-        ? `<img src="${ans}" alt="Your submitted answer" class="max-h-56 rounded-lg border border-gray-200 object-contain">`
-        : `<div class="whitespace-pre-wrap break-words text-gray-800">${this.esc(ans || '')}</div>`;
-      return `
-        <div class="rounded-xl border-2 ${revealed.isCorrect ? 'border-green-500' : 'border-red-500'} bg-gray-50 p-4 space-y-4">
-          <div class="text-xl font-extrabold ${revealed.isCorrect ? 'text-green-700' : 'text-red-600'}"><i class="fas fa-award mr-2"></i>Marks Awarded: ${this.esc(revealed.score)} / ${maxMarks}</div>
-          <div>
-            <div class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Your submitted answer</div>
-            <div class="bg-white border border-gray-200 rounded-lg p-3">${submitted}</div>
-          </div>
-          <div class="explanation-box">
-            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
-              <div class="font-bold text-gray-800 mb-1">📚 Model Answer &amp; AI Feedback:</div>
-              <div class="whitespace-pre-wrap break-words text-gray-800">${this.esc(revealed.explanation)}</div>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    const startImage = isImg;
-    const draft = this._theoryDrafts[q.id];
-    const textVal = isImg ? '' : (draft !== undefined ? draft : (ans || ''));
-    const btnLabelText = study ? '<i class="fas fa-robot mr-2"></i>Submit for AI Grading' : '<i class="fas fa-save mr-2"></i>Save Answer';
-    const saved = ans ? `<div class="mt-2 text-sm text-green-700 font-semibold"><i class="fas fa-check-circle mr-1"></i>${isImg ? 'Photo answer saved' : 'Answer saved'}</div>` : '';
-    const tabOn = 'bg-blue-600 text-white';
-    const tabOff = 'bg-gray-100 text-gray-700';
-
-    return `
-      <div class="flex gap-2 mb-4">
-        <button type="button" id="theory-tab-text-btn-${q.id}" onclick="app.toggleTheoryTab(${q.id},'text')" class="px-4 py-2 rounded-lg font-semibold text-sm ${startImage ? tabOff : tabOn}"><i class="fas fa-keyboard mr-2"></i>Type Answer</button>
-        <button type="button" id="theory-tab-image-btn-${q.id}" onclick="app.toggleTheoryTab(${q.id},'image')" class="px-4 py-2 rounded-lg font-semibold text-sm ${startImage ? tabOn : tabOff}"><i class="fas fa-camera mr-2"></i>Upload Photo</button>
-      </div>
-
-      <div id="theory-panel-text-${q.id}" class="${startImage ? 'hidden' : ''}">
-        <textarea id="theory-text-input-${q.id}" rows="8" placeholder="Write your answer here…" oninput="app._theoryDrafts[${q.id}] = this.value" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3">${this.esc(textVal)}</textarea>
-        <button type="button" id="theory-text-btn-${q.id}" onclick="app.submitTheoryText(${q.id})" class="mt-3 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold">${btnLabelText}</button>
-        ${!isImg ? saved : ''}
-      </div>
-
-      <div id="theory-panel-image-${q.id}" class="${startImage ? '' : 'hidden'}">
-        <input type="file" accept="image/*" capture="environment" id="theory-image-input-${q.id}" onchange="app.previewTheoryImage(${q.id}, this)" class="block w-full text-sm text-gray-600 border-2 border-dashed border-gray-300 rounded-lg p-3">
-        <div id="theory-image-preview-container-${q.id}" class="${isImg ? '' : 'hidden'} mt-3">
-          <img id="theory-image-preview-${q.id}" ${isImg ? `src="${ans}"` : ''} alt="Preview of your answer" class="max-h-64 rounded-lg border border-gray-200 object-contain">
-        </div>
-        <button type="button" id="theory-image-btn-${q.id}" onclick="app.submitTheoryImage(${q.id})" class="mt-3 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold">${btnLabelText}</button>
-        ${isImg ? saved : ''}
-      </div>`;
-  },
-
-  toggleTheoryTab: function (qId, which) {
-    const panelT = document.getElementById('theory-panel-text-' + qId);
-    const panelI = document.getElementById('theory-panel-image-' + qId);
-    const btnT = document.getElementById('theory-tab-text-btn-' + qId);
-    const btnI = document.getElementById('theory-tab-image-btn-' + qId);
-    const setBtn = (btn, on) => {
-      if (!btn) return;
-      btn.classList.toggle('bg-blue-600', on);
-      btn.classList.toggle('text-white', on);
-      btn.classList.toggle('bg-gray-100', !on);
-      btn.classList.toggle('text-gray-700', !on);
-    };
-    if (panelT) panelT.classList.toggle('hidden', which !== 'text');
-    if (panelI) panelI.classList.toggle('hidden', which !== 'image');
-    setBtn(btnT, which === 'text');
-    setBtn(btnI, which === 'image');
-  },
-
-  previewTheoryImage: function (qId, input) {
-    const file = input.files && input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = document.getElementById('theory-image-preview-' + qId);
-      const box = document.getElementById('theory-image-preview-container-' + qId);
-      if (img) img.src = e.target.result;
-      if (box) box.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-  },
-
-  /* ---------- EXPLANATION (study only, objective + fill) ---------- */
-  _renderExplanation: function (q) {
-    const d = this.data;
-    const r = d.answerRevealed[q.id];
-    if (d.examMode !== 'study' || !r || q.type === 'theory') return '';
-    let wrongBox = '';
-    if (!r.isCorrect && q.type === 'objective') {
-      const L = String(q.correct || '').toUpperCase();
-      wrongBox = `<div class="bg-green-50 border border-green-500 rounded-lg p-3 text-green-700 font-semibold break-words">Correct answer: ${this.esc(L)}: ${this.esc((q.options || {})[L] || '')}</div>`;
-    }
-    return `
-      <div class="mt-6 space-y-3">
-        <div class="font-extrabold text-lg ${r.isCorrect ? 'text-green-700' : 'text-red-600'}">${r.isCorrect ? '✓ Correct!' : '✗ Incorrect'}</div>
-        <div class="explanation-box">
-          <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
-            <div class="font-bold text-gray-800 mb-1">📚 Explanation:</div>
-            <div class="whitespace-pre-wrap break-words text-gray-800">${this.esc(r.explanation || 'No explanation provided.')}</div>
-          </div>
-        </div>
-        ${wrongBox}
-      </div>`;
-  },
-
-  /* ------------------------------------------------------------------ *
-   *  ANSWER HANDLING
-   * ------------------------------------------------------------------ */
-  checkAnswer: function (qId, value) {
-    const q = this.data.questions.find((x) => x.id === qId || String(x.id) === String(qId));
-    if (!q) return false;
-    if (q.type === 'objective') {
-      return String(value == null ? '' : value).toUpperCase() === String(q.correct || '').toUpperCase();
-    }
-    if (q.type === 'fill') {
-      return String(value == null ? '' : value).trim().toLowerCase() === String(q.correct || '').trim().toLowerCase();
-    }
-    return false;
-  },
-
-  selectAnswer: function (qId, value) {
-    this.data.userAnswers[qId] = value;
-    this.saveExamState();
-    this.renderNavigator();
-  },
-
-  handleStudyAnswerClick: function (qId, selectedValue, isFill) {
-    const d = this.data;
-    if (d.answerRevealed[qId]) return;
-    const q = d.questions.find((x) => x.id === qId || String(x.id) === String(qId));
-    if (!q) return;
-    if (isFill) {
-      const el = document.getElementById('fill-answer-' + qId);
-      selectedValue = el ? el.value : '';
-    }
-    d.userAnswers[qId] = selectedValue;
-    const isCorrect = this.checkAnswer(qId, selectedValue);
-    d.answerRevealed[qId] = { isCorrect: isCorrect, score: isCorrect ? 100 : 0, explanation: q.explanation };
-    this.saveExamState();
-    this.renderQuestion();
-  },
-
-  nextQuestion: function () {
-    const d = this.data;
-    if (d.currentQuestionIndex < d.questions.length - 1) d.currentQuestionIndex++;
-    this.saveExamState();
-    this.renderQuestion();
-  },
-
-  prevQuestion: function () {
-    const d = this.data;
-    if (d.currentQuestionIndex > 0) d.currentQuestionIndex--;
-    this.saveExamState();
-    this.renderQuestion();
-  },
-
-  jumpToQuestion: function (i) {
-    const d = this.data;
-    if (i < 0 || i >= d.questions.length) return;
-    d.currentQuestionIndex = i;
-    this.saveExamState();
-    this.renderQuestion();
-  },
-
-  /* ------------------------------------------------------------------ *
-   *  SUBMIT CONFIRMATION
-   * ------------------------------------------------------------------ */
-  submitTestConfirm: function () {
-    const d = this.data;
-    const old = document.getElementById('submit-confirm-overlay');
-    if (old) old.remove();
-    const total = d.questions.length;
-    const answered = d.questions.filter((q) => this._isAnswered(q)).length;
-    const unanswered = total - answered;
-    const overlay = document.createElement('div');
-    overlay.id = 'submit-confirm-overlay';
-    overlay.className = 'cbt-modal';
-    overlay.style.zIndex = '90';
-    overlay.innerHTML = `
-      <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 text-center">
-        <div class="w-16 h-16 mx-auto rounded-full bg-yellow-100 flex items-center justify-center mb-3"><i class="fas fa-question text-3xl text-yellow-600"></i></div>
-        <h3 class="text-xl font-bold text-gray-800 mb-1">Submit your exam?</h3>
-        <p class="text-gray-600 mb-1">You have answered <strong>${answered}</strong> of <strong>${total}</strong> questions.</p>
-        ${unanswered > 0 ? `<p class="text-red-600 font-semibold mb-1">${unanswered} question${unanswered === 1 ? ' is' : 's are'} still unanswered.</p>` : ''}
-        <p class="text-sm text-gray-500 mb-5">You cannot change your answers after submitting.</p>
-        <div class="flex gap-3">
-          <button type="button" id="submit-cancel-btn" class="flex-1 py-3 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold">Keep Working</button>
-          <button type="button" id="submit-confirm-btn" class="flex-1 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold">Submit Now</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    const cancel = overlay.querySelector('#submit-cancel-btn');
-    const confirmBtn = overlay.querySelector('#submit-confirm-btn');
-    cancel.addEventListener('click', () => overlay.remove());
-    confirmBtn.addEventListener('click', () => {
-      confirmBtn.disabled = true;
-      cancel.disabled = true;
-      confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting…';
-      Promise.resolve(this.submitTest()).finally(() => overlay.remove());
-    });
-  }
-});
+  Object.keys(examMethods).forEach(function (key) {
+    window.app[key] = examMethods[key];
+  });
+})();

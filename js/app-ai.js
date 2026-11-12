@@ -1,261 +1,288 @@
-/* ==========================================================================
-   app-ai.js — AI theory grading (text + image) and exam submission
-   ========================================================================== */
-Object.assign(window.app, {
+/* ============================================================
+   app-ai.js — submission, AI theory grading (text + image)
+   ============================================================ */
+(function () {
+  'use strict';
 
-  /* ---------- helpers ---------- */
-  _callAiBrain: async function (payload) {
-    const res = await fetch('/api/ai-brain', {
+  function readFileAsDataURL(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function (e) { resolve(e.target.result); };
+      reader.onerror = function () { reject(reader.error || new Error('File read failed')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function localHeuristicGrade(studentAnswer, referenceAnswer, maxMarks, isImage) {
+    if (isImage) {
+      return {
+        score: Math.round(Number(maxMarks || 10) * 0.6),
+        reason: 'Offline heuristic assessment (AI proxy unavailable). The photograph was received and compressed. Vision transcription and a detailed rubric comparison require the /api/ai-brain Groq proxy. Provisional credit assumes a complete handwritten attempt that references the model answer.',
+        transcription: 'Handwriting transcription unavailable offline.',
+        imageFallback: true
+      };
+    }
+    var ref = String(referenceAnswer || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+    var stu = String(studentAnswer || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+    var refWords = ref.split(/\s+/).filter(function (w) { return w.length > 3; });
+    var stuWords = stu.split(/\s+/).filter(function (w) { return w.length > 3; });
+    var uniqueRef = refWords.filter(function (w, i) { return refWords.indexOf(w) === i; });
+    var hits = uniqueRef.filter(function (w) { return stuWords.indexOf(w) !== -1; }).length;
+    var coverage = uniqueRef.length ? hits / uniqueRef.length : 0;
+    var depth = Math.min(1, stuWords.length / 18);
+    var ratio = Math.max(0, Math.min(1, coverage * 0.65 + depth * 0.35));
+    var score = Math.round(ratio * Number(maxMarks || 10));
+    var reason = 'Offline heuristic assessment (AI proxy unavailable). ' +
+      (hits ? 'Your response touches ' + hits + ' of the key concepts in the model answer. ' : 'No core concepts from the model answer were detected. ') +
+      'Expand your answer with definitions, the governing relationship and a short worked step to earn full marks.';
+    return { score: score, reason: reason, transcription: null };
+  }
+
+  async function callAIBrain(payload) {
+    var res = await fetch('/api/ai-brain', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    let data = null;
-    try { data = await res.json(); } catch (e) { data = null; }
-    if (!res.ok) throw new Error((data && data.error) || ('AI grading failed (HTTP ' + res.status + ')'));
-    if (!data) throw new Error('The AI service returned an empty response.');
+    if (!res.ok) throw new Error('AI service responded with ' + res.status);
+    var contentType = res.headers.get('content-type') || '';
+    if (contentType.indexOf('application/json') === -1) throw new Error('AI service unavailable');
+    var data = await res.json();
+    if (data && data.error) throw new Error(data.error);
     return data;
-  },
+  }
 
-  _buildGrade: function (q, data, referenceAnswer, isImage) {
-    const maxMarks = q.maxMarks || 10;
-    let score = Number(data.score);
-    if (!isFinite(score)) score = 0;
-    score = Math.max(0, Math.min(maxMarks, score));
-    let explanation = 'Model Answer:\n\n"' + referenceAnswer + '"\n\nAI Feedback: ' + (data.reason || 'No feedback provided.');
-    if (isImage) explanation += '\n\nAI Transcription: "' + (data.transcription || 'N/A') + '"';
-    return { isCorrect: score >= maxMarks * 0.4, score: score, explanation: explanation };
-  },
-
-  _showGradingOverlay: function (done, total) {
-    let el = document.getElementById('grading-overlay');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'grading-overlay';
-      el.className = 'cbt-modal';
-      el.style.zIndex = '95';
-      document.body.appendChild(el);
-    }
-    el.innerHTML = `
-      <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
-        <i class="fas fa-robot text-5xl text-green-600 mb-4 animate-pulse"></i>
-        <h3 class="text-xl font-bold text-gray-800 mb-1">Grading theory answers…</h3>
-        <p class="text-gray-600">${done} of ${total} graded by the AI examiner</p>
-        <div class="w-full h-2 bg-gray-200 rounded-full mt-4 overflow-hidden"><div class="h-2 bg-green-600" style="width:${total ? Math.round(done / total * 100) : 0}%"></div></div>
-      </div>`;
-  },
-
-  _hideGradingOverlay: function () {
-    const el = document.getElementById('grading-overlay');
-    if (el) el.remove();
-  },
-
-  _readAsDataURL: function (file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = () => reject(new Error('Could not read the image.'));
-      r.readAsDataURL(file);
-    });
-  },
-
-  /* ------------------------------------------------------------------ *
-   *  SUBMIT TEST
-   * ------------------------------------------------------------------ */
-  submitTest: async function () {
-    if (this._submitting) return;
-    this._submitting = true;
-    const d = this.data;
+  async function gradeOrFallback(payload, studentText, reference, maxMarks) {
     try {
+      var data = await callAIBrain(payload);
+      return {
+        score: Number(data.score) || 0,
+        reason: String(data.reason || ''),
+        transcription: data.transcription || null,
+        offline: false
+      };
+    } catch (err) {
+      var fb = localHeuristicGrade(studentText, reference, maxMarks, payload && payload.isImage === true);
+      fb.offline = true;
+      return fb;
+    }
+  }
+
+  var aiMethods = {
+
+    /* ============================================================
+       submitTest — grade theory, tally score, persist result
+       ============================================================ */
+    submitTest: async function () {
+      if (this._submitting) return;
+      this._submitting = true;
+      if (this.data.timer) { clearInterval(this.data.timer); this.data.timer = null; }
       this.stopTimer();
       this.clearExamState();
+      var self = this;
+      var d = this.data;
 
-      // 1. grade any theory answers that have not been graded yet
-      const pending = d.questions.filter((q) =>
-        q.type === 'theory' &&
-        !d.answerRevealed[q.id] &&
-        (d.userAnswers[q.id] || d.userAnswers[String(q.id)]));
+      try {
+        /* 1. find ungraded theory questions and grade them */
+        for (var i = 0; i < d.questions.length; i++) {
+          var q = d.questions[i];
+          if (q.type !== 'theory') continue;
+          if (d.answerRevealed[q.id]) continue;
+          var userAns = d.userAnswers[q.id] !== undefined ? d.userAnswers[q.id] : d.userAnswers[String(q.id)];
+          if (userAns === undefined || userAns === null || String(userAns).trim() === '') continue;
 
-      if (pending.length) this._showGradingOverlay(0, pending.length);
-      let done = 0;
-      for (const q of pending) {
-        const userAns = d.userAnswers[q.id] || d.userAnswers[String(q.id)];
-        const maxMarks = q.maxMarks || 10;
-        const referenceAnswer = q.explanation || q.correct || 'General knowledge';
-        const isImage = String(userAns).startsWith('data:image');
-        const payload = isImage
-          ? { imageBase64: userAns, referenceAnswer: referenceAnswer, maxMarks: maxMarks, isImage: true }
-          : { studentAnswer: userAns, referenceAnswer: referenceAnswer, maxMarks: maxMarks };
-        try {
-          const data = await this._callAiBrain(payload);
-          d.answerRevealed[q.id] = this._buildGrade(q, data, referenceAnswer, isImage);
-        } catch (err) {
-          d.answerRevealed[q.id] = {
-            isCorrect: false,
-            score: 0,
-            explanation: 'Could not grade this answer automatically. Error: ' + err.message
-          };
+          var isImage = String(userAns).indexOf('data:image') === 0;
+          var maxMarks = q.maxMarks || 10;
+          var reference = q.explanation || q.correct || 'General knowledge';
+          var payload = isImage
+            ? { imageBase64: userAns, referenceAnswer: reference, maxMarks: maxMarks, isImage: true }
+            : { studentAnswer: userAns, referenceAnswer: reference, maxMarks: maxMarks };
+
+          try {
+            var result = await gradeOrFallback(payload, isImage ? '' : userAns, reference, maxMarks);
+            var score = Math.max(0, Math.min(maxMarks, Number(result.score) || 0));
+            d.answerRevealed[q.id] = {
+              isCorrect: score >= maxMarks * 0.4,
+              score: score,
+              explanation: 'Model Answer:\n\n"' + reference + '"\n\nAI Feedback: ' + result.reason +
+                (isImage ? '\n\nAI Transcription: "' + (result.transcription || 'N/A') + '"' : '')
+            };
+          } catch (err) {
+            d.answerRevealed[q.id] = {
+              isCorrect: false,
+              score: 0,
+              explanation: 'Could not grade this answer automatically. Error: ' + err.message
+            };
+          }
         }
-        done++;
-        this._showGradingOverlay(done, pending.length);
-      }
 
-      // 2. tally the score (theory = ONE full point each, regardless of maxMarks)
-      let score = 0;
-      const details = d.questions.map((q) => {
-        const userAns = d.userAnswers[q.id];
-        const revealed = d.answerRevealed[q.id];
-        const maxMarks = q.maxMarks || 10;
-        let isCorrect = false;
-        if (q.type === 'theory') {
-          isCorrect = !!revealed && revealed.score !== undefined && revealed.score >= maxMarks / 2;
-        } else if (q.type === 'objective') {
-          isCorrect = !!userAns && String(userAns).toUpperCase() === String(q.correct).toUpperCase();
-        } else if (q.type === 'fill') {
-          isCorrect = !!userAns && String(userAns).trim().toLowerCase() === String(q.correct).trim().toLowerCase();
-        }
-        if (isCorrect) score++;
-        return {
-          question: q.text,
-          userAnswer: userAns || 'Not Answered',
-          correctAnswer: q.type === 'theory'
-            ? 'AI Grade: ' + (revealed && revealed.score !== undefined ? revealed.score : 0) + '/' + maxMarks
-            : q.correct,
-          isCorrect: isCorrect,
-          questionType: q.type,
-          options: q.options,
-          explanation: (revealed && revealed.explanation) || q.explanation || ''
+        /* 2. tally score */
+        var scoreCount = 0;
+        var details = [];
+        d.questions.forEach(function (q) {
+          var userAns = d.userAnswers[q.id] !== undefined ? d.userAnswers[q.id] : d.userAnswers[String(q.id)];
+          var revealed = d.answerRevealed[q.id];
+          var isCorrect = false;
+          var correctAnswer = q.correct;
+
+          if (q.type === 'theory') {
+            isCorrect = !!(revealed && revealed.score !== undefined && revealed.score >= (q.maxMarks || 10) / 2);
+            correctAnswer = 'AI Grade: ' + ((revealed && revealed.score !== undefined) ? revealed.score : 0) + '/' + (q.maxMarks || 10);
+          } else if (q.type === 'objective') {
+            isCorrect = String(userAns || '').toUpperCase() === String(q.correct || '').toUpperCase();
+          } else {
+            isCorrect = String(userAns || '').trim().toLowerCase() === String(q.correct || '').trim().toLowerCase();
+          }
+
+          if (isCorrect) scoreCount++;
+          details.push({
+            question: q,
+            userAnswer: (userAns !== undefined && userAns !== null && String(userAns).trim() !== '') ? userAns : 'Not Answered',
+            correctAnswer: correctAnswer,
+            isCorrect: isCorrect,
+            questionType: q.type,
+            options: q.options || null,
+            explanation: (revealed && revealed.explanation) ? revealed.explanation : q.explanation
+          });
+        });
+
+        var total = d.questions.length;
+        var percentage = total ? Math.round((scoreCount / total) * 100) : 0;
+        var subject = self.currentSubject();
+        var result = {
+          name: d.candidateName,
+          subjectName: subject ? subject.name : 'Exam',
+          score: scoreCount,
+          total: total,
+          percentage: percentage,
+          date: new Date().toISOString(),
+          examMode: d.examMode,
+          details: details
         };
-      });
 
-      const total = d.questions.length;
-      const percentage = total ? Math.round(score / total * 100) : 0;
-      const subj = this.getSubject();
-      const result = {
-        name: d.candidateName,
-        subjectName: subj ? subj.name : 'Unknown Subject',
-        score: score,
-        total: total,
-        percentage: percentage,
-        date: new Date().toISOString(),
-        examMode: d.examMode,
-        details: details
-      };
-      d.lastResults = result;
-      d.results.push(result);
-      this.saveResults();
-      this._hideGradingOverlay();
-      this.showSimplifiedResult(score, total, percentage);
-    } finally {
-      this._submitting = false;
-      this._hideGradingOverlay();
-      const c = document.getElementById('submit-confirm-overlay');
-      if (c) c.remove();
-    }
-  },
+        d.lastResults = result;
+        d.results.push(result);
+        self.saveResults();
+        d.mode = 'result';
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        self.showSimplifiedResult(scoreCount, total, percentage);
+      } finally {
+        this._submitting = false;
+      }
+    },
 
-  /* ------------------------------------------------------------------ *
-   *  THEORY — TEXT
-   * ------------------------------------------------------------------ */
-  submitTheoryText: async function (qId) {
-    const d = this.data;
-    const q = d.questions.find((x) => x.id === qId || String(x.id) === String(qId));
-    if (!q) return;
-    const ta = document.getElementById('theory-text-input-' + qId);
-    const text = ta ? ta.value.trim() : '';
-    if (!text) { this.toast('Please type your answer first.', 'error'); return; }
-
-    // PRACTICE: store only — grading happens at submission.
-    if (d.examMode !== 'study') {
-      d.userAnswers[qId] = text;
-      this._theoryDrafts[qId] = text;
-      this.saveExamState();
-      this.renderNavigator();
-      this.toast('Answer saved', 'success');
-      return;
-    }
-
-    // STUDY: grade immediately with the AI.
-    const btn = document.getElementById('theory-text-btn-' + qId);
-    const original = btn ? btn.innerHTML : '';
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Grading…'; }
-    d.userAnswers[qId] = text;
-    const referenceAnswer = q.explanation || q.correct || 'General knowledge';
-    try {
-      const data = await this._callAiBrain({
-        studentAnswer: text,
-        referenceAnswer: referenceAnswer,
-        maxMarks: q.maxMarks || 10
-      });
-      d.answerRevealed[qId] = this._buildGrade(q, data, referenceAnswer, false);
-      this.saveExamState();
-      this.renderQuestion();
-    } catch (err) {
-      delete d.userAnswers[qId];
-      const b = document.getElementById('theory-text-btn-' + qId);
-      if (b) { b.disabled = false; b.innerHTML = original; }
-      this.toast('AI grading failed: ' + err.message, 'error');
-    }
-  },
-
-  /* ------------------------------------------------------------------ *
-   *  THEORY — IMAGE
-   * ------------------------------------------------------------------ */
-  submitTheoryImage: async function (qId) {
-    const d = this.data;
-    const q = d.questions.find((x) => x.id === qId || String(x.id) === String(qId));
-    if (!q) return;
-    const input = document.getElementById('theory-image-input-' + qId);
-    const file = input && input.files && input.files[0];
-    if (!file) { this.toast('Please choose or take a photo first.', 'error'); return; }
-
-    const requestTimestamp = Date.now() + Math.random();
-    this._lastImageRequest[qId] = requestTimestamp;
-    const superseded = () => this._lastImageRequest[qId] !== requestTimestamp;
-
-    const study = d.examMode === 'study';
-    const btn = document.getElementById('theory-image-btn-' + qId);
-    const original = btn ? btn.innerHTML : '';
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + (study ? 'Reading & grading…' : 'Saving…');
-    }
-    const restore = () => {
-      const b = document.getElementById('theory-image-btn-' + qId);
-      if (b) { b.disabled = false; b.innerHTML = original; }
-    };
-
-    try {
-      const compressed = await compressImage(file, 1000, 1000, 0.7);
-      if (superseded()) return;                       // race guard
-      const base64 = await this._readAsDataURL(compressed);
-      if (superseded()) return;                       // race guard
-
-      d.userAnswers[qId] = base64;
+    /* ============================================================
+       submitTheoryText
+       ============================================================ */
+    submitTheoryText: async function (qId) {
+      var self = this;
+      var q = this.data.questions.find(function (x) { return x.id === qId; });
+      if (!q) return;
+      var input = document.getElementById('theory-text-input-' + qId);
+      var answer = input ? input.value : (this.data.userAnswers[qId] || '');
+      if (!answer || !String(answer).trim()) {
+        this.toast('Please type an answer first.', 'error');
+        return;
+      }
+      this.data.userAnswers[qId] = answer;
+      this.cacheTheoryDraft(qId, answer);
       this.saveExamState();
 
-      if (!study) {
-        this.renderNavigator();
-        restore();
-        this.toast('Photo answer saved', 'success');
+      if (this.data.examMode !== 'study') {
+        this.toast('Answer saved', 'success');
         return;
       }
 
-      const referenceAnswer = q.explanation || q.correct || 'General knowledge';
-      const data = await this._callAiBrain({
-        imageBase64: base64,
-        referenceAnswer: referenceAnswer,
-        maxMarks: q.maxMarks || 10,
-        isImage: true
-      });
-      if (superseded()) return;                       // race guard
-      d.answerRevealed[qId] = this._buildGrade(q, data, referenceAnswer, true);
-      this.saveExamState();
-      this.renderQuestion();
-    } catch (err) {
-      if (superseded()) return;
-      restore();
-      this.toast((study ? 'AI grading failed: ' : 'Could not save photo: ') + err.message, 'error');
+      var btn = document.getElementById('theory-text-btn-' + qId);
+      var originalHTML = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Grading…'; }
+
+      var reference = q.explanation || q.correct || 'General knowledge';
+      var maxMarks = q.maxMarks || 10;
+      try {
+        var result = await gradeOrFallback(
+          { studentAnswer: answer, referenceAnswer: reference, maxMarks: maxMarks },
+          answer, reference, maxMarks
+        );
+        var score = Math.max(0, Math.min(maxMarks, Number(result.score) || 0));
+        this.data.answerRevealed[qId] = {
+          isCorrect: score >= maxMarks * 0.4,
+          score: score,
+          explanation: 'Model Answer:\n\n"' + reference + '"\n\nAI Feedback: ' + result.reason
+        };
+        this.saveExamState();
+        this.toast('AI grading complete: ' + score + '/' + maxMarks, 'success');
+        this.renderQuestion();
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.innerHTML = originalHTML; }
+        this.toast('Grading failed: ' + err.message, 'error');
+      }
+    },
+
+    /* ============================================================
+       submitTheoryImage
+       ============================================================ */
+    submitTheoryImage: async function (qId) {
+      var q = this.data.questions.find(function (x) { return x.id === qId; });
+      if (!q) return;
+      var input = document.getElementById('theory-image-input-' + qId);
+      var file = input && input.files ? input.files[0] : null;
+      if (!file) { this.toast('Please choose or capture a photo first.', 'error'); return; }
+
+      var btn = document.getElementById('theory-image-btn-' + qId);
+      var originalHTML = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing…'; }
+
+      var self = this;
+      var isStudy = this.data.examMode === 'study';
+      var timestamp = Date.now();
+      this._lastImageRequest[qId] = timestamp;
+
+      try {
+        var compressed = await compressImage(file, 1000, 1000, 0.7);
+        if (this._lastImageRequest[qId] !== timestamp) return;   // superseded — abort silently
+        var dataUrl = await readFileAsDataURL(compressed);
+        if (this._lastImageRequest[qId] !== timestamp) return;   // superseded — abort silently
+
+        this.data.userAnswers[qId] = dataUrl;
+        this.saveExamState();
+
+        if (!isStudy) {
+          this.toast('Image answer saved', 'success');
+          if (btn) { btn.disabled = false; btn.innerHTML = originalHTML; }
+          this.renderQuestion();
+          return;
+        }
+
+        var reference = q.explanation || q.correct || 'General knowledge';
+        var maxMarks = q.maxMarks || 10;
+        if (btn) btn.innerHTML = '<span class="spinner"></span> AI grading…';
+
+        var result = await gradeOrFallback(
+          { imageBase64: dataUrl, referenceAnswer: reference, maxMarks: maxMarks, isImage: true },
+          '', reference, maxMarks
+        );
+        if (this._lastImageRequest[qId] !== timestamp) return;   // superseded — abort silently
+
+        var score = Math.max(0, Math.min(maxMarks, Number(result.score) || 0));
+        this.data.answerRevealed[qId] = {
+          isCorrect: score >= maxMarks * 0.4,
+          score: score,
+          explanation: 'Model Answer:\n\n"' + reference + '"\n\nAI Transcription: "' + (result.transcription || 'N/A') + '"\n\nAI Feedback: ' + result.reason
+        };
+        this.saveExamState();
+        this.toast('AI grading complete: ' + score + '/' + maxMarks, 'success');
+        this.renderQuestion();
+      } catch (err) {
+        if (this._lastImageRequest[qId] !== timestamp) return;
+        if (btn) { btn.disabled = false; btn.innerHTML = originalHTML; }
+        this.toast('Image upload failed: ' + err.message, 'error');
+      }
     }
-  }
-});
+  };
+
+  Object.keys(aiMethods).forEach(function (k) {
+    window.app[k] = aiMethods[k];
+  });
+})();

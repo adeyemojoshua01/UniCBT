@@ -1,51 +1,75 @@
-/* ==========================================================================
-   verse-popup.js — "Midnight Scholar" theme patch for the verse popup.
-   Wraps app.showVersePopup AFTER it exists: removes any previous popup,
-   lets the original build the DOM, then restyles it.
-   ========================================================================== */
+/* ============================================================
+   verse-popup.js — "Midnight Scholar" restyle patch for the
+   verse popup built by app-results.js
+   ============================================================ */
 (function () {
   'use strict';
 
-  function install() {
-    const app = window.app;
-    if (!app || typeof app.showVersePopup !== 'function') { setTimeout(install, 100); return; }
-    if (app._versePatched) return;
-    app._versePatched = true;
+  if (!window.app || typeof app.showVersePopup !== 'function') return;
+  var original = app.showVersePopup;
 
-    const original = app.showVersePopup;
-    app.showVersePopup = function () {
-      const stale = document.getElementById('verse-popup');
-      if (stale) stale.remove();
+  app.showVersePopup = function () {
+    /* remove any pre-existing popup before calling through */
+    var existing = document.getElementById('verse-popup');
+    if (existing) existing.remove();
 
-      const result = original.apply(this, arguments);
+    /* palette picked from the most recent result (base function reads it too) */
+    var source = this.data.results && this.data.results.length
+      ? this.data.results[this.data.results.length - 1]
+      : this.data.lastResults;
+    var good = source ? Number(source.percentage) >= 50 : false;
 
-      const popup = document.getElementById('verse-popup');
-      if (!popup) return result;
+    var result = original.apply(this, arguments);
 
-      const results = (this.data && this.data.results) || [];
-      const last = results[results.length - 1] || (this.data && this.data.lastResults);
-      const good = last ? last.percentage >= 50 : true;
+    setTimeout(function () {
+      var popup = document.getElementById('verse-popup');
+      if (!popup) return;
+      var card = popup.firstElementChild;
+      if (!card) return;
 
-      const card = popup.querySelector('.verse-card');
-      if (card) {
-        card.style.background = good
-          ? 'linear-gradient(135deg,#1E1B4B 0%,#312E81 55%,#3730A3 100%)'
-          : 'linear-gradient(135deg,#0F172A 0%,#1E1B4B 55%,#312E81 100%)';
-        card.style.border = '2px solid #F59E0B';
-        card.style.color = '#E0E7FF';
-        card.style.boxShadow = '0 18px 44px rgba(15,23,42,.65), 0 0 0 1px rgba(245,158,11,.25)';
+      /* Midnight Scholar shell: indigo gradient + amber accent */
+      card.style.background = 'linear-gradient(150deg, #1E1B4B 0%, #312E81 52%, #0B1020 100%)';
+      card.style.border = '2px solid #F59E0B';
+      card.style.color = '#E2E8F0';
+      card.style.boxShadow = '0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(245,158,11,.15)';
+
+      var title = card.querySelector('div[style*="font-weight:800"]');
+      if (title) {
+        title.style.color = '#F59E0B';
+        title.style.fontSize = '14px';
+        title.style.letterSpacing = '.01em';
       }
-      const title = popup.querySelector('.verse-title');
-      if (title) title.style.color = '#F59E0B';
-      const ref = popup.querySelector('.verse-ref');
-      if (ref) ref.style.color = '#FBBF24';
-      const btn = popup.querySelector('.verse-continue');
+      var quote = card.querySelector('p');
+      if (quote) { quote.style.color = '#E2E8F0'; quote.style.fontSize = '13px'; }
+      var ref = card.querySelector('div[style*="letter-spacing"]');
+      if (ref) { ref.style.color = '#FBBF24'; }
+
+      var muted = card.querySelector('span[style*="rgba(255,255,255"]');
+      if (muted) muted.style.color = 'rgba(226,232,240,.72)';
+
+      var btn = card.querySelector('button');
       if (btn) {
         btn.style.background = '#F59E0B';
         btn.style.color = '#0F172A';
+        btn.style.border = '1px solid #FBBF24';
+        btn.style.fontWeight = '800';
+        btn.style.padding = '6px 16px';
+        btn.style.borderRadius = '8px';
       }
-      return result;
-    };
-  }
-  install();
+
+      /* ensure the keyframes style tag exists (base injects it; be defensive) */
+      if (!document.getElementById('verse-popup-keyframes')) {
+        var style = document.createElement('style');
+        style.id = 'verse-popup-keyframes';
+        style.textContent = '@keyframes slideUpVerse{from{opacity:0;transform:translate(-50%,26px)}to{opacity:1;transform:translate(-50%,0)}}';
+        document.head.appendChild(style);
+      }
+
+      /* keep the amber identity for good runs, amber-violet for retry */
+      var accentIcon = card.querySelector('div[style*="font-size:26px"]');
+      if (accentIcon) accentIcon.textContent = good ? '🎓✨' : '🌱💪';
+    }, 30);
+
+    return result;
+  };
 })();
