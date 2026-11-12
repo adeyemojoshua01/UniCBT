@@ -1,6 +1,14 @@
 /* ============================================================
    question-loader.js — parses the CBT_SUBJECT_BANKS text DSL
    into window.app.data.subjects (object keyed by subjectId)
+
+   Study notes and study images are supplied externally by the
+   per-subject notes.js files, which set:
+     window.CBT_SUBJECT_NOTES            [subjectName][topicName] → html
+     window.CBT_SUBJECT_IMAGES           [subjectName][topicName] → [{data, filename}]
+     window.CBT_SUBJECT_REFERENCE_IMAGES [subjectName]            → [{data, filename}]
+
+   Those files must load BEFORE this script.
    ============================================================ */
 (function () {
   'use strict';
@@ -60,7 +68,6 @@
     lines.forEach(function (rawLine) {
       var line = rawLine.trim();
       if (!line || line.indexOf('===') === 0) return;
-      var mode = null;
 
       if (/^Subject\s*:/i.test(line)) {
         subject = ensureSubject(line.replace(/^Subject\s*:/i, '').trim());
@@ -179,98 +186,7 @@
     return subjects;
   }
 
-  /* ---------- built-in study material (defaults; admin notes win) ---------- */
-  function svgImage(title, subtitle, accent, type) {
-    var shapes = '';
-    if (type === 'pvd') {
-      shapes = '<path d="M90 300 C 180 140, 260 120, 330 90" stroke="' + accent + '" stroke-width="4" fill="none"/>' +
-        '<path d="M90 300 C 170 240, 250 210, 340 200" stroke="#7c3aed" stroke-width="3" stroke-dasharray="7 6" fill="none"/>' +
-        '<text x="200" y="150" fill="#cbd5e1" font-size="14">isothermal</text>' +
-        '<text x="235" y="235" fill="#a78bfa" font-size="14">adiabatic</text>';
-    } else if (type === 'tree') {
-      shapes = '<g stroke="#64748b" stroke-width="2"><line x1="200" y1="90" x2="120" y2="170"/><line x1="200" y1="90" x2="280" y2="170"/><line x1="120" y1="170" x2="80" y2="250"/><line x1="120" y1="170" x2="160" y2="250"/><line x1="280" y1="170" x2="240" y2="250"/><line x1="280" y1="170" x2="320" y2="250"/></g>' +
-        '<circle cx="200" cy="90" r="16" fill="' + accent + '"/><circle cx="120" cy="170" r="12" fill="#0d9488"/><circle cx="280" cy="170" r="12" fill="#0d9488"/>' +
-        '<circle cx="80" cy="250" r="9" fill="#7c3aed"/><circle cx="160" cy="250" r="9" fill="#7c3aed"/><circle cx="240" cy="250" r="9" fill="#7c3aed"/><circle cx="320" cy="250" r="9" fill="#7c3aed"/>';
-    } else if (type === 'matrix') {
-      shapes = '<g stroke="#334155" stroke-width="1">' +
-        '<line x1="80" y1="120" x2="340" y2="120"/><line x1="80" y1="180" x2="340" y2="180"/><line x1="80" y1="240" x2="340" y2="240"/>' +
-        '<line x1="120" y1="80" x2="120" y2="290"/><line x1="180" y1="80" x2="180" y2="290"/><line x1="240" y1="80" x2="240" y2="290"/><line x1="300" y1="80" x2="300" y2="290"/></g>' +
-        '<polygon points="180,120 300,120 240,240 120,240" fill="' + accent + '" opacity=".35" stroke="' + accent + '" stroke-width="3"/>' +
-        '<text x="88" y="108" fill="#94a3b8" font-size="12">v₁ →</text><text x="88" y="168" fill="#94a3b8" font-size="12">v₂ →</text>';
-    } else {
-      shapes = '<line x1="70" y1="210" x2="340" y2="210" stroke="#475569" stroke-width="3"/>' +
-        '<circle cx="110" cy="210" r="8" fill="' + accent + '"/><circle cx="190" cy="210" r="8" fill="#14b8a6"/><circle cx="270" cy="210" r="8" fill="#a78bfa"/><circle cx="330" cy="210" r="8" fill="#f59e0b"/>' +
-        '<text x="78" y="245" fill="#94a3b8" font-size="12">birth</text><text x="160" y="245" fill="#94a3b8" font-size="12">baptism</text><text x="243" y="245" fill="#94a3b8" font-size="12">ministry</text><text x="310" y="245" fill="#94a3b8" font-size="12">cross</text>';
-    }
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">' +
-      '<rect width="420" height="320" rx="16" fill="#0B1020"/>' +
-      '<rect x="1" y="1" width="418" height="318" rx="16" fill="none" stroke="#22304F"/>' +
-      '<text x="28" y="44" fill="#EAF2F6" font-family="sans-serif" font-size="18" font-weight="700">' + title + '</text>' +
-      '<text x="28" y="64" fill="#8598AC" font-family="sans-serif" font-size="12">' + subtitle + '</text>' +
-      shapes +
-      '<text x="28" y="300" fill="#5EEAD4" font-family="sans-serif" font-size="11">eduCBT study library</text>' +
-      '</svg>';
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  }
-
-  var DEFAULT_NOTES = {
-    'Physics::Thermodynamics': `<h2>Thermodynamics — core notes</h2>
-<p><strong>System and surroundings.</strong> A thermodynamic system is the part of the universe under study. Its boundary may allow heat or work to cross.</p>
-<h3>First law</h3>
-<p>Energy is conserved: \\(\\Delta U = Q - W\\), where \\(Q\\) is heat added to the system and \\(W\\) is work done <em>by</em> the system.</p>
-<ul>
-<li><strong>Isothermal</strong> — constant temperature, \\(\\Delta U = 0\\) for an ideal gas.</li>
-<li><strong>Adiabatic</strong> — no heat exchange, \\(Q = 0\\), so \\(\\Delta U = -W\\).</li>
-<li><strong>Isobaric</strong> — constant pressure, \\(W = P\\Delta V\\).</li>
-<li><strong>Isochoric</strong> — constant volume, \\(W = 0\\).</li>
-</ul>
-<h3>Second law and entropy</h3>
-<p>Spontaneous change increases total entropy. For a reversible step, \\(\\Delta S = \\frac{Q_{rev}}{T}\\), and microscopically \\(S = k_B \\ln \\Omega\\).</p>
-<blockquote>Exam tip: always state the sign convention you are using before substituting into \\(\\Delta U = Q - W\\).</blockquote>`,
-    'Probability::Conditional Probability': `<h2>Conditional probability &amp; Bayes</h2>
-<p>The conditional probability of \\(A\\) given \\(B\\) is \\(P(A \\mid B) = \\frac{P(A \\cap B)}{P(B)}\\), provided \\(P(B) &gt; 0\\).</p>
-<h3>Independence</h3>
-<p>Events are independent when \\(P(A \\cap B) = P(A)P(B)\\). Equivalently, knowing \\(B\\) does not change the chance of \\(A\\).</p>
-<h3>Total probability and Bayes</h3>
-<p>For a partition \\(B_1, \\dots, B_n\\): \\(P(A) = \\sum_i P(A \\mid B_i)P(B_i)\\), and therefore</p>
-<p>\\[P(B_j \\mid A) = \\frac{P(A \\mid B_j)P(B_j)}{\\sum_i P(A \\mid B_i)P(B_i)}\\]</p>
-<ul><li>Prior × likelihood gives the posterior numerator.</li><li>The denominator is the overall evidence.</li><li>Without replacement, the sample space shrinks each draw.</li></ul>`,
-    'Bible Studies::Gospels': `<h2>The Four Gospels</h2>
-<p>Each Gospel presents the life, teaching, death and resurrection of Jesus with a distinct emphasis.</p>
-<ul>
-<li><strong>Matthew</strong> — Jesus as promised Messiah and teacher; structured in five major discourses.</li>
-<li><strong>Mark</strong> — the action-paced servant; the earliest Gospel.</li>
-<li><strong>Luke</strong> — the compassionate Saviour, attentive to outsiders and prayer.</li>
-<li><strong>John</strong> — the divine Word; seven signs and extended discourses.</li>
-</ul>
-<h3>Sermon on the Mount</h3>
-<p>Matthew 5–7 opens with the Beatitudes, reframes the Law around the heart, and calls disciples to love enemies and trust the Father.</p>
-<blockquote>The kingdom is announced as a gift, then practised as a new way of life.</blockquote>`,
-    'Linear Algebra::Matrices': `<h2>Matrices — working notes</h2>
-<p>A matrix is a rectangular array of numbers acting as a linear map between coordinate spaces.</p>
-<h3>Determinants</h3>
-<p>For \\(\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}\\), \\(\\det = ad - bc\\). The map is invertible exactly when \\(\\det A \\neq 0\\).</p>
-<h3>Inverses</h3>
-<p>\\(A^{-1} = \\frac{1}{\\det A}\\,\\text{adj}(A)\\). Always verify \\(AA^{-1} = I\\).</p>
-<ul><li>Product dimension: \\((m \\times n)(n \\times p) = m \\times p\\).</li><li>Transpose swaps rows and columns.</li><li>Singular matrices have dependent rows and non-trivial kernels.</li></ul>`
-  };
-
-  var DEFAULT_IMAGES = {
-    'Physics::Thermodynamics': [
-      { title: 'PV diagram', subtitle: 'Reversible expansion paths', type: 'pvd', filename: 'pv-diagram.svg' },
-      { title: 'Carnot cycle', subtitle: 'Two isotherms, two adiabats', type: 'tree', filename: 'carnot-cycle.svg' }
-    ],
-    'Probability::Conditional Probability': [
-      { title: 'Probability tree', subtitle: 'Without-replacement branches', type: 'tree', filename: 'probability-tree.svg' }
-    ],
-    'Bible Studies::Gospels': [
-      { title: 'Gospel timeline', subtitle: 'From Bethlehem to the cross', type: 'timeline', filename: 'gospel-timeline.svg' }
-    ],
-    'Linear Algebra::Matrices': [
-      { title: 'Linear transformation', subtitle: 'Unit square mapped by A', type: 'matrix', filename: 'linear-map.svg' }
-    ]
-  };
-
+  /* ---------- boot ---------- */
   function boot() {
     var tries = 0;
     var interval = setInterval(function () {
@@ -287,20 +203,28 @@
     }, 100);
   }
 
+  /* ---------- merge saved notes/images + external per-subject files ---------- */
   function mergeSaved(newSubjects) {
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem('cbt_subjects') || '{}') || {}; } catch (e) { saved = {}; }
     var savedList = Object.values(saved);
+
     var savedImages = {};
     try { savedImages = JSON.parse(localStorage.getItem('cbt_images') || '{}') || {}; } catch (e) { savedImages = {}; }
+
     var remappedImages = {};
     var imagesChanged = false;
 
+    var EXT_NOTES  = window.CBT_SUBJECT_NOTES  || {};
+    var EXT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
+
     Object.values(newSubjects).forEach(function (ns) {
       var savedSub = savedList.find(function (s) { return s && s.name === ns.name; });
+
       if (savedSub) {
-        /* reuse the persisted subject id so saved exams, images and notes keep resolving */
+        /* reuse persisted subject id so saved exams, images and notes keep resolving */
         if (savedSub.id) ns.id = savedSub.id;
+
         if (savedSub.notes && typeof savedSub.notes === 'object') {
           Object.keys(savedSub.notes).forEach(function (k) {
             if (savedSub.notes[k] && String(savedSub.notes[k]).trim() !== '') ns.notes[k] = savedSub.notes[k];
@@ -317,16 +241,16 @@
         }
       }
 
-      /* seed defaults per topic where nothing was merged */
+      /* fall back to the external per-subject notes.js payloads */
+      var subNotes  = EXT_NOTES[ns.name]  || {};
+      var subImages = EXT_IMAGES[ns.name] || {};
+
       ns.topics.forEach(function (t) {
-        var key = ns.name + '::' + t.name;
-        if (DEFAULT_NOTES[key] && (!ns.notes[t.id] || String(ns.notes[t.id]).trim() === '')) {
-          ns.notes[t.id] = DEFAULT_NOTES[key];
+        if (subNotes[t.name] && (!ns.notes[t.id] || String(ns.notes[t.id]).trim() === '')) {
+          ns.notes[t.id] = subNotes[t.name];
         }
-        if (DEFAULT_IMAGES[key] && (!ns.topicImages[t.id] || !ns.topicImages[t.id].length)) {
-          ns.topicImages[t.id] = DEFAULT_IMAGES[key].map(function (spec) {
-            return { data: svgImage(spec.title, spec.subtitle, '#2DD4BF', spec.type), filename: spec.filename };
-          });
+        if (subImages[t.name] && (!ns.topicImages[t.id] || !ns.topicImages[t.id].length)) {
+          ns.topicImages[t.id] = subImages[t.name].slice();
         }
       });
     });
@@ -337,6 +261,7 @@
     }
   }
 
+  /* ---------- load ---------- */
   function load() {
     var text = window.CBT_SUBJECT_BANKS.join('\n');
     var parsed = parseQuestions(text);
@@ -360,21 +285,23 @@
     if (!window.app.data.currentSubjectId || !parsed[window.app.data.currentSubjectId]) {
       window.app.data.currentSubjectId = ids[0];
     }
+
+    /* merge any persisted subject-level reference images */
     window.app.data.images = window.app.data.images || {};
     var savedImages = {};
     try { savedImages = JSON.parse(localStorage.getItem('cbt_images') || '{}') || {}; } catch (e) { savedImages = {}; }
     Object.keys(savedImages).forEach(function (k) { window.app.data.images[k] = savedImages[k]; });
 
-    /* seed reference-image boards for subjects that have none (visual study aids) */
-    var refTypes = { 'Physics': 'pvd', 'Probability': 'tree', 'Bible Studies': 'timeline', 'Linear Algebra': 'matrix' };
+    /* seed reference-image boards from the external notes.js files */
+    var refBoards = window.CBT_SUBJECT_REFERENCE_IMAGES || {};
     Object.values(parsed).forEach(function (s) {
       if (!window.app.data.images[s.id] || !window.app.data.images[s.id].length) {
-        window.app.data.images[s.id] = [{
-          data: svgImage(s.name + ' — reference board', 'Key relationships and worked-figure overview', '#F59E0B', refTypes[s.name] || 'tree'),
-          filename: (s.name || 'subject').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-reference.svg'
-        }];
+        if (refBoards[s.name] && refBoards[s.name].length) {
+          window.app.data.images[s.id] = refBoards[s.name].slice();
+        }
       }
     });
+
     if (typeof window.app.saveImages === 'function') window.app.saveImages();
     window.app.data.refreshLocked = false;
 
@@ -385,7 +312,10 @@
     }
   }
 
+  /* ---------- public API (kept for backwards compatibility) ---------- */
   window.parseCBTBankQuestions = parseQuestions;
-  window.CBT_DEFAULT_STUDY_NOTES = DEFAULT_NOTES;
+  /* kept as empty objects so any external code referencing them does not crash */
+  window.CBT_DEFAULT_STUDY_NOTES = window.CBT_DEFAULT_STUDY_NOTES || {};
+
   boot();
 })();
