@@ -1,97 +1,91 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
+window.CBT_SUBJECT_BANKS.push(`Subject: Bible Studies
+Duration: 30
+Topic: Gospels
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Bible Knowledge
-Duration: 25
-
-Topic: Old Testament
-
-SubTopic: Creation & Patriarchs
+SubTopic: Life of Christ
 Type: MCQ
-Q001: On which day of creation did God make man in His own image?
-Option: A: The fourth day
-Option: B: The fifth day
-Option: C: The sixth day
-Option: D: The seventh day
-Answer: C
-Explanation: Genesis 1:26-31 records that God created man in His own image on the sixth day, after the land animals.
-
-Type: Fill
-Q002: ____ built the ark in obedience to God before the flood.
-Answer: Noah
-Explanation: God instructed Noah to build an ark to save his family and the animals from the flood (Genesis 6:13-22).
-
-Type: MCQ
-Q003: Who was the son born to Abraham and Sarah in their old age?
-Option: A: Ishmael
-Option: B: Isaac
-Option: C: Jacob
-Option: D: Esau
+Q001: In which town was Jesus born?
+Option: A: Nazareth
+Option: B: Bethlehem
+Option: C: Jerusalem
+Option: D: Capernaum
 Answer: B
-Explanation: Isaac was the promised son of Abraham and Sarah (Genesis 21:1-3). Ishmael was born to Abraham and Hagar.
+Explanation: The Gospels record that Jesus was born in Bethlehem of Judea (Matthew 2:1; Luke 2:4-7), while he grew up in Nazareth.
 
-SubTopic: Prophets & Kings
+SubTopic: Life of Christ
 Type: MCQ
-Q004: Who was the first king of Israel?
-Option: A: David
-Option: B: Solomon
-Option: C: Saul
-Option: D: Samuel
-Answer: C
-Explanation: Saul, son of Kish from the tribe of Benjamin, was anointed by Samuel as Israel's first king (1 Samuel 10:1).
+Q002: Which Gospel begins with the words "In the beginning was the Word"?
+Option: A: Matthew
+Option: B: Mark
+Option: C: Luke
+Option: D: John
+Answer: D
+Explanation: John's prologue opens with "In the beginning was the Word, and the Word was with God, and the Word was God" (John 1:1).
 
-Type: Fill
-Q005: The Philistine giant defeated by young David with a sling and a stone was named ____.
-Answer: Goliath
-Explanation: David defeated Goliath of Gath in the Valley of Elah (1 Samuel 17).
-
-Type: Theory
-Q006: Narrate the call of the boy Samuel and explain what it teaches about listening to God.
-Marks: 10
-Explanation: In 1 Samuel 3, God called Samuel three times at night while he served under Eli at Shiloh. Samuel thought it was Eli speaking, and Eli finally perceived that the LORD was calling the boy and told him to respond, "Speak, LORD; for thy servant heareth." God then revealed to Samuel the coming judgment on Eli's house. The account teaches availability, humility, obedience, and the importance of guidance from mature believers in recognising God's voice.
-
-Topic: New Testament
-
-SubTopic: Gospels
+SubTopic: Life of Christ
 Type: MCQ
-Q007: How many disciples did Jesus choose to be His apostles?
-Option: A: Seven
-Option: B: Ten
-Option: C: Twelve
-Option: D: Seventy
-Answer: C
-Explanation: Jesus appointed twelve apostles (Mark 3:13-19; Luke 6:12-16).
-
-Type: Fill
-Q008: Jesus was born in the town of ____.
-Answer: Bethlehem
-Explanation: Matthew 2:1 and Luke 2:4-7 record that Jesus was born in Bethlehem of Judaea.
-
-Type: MCQ
-Q009: Who baptised Jesus in the River Jordan?
-Option: A: Peter
-Option: B: John the Baptist
-Option: C: Paul
-Option: D: Andrew
+Q003: How many Gospels open the New Testament?
+Option: A: 3
+Option: B: 4
+Option: C: 5
+Option: D: 7
 Answer: B
-Explanation: John the Baptist baptised Jesus in the Jordan, and the Spirit descended like a dove (Matthew 3:13-17).
+Explanation: The four canonical Gospels are Matthew, Mark, Luke and John.
 
-SubTopic: Epistles & Acts
-Type: MCQ
-Q010: Which apostle wrote the largest number of letters (epistles) in the New Testament?
-Option: A: Peter
-Option: B: John
-Option: C: Paul
-Option: D: James
-Answer: C
-Explanation: Thirteen epistles, from Romans to Philemon, are traditionally attributed to the apostle Paul.
-
+SubTopic: Life of Christ
 Type: Fill
-Q011: Saul of Tarsus, after his encounter with Christ on the road to Damascus, became known as ____.
-Answer: Paul
-Explanation: Acts 9 records Saul's conversion, and from Acts 13:9 he is referred to as Paul.
+Q004: Jesus called ______ disciples to follow him, and they later became his apostles.
+Answer: twelve
+Explanation: Jesus chose twelve apostles (Mark 3:14-19) to be with him and to be sent out to preach.
 
+SubTopic: Teachings
 Type: Theory
-Q012: List and briefly explain the fruit of the Spirit as given in Galatians 5:22-23.
+Q005: Summarise the central message of the Sermon on the Mount and give two examples of how it reframes the Law.
 Marks: 10
-Explanation: Galatians 5:22-23 lists the fruit of the Spirit as love, joy, peace, longsuffering (patience), gentleness (kindness), goodness, faithfulness, meekness (gentleness) and self-control (temperance). They are the character qualities produced in a believer by the Holy Spirit, in contrast to the works of the flesh listed in verses 19-21.
+Explanation: The Sermon on the Mount (Matthew 5-7) announces the kingdom of God and describes kingdom character through the Beatitudes. It then reframes the Law with heart-level obedience: anger is set alongside murder, and lust alongside adultery. It commands love of enemies, unrewarded generosity and prayer without display, and closes with the wise and foolish builders as a call to put the teaching into practice.
+
+SubTopic: Teachings
+Type: MCQ
+Q006: "For God so loved the world..." opens a verse in which Gospel?
+Option: A: John
+Option: B: Matthew
+Option: C: Acts
+Option: D: Romans
+Answer: A
+Explanation: John 3:16 expresses the Gospel's message of God's love and the gift of his Son.
+
+Topic: Wisdom Literature
+
+SubTopic: Psalms & Proverbs
+Type: MCQ
+Q007: The book of Proverbs is most closely associated with which kind of literature?
+Option: A: Apocalyptic
+Option: B: Wisdom
+Option: C: Law
+Option: D: Prophecy
+Answer: B
+Explanation: Proverbs belongs to the wisdom tradition, offering practical instruction for reverent, skillful living.
+
+SubTopic: Psalms & Proverbs
+Type: MCQ
+Q008: "The LORD is my shepherd; I shall not want" is found in which Psalm?
+Option: A: Psalm 1
+Option: B: Psalm 23
+Option: C: Psalm 51
+Option: D: Psalm 100
+Answer: B
+Explanation: Psalm 23 is the shepherd psalm, presenting the LORD as guide, provider and host.
+
+SubTopic: Psalms & Proverbs
+Type: Fill
+Q009: The fear of the LORD is the beginning of ______ (Proverbs 9:10).
+Answer: wisdom
+Explanation: Proverbs 9:10 says knowledge of the Holy One is understanding; reverent fear of God grounds all true wisdom.
+
+SubTopic: Psalms & Proverbs
+Type: Theory
+Q010: Explain the difference between wisdom and knowledge using any two wisdom texts you have studied.
+Marks: 10
+Explanation: Knowledge gathers facts, while wisdom is the skill of applying them rightly before God. Proverbs presents wisdom as practical, reverent living: the fear of the LORD precedes understanding, and wise speech is slow and generous. Ecclesiastes tests knowledge gained from observation and concludes that every worldly pursuit is vapour without reverence for God. James 3 distinguishes earthly knowledge-driven ambition from the peaceable gentleness of true wisdom; they differ in character, practice and final goal.
 `);

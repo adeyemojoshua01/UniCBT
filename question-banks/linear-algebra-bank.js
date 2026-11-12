@@ -1,97 +1,91 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
-
 window.CBT_SUBJECT_BANKS.push(`Subject: Linear Algebra
 Duration: 40
-
 Topic: Matrices
 
-SubTopic: Matrix Operations
+SubTopic: Operations & Determinants
 Type: MCQ
-Q001: If A is a \\( 2 \\times 3 \\) matrix and B is a \\( 3 \\times 4 \\) matrix, what is the size of the product AB?
-Option: A: \\( 2 \\times 4 \\)
-Option: B: \\( 3 \\times 3 \\)
-Option: C: \\( 4 \\times 2 \\)
-Option: D: AB is not defined
-Answer: A
-Explanation: The product of an \\( m \\times n \\) matrix and an \\( n \\times p \\) matrix is an \\( m \\times p \\) matrix, so AB is \\( 2 \\times 4 \\).
-
-Type: Fill
-Q002: A square matrix that is equal to its own transpose is called a ____ matrix.
-Answer: symmetric
-Explanation: A matrix A is symmetric when \\( A^{T} = A \\), that is \\( a_{ij} = a_{ji} \\) for all i and j.
-
-Type: MCQ
-Q003: What is the trace of the matrix \\( \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix} \\)?
-Option: A: 4
-Option: B: 5
-Option: C: 7
-Option: D: 10
-Answer: B
-Explanation: The trace is the sum of the diagonal entries: \\( 1 + 4 = 5 \\).
-
-SubTopic: Determinants & Inverses
-Type: MCQ
-Q004: Find the determinant of \\( \\begin{pmatrix} 2 & 1 \\\\ 5 & 3 \\end{pmatrix} \\).
-Option: A: 1
-Option: B: 6
+Q001: What is the determinant of the matrix \\(\\begin{pmatrix} 2 & 1 \\\\ 3 & 4 \\end{pmatrix}\\)?
+Option: A: 5
+Option: B: 8
 Option: C: 11
-Option: D: -1
+Option: D: -5
 Answer: A
-Explanation: For a \\( 2 \\times 2 \\) matrix, \\( \\det = ad - bc = (2)(3) - (1)(5) = 6 - 5 = 1 \\).
+Explanation: For a 2x2 matrix \\(\\det = ad - bc = (2)(4) - (1)(3) = 8 - 3 = 5\\).
 
+SubTopic: Operations & Determinants
+Type: MCQ
+Q002: A 3x3 matrix is singular. What is its determinant?
+Option: A: 1
+Option: B: -1
+Option: C: 0
+Option: D: Positive but not 1
+Answer: C
+Explanation: A singular matrix is not invertible, which occurs exactly when its determinant equals zero. Its rows are linearly dependent.
+
+SubTopic: Operations & Determinants
+Type: MCQ
+Q003: If A is 2x3 and B is 3x4, what are the dimensions of AB?
+Option: A: 3x3
+Option: B: 2x4
+Option: C: 4x2
+Option: D: Undefined
+Answer: B
+Explanation: Matrix product AB is defined because A's column count (3) matches B's row count (3), and the result has A's row count and B's column count: 2x4.
+
+SubTopic: Operations & Determinants
 Type: Fill
-Q005: A square matrix A is invertible if and only if \\( \\det(A) \\neq \\) ____.
-Answer: 0
-Explanation: A zero determinant means the matrix is singular, so no inverse exists.
+Q004: The transpose of a 2x3 matrix has dimensions ______.
+Answer: 3x2
+Explanation: Transposing swaps rows and columns, so an m x n matrix becomes n x m.
 
+SubTopic: Inverses
 Type: Theory
-Q006: Explain how the inverse of a square matrix can be found using Gauss-Jordan elimination.
+Q005: Explain how to determine whether a given square matrix is invertible, and describe the method of finding its inverse using the adjugate.
 Marks: 10
-Explanation: Form the augmented matrix \\( [A \\mid I] \\) and apply elementary row operations (swapping rows, scaling a row, adding a multiple of one row to another) to reduce the left block A to the identity matrix I. The same operations transform the right block into \\( A^{-1} \\), giving \\( [I \\mid A^{-1}] \\). If a row of zeros appears in the left block, the matrix is singular and has no inverse.
+Explanation: A square matrix A is invertible if and only if \\(\\det A \\neq 0\\); equivalently, its columns are linearly independent and its null space contains only the zero vector. When \\(\\det A \\neq 0\\), the inverse is \\(A^{-1} = \\frac{1}{\\det A}\\,\\text{adj}(A)\\), where the adjugate is the transpose of the cofactor matrix. It is wise to verify by multiplying A and A inverse to obtain the identity, since no free parameters exist in the inverse.
 
 Topic: Vector Spaces
 
-SubTopic: Eigenvalues
+SubTopic: Basis & Dimension
 Type: MCQ
-Q007: What are the eigenvalues of \\( \\begin{pmatrix} 2 & 0 \\\\ 0 & 3 \\end{pmatrix} \\)?
-Option: A: 0 and 5
-Option: B: 2 and 3
-Option: C: 1 and 6
-Option: D: 6 only
-Answer: B
-Explanation: The eigenvalues of a triangular (here diagonal) matrix are its diagonal entries, namely 2 and 3.
-
-Type: Fill
-Q008: The equation \\( \\det(A - \\lambda I) = 0 \\) is called the ____ equation of A.
-Answer: characteristic
-Explanation: Its roots are exactly the eigenvalues of A.
-
-Type: MCQ
-Q009: The sum of the eigenvalues of a square matrix is equal to its:
-Option: A: determinant
-Option: B: rank
-Option: C: trace
-Option: D: nullity
-Answer: C
-Explanation: The sum of the eigenvalues (counted with multiplicity) equals the trace, and their product equals the determinant.
-
-SubTopic: Independence & Basis
-Type: MCQ
-Q010: What is the dimension of the vector space \\( \\mathbb{R}^3 \\)?
-Option: A: 1
-Option: B: 2
-Option: C: 3
+Q006: The dimension of the vector space R^3 is:
+Option: A: 2
+Option: B: 3
+Option: C: 4
 Option: D: Infinite
+Answer: B
+Explanation: R^3 has the standard basis {(1,0,0), (0,1,0), (0,0,1)}, containing three independent vectors.
+
+SubTopic: Basis & Dimension
+Type: MCQ
+Q007: Which set is a basis for R^2?
+Option: A: {(1,0), (2,0)}
+Option: B: {(1,0), (0,1)}
+Option: C: {(0,0), (1,1)}
+Option: D: {(1,1)}
+Answer: B
+Explanation: The standard basis {(1,0), (0,1)} is linearly independent and spans R^2. The set {(1,0),(2,0)} is dependent and spans only a line.
+
+SubTopic: Basis & Dimension
+Type: MCQ
+Q008: A set of vectors is linearly independent if the only solution to \\(c_1v_1 + ... + c_nv_n = 0\\) is:
+Option: A: Any real coefficients
+Option: B: All coefficients equal to 1
+Option: C: All coefficients equal to 0
+Option: D: One non-zero coefficient
 Answer: C
-Explanation: The standard basis \\( \\{e_1, e_2, e_3\\} \\) has three vectors, so \\( \\dim \\mathbb{R}^3 = 3 \\).
+Explanation: Linear independence means the trivial combination is the only one producing the zero vector; otherwise the vectors are dependent.
 
+SubTopic: Basis & Dimension
 Type: Fill
-Q011: A set of vectors that is linearly independent and spans a vector space is called a ____ of that space.
-Answer: basis
-Explanation: Every vector in the space can then be written uniquely as a linear combination of the basis vectors.
+Q009: A basis of a vector space must be both linearly independent and must ______ the space.
+Answer: span
+Explanation: Independence prevents redundancy and spanning ensures every element is representable. The number of basis vectors is the dimension.
 
+SubTopic: Linear Maps
 Type: Theory
-Q012: Define linear independence of a set of vectors and describe a method to test whether three vectors in \\( \\mathbb{R}^3 \\) are linearly independent.
+Q010: Explain the rank-nullity theorem and illustrate it with a linear map from R^4 to R^3.
 Marks: 10
-Explanation: Vectors \\( v_1, \\dots, v_k \\) are linearly independent if the only solution of \\( c_1 v_1 + \\dots + c_k v_k = 0 \\) is \\( c_1 = \\dots = c_k = 0 \\). For three vectors in \\( \\mathbb{R}^3 \\), place them as columns of a \\( 3 \\times 3 \\) matrix: they are independent exactly when its determinant is non-zero (equivalently, when row reduction gives three pivots).
+Explanation: For a linear map \\(T: V \\to W\\) on a finite-dimensional space, \\(\\dim V = \\text{rank}(T) + \\text{nullity}(T)\\). The rank is the dimension of the image and the nullity is the dimension of the kernel. For \\(T: R^4 \\to R^3\\), the domain dimension is four while the rank cannot exceed three. If, for example, the image has dimension 3, then the kernel has dimension 1, so the map is onto but not one-to-one. The theorem captures the conservation of degrees of freedom between inputs, outputs and collapsed directions.
 `);
