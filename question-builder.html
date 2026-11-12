@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eduCBT — Question Builder</title>
+
+  <!-- Tailwind (browser build) with inline dark theme config -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style type="text/tailwindcss">
+    @theme {
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --color-ink-950: #070a12;
+      --color-ink-900: #0b1020;
+      --color-ink-850: #0f1528;
+      --color-ink-800: #131b32;
+      --color-ink-700: #1b2540;
+      --color-ink-600: #263256;
+      --color-ink-500: #36446f;
+      --color-brand-300: #5eead4;
+      --color-brand-400: #2dd4bf;
+      --color-brand-500: #14b8a6;
+      --color-brand-600: #0d9488;
+      --color-brand-700: #0f766e;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+  <!-- MathJax config (supports $...$ and $$...$$ as well as \( \) and \[ \]) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        packages: { '[+]': ['mhchem', 'ams'] }
+      },
+      loader: { load: ['[tex]/mhchem'] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+      startup: { typeset: false }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { background: #070a12; color: #e2e8f0; overflow: hidden; font-family: var(--font-sans, system-ui, sans-serif); }
+    button:not(:disabled) { cursor: pointer; }
+    * { scrollbar-width: thin; scrollbar-color: #36446f transparent; }
+
+    .fld { width: 100%; background: #0b1020; border: 1px solid #263256; border-radius: .6rem; padding: .55rem .8rem; color: #e2e8f0; font-size: .9rem; outline: none; transition: border-color .15s, box-shadow .15s; }
+    .fld:focus { border-color: #2dd4bf; box-shadow: 0 0 0 3px rgba(45, 212, 191, .2); }
+    textarea.fld { resize: vertical; min-height: 90px; font-family: inherit; line-height: 1.5; }
+    .label { display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b98b8; margin-bottom: .35rem; }
+
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border-radius: .6rem; font-size: .8rem; font-weight: 600; border: 1px solid #263256; background: #131b32; color: #cbd5e1; transition: background .15s, border-color .15s; white-space: nowrap; }
+    .btn:hover:not(:disabled) { background: #1b2540; border-color: #36446f; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: #0d9488; border-color: #14b8a6; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #14b8a6; border-color: #2dd4bf; }
+    .btn-danger { color: #fda4af; border-color: rgba(244, 63, 94, .4); }
+    .btn-danger:hover:not(:disabled) { background: rgba(244, 63, 94, .15); border-color: rgba(244, 63, 94, .6); }
+    .btn-amber { color: #fcd34d; border-color: rgba(245, 158, 11, .4); }
+    .btn-amber:hover:not(:disabled) { background: rgba(245, 158, 11, .14); }
+    .btn-active { background: rgba(245, 158, 11, .2); border-color: #f59e0b; color: #fcd34d; }
+
+    .preview-box { background: #0b1020; border: 1px dashed #263256; border-radius: .6rem; padding: .7rem .9rem; min-height: 2.6rem; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92rem; color: #cbd5e1; }
+    .preview-box:empty::before { content: 'Live preview appears here…'; color: #4b5873; }
+
+    .tree-row { display: flex; align-items: center; gap: .4rem; padding: .35rem .5rem; border-radius: .5rem; cursor: pointer; font-size: .84rem; color: #cbd5e1; min-width: 0; }
+    .tree-row:hover { background: #131b32; }
+    .tree-row.active { background: rgba(20, 184, 166, .16); color: #99f6e4; }
+    .tree-row .acts { opacity: 0; margin-left: auto; display: flex; gap: .2rem; }
+    .tree-row:hover .acts, .tree-row.active .acts { opacity: 1; }
+    .tree-mini { width: 1.5rem; height: 1.5rem; border-radius: .35rem; display: inline-flex; align-items: center; justify-content: center; color: #8b98b8; font-size: .7rem; }
+    .tree-mini:hover { background: #263256; color: #5eead4; }
+    .dot { width: .5rem; height: .5rem; border-radius: 9999px; flex-shrink: 0; }
+    .dot-MCQ { background: #2dd4bf; } .dot-Fill { background: #fbbf24; } .dot-Theory { background: #a78bfa; }
+
+    .seg { display: inline-flex; border: 1px solid #263256; border-radius: .6rem; overflow: hidden; }
+    .seg button { padding: .4rem .9rem; font-size: .8rem; font-weight: 700; background: #0b1020; color: #8b98b8; }
+    .seg button.on { background: #0d9488; color: #fff; }
+
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(3, 5, 12, .78); z-index: 70; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-bg.open { display: flex; }
+    .modal-card { background: #0f1528; border: 1px solid #263256; border-radius: 1rem; box-shadow: 0 30px 70px rgba(0, 0, 0, .6); width: 100%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    #sidebar { width: 18rem; flex-shrink: 0; background: #0b1020; border-right: 1px solid #263256; display: flex; flex-direction: column; min-height: 0; }
+    #sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .6); z-index: 35; }
+    @media (max-width: 767px) {
+      #sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; transform: translateX(-100%); transition: transform .25s ease; }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar-backdrop.open { display: block; }
+    }
+    @media (min-width: 768px) { #btn-menu { display: none !important; } }
+
+    .drop-active { border-color: #2dd4bf !important; background: rgba(20, 184, 166, .08) !important; }
+
+    .pv-card { background: #0f1528; border: 1px solid #263256; border-radius: .9rem; padding: 1rem; }
+    .pv-opt { border: 2px solid #263256; border-radius: .6rem; padding: .55rem .75rem; display: flex; gap: .6rem; align-items: flex-start; overflow-wrap: anywhere; }
+    .pv-card.revealed .pv-opt[data-correct="1"] { border-color: #10b981; background: rgba(16, 185, 129, .14); }
+    .pv-answer { filter: blur(7px); user-select: none; transition: filter .2s; }
+    .pv-card.revealed .pv-answer { filter: none; user-select: auto; }
+    .pv-exp { display: none; }
+    .pv-card.revealed .pv-exp { display: block; }
+
+    #toasts { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: .5rem; align-items: center; pointer-events: none; }
+    .toast { background: #1b2540; border: 1px solid #36446f; color: #e2e8f0; padding: .55rem 1rem; border-radius: .6rem; font-size: .85rem; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+    .toast.err { border-color: #f43f5e; color: #fda4af; }
+    .toast.ok { border-color: #14b8a6; color: #99f6e4; }
+
+    mjx-container { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+    mjx-container[display="true"] { display: block; }
+  </style>
+</head>
+
+<body class="flex flex-col">
+
+  <!-- ============================ TOP BAR ============================ -->
+  <header class="h-14 shrink-0 flex items-center gap-2 px-3 border-b border-ink-600 bg-ink-900">
+    <button id="btn-menu" class="btn" onclick="openSidebar()" title="Open tree"><i class="fas fa-bars"></i></button>
+    <div class="flex items-center gap-2 font-bold whitespace-nowrap">
+      <span class="w-8 h-8 rounded-lg bg-brand-600/25 text-brand-300 flex items-center justify-center"><i class="fas fa-layer-group"></i></span>
+      <span class="hidden sm:inline">Question Builder</span>
+    </div>
+    <input id="bank-name" class="fld !w-40 md:!w-56 ml-1" placeholder="Bank name" oninput="edit(function(){appData.bankName=$('bank-name').value})" />
+    <div class="ml-auto flex items-center gap-1.5">
+      <span id="saved-indicator" class="text-xs text-brand-300 opacity-0 transition-opacity whitespace-nowrap"><i class="fas fa-check-circle"></i> Saved</span>
+      <button id="btn-undo" class="btn" onclick="undo()" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+      <button id="btn-redo" class="btn" onclick="redo()" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+      <button id="btn-preview" class="btn" onclick="togglePreview()" title="Toggle preview mode"><i class="fas fa-eye"></i><span class="hidden lg:inline">Preview</span></button>
+      <button class="btn" onclick="openImportModal()"><i class="fas fa-file-import"></i><span class="hidden lg:inline">Import</span></button>
+      <button class="btn" onclick="openExportModal()"><i class="fas fa-file-export"></i><span class="hidden lg:inline">Export</span></button>
+      <button class="btn btn-primary" onclick="openPublishModal()"><i class="fab fa-github"></i><span class="hidden lg:inline">Publish</span></button>
+    </div>
+  </header>
+
+  <!-- ============================ EMPTY VIEW ============================ -->
+  <div id="empty-view" class="flex-1 overflow-auto items-center justify-center p-4" style="display:flex">
+    <div class="max-w-xl w-full text-center">
+      <div class="w-20 h-20 rounded-2xl bg-brand-600/20 text-brand-300 flex items-center justify-center text-4xl mx-auto mb-5"><i class="fas fa-layer-group"></i></div>
+      <h1 class="text-2xl font-extrabold mb-1">Build a question bank</h1>
+      <p class="text-slate-400 mb-6 text-sm">Import an existing <code class="text-brand-300">*-bank.js</code> file, start from scratch, or explore a sample.</p>
+
+      <div id="drop-zone" class="border-2 border-dashed border-ink-500 rounded-2xl p-8 mb-5 bg-ink-900 transition">
+        <i class="fas fa-cloud-upload-alt text-3xl text-slate-500 mb-2"></i>
+        <p class="font-semibold mb-1">Drag &amp; drop a .js bank file here</p>
+        <p class="text-xs text-slate-500 mb-4">or</p>
+        <label class="btn btn-primary cursor-pointer"><i class="fas fa-folder-open"></i> Choose file
+          <input id="file-input" type="file" accept=".js,.txt" class="hidden" />
+        </label>
+      </div>
+
+      <div class="flex flex-wrap gap-2 justify-center">
+        <button class="btn" onclick="createBlank()"><i class="fas fa-plus"></i> Create Blank</button>
+        <button class="btn" onclick="loadSample()"><i class="fas fa-flask"></i> Load Sample</button>
+        <button class="btn" onclick="openImportModal()"><i class="fas fa-paste"></i> Paste / GitHub</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ EDITOR VIEW ============================ -->
+  <div id="editor-view" class="flex-1 min-h-0" style="display:none">
+    <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+    <aside id="sidebar">
+      <div class="p-3 border-b border-ink-600 flex items-center gap-2">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input id="search" class="fld !pl-8" placeholder="Search…" oninput="searchTerm=this.value; renderSidebar()" />
+        </div>
+        <button class="btn md:hidden" onclick="closeSidebar()"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="tree" class="flex-1 overflow-y-auto p-2"></div>
+      <div class="p-3 border-t border-ink-600">
+        <button class="btn btn-primary w-full justify-center" onclick="addSubject()"><i class="fas fa-plus"></i> New Subject</button>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0 flex flex-col">
+      <div id="breadcrumb" class="shrink-0 h-11 px-4 flex items-center gap-2 border-b border-ink-600 bg-ink-900 text-sm overflow-x-auto whitespace-nowrap"></div>
+      <div id="editor-pane" class="flex-1 overflow-y-auto"></div>
+    </main>
+  </div>
+
+  <!-- ============================ IMPORT MODAL ============================ -->
+  <div id="import-modal" class="modal-bg" onclick="if(event.target===this)closeModal('import-modal')">
+    <div class="modal-card max-w-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-600">
+        <h3 class="font-bold"><i class="fas fa-file-import text-brand-300 mr-2"></i>Import question bank</h3>
+        <button class="btn" onclick="closeModal('import-modal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4">
+        <div id="import-drop" class="border-2 border-dashed border-ink-500 rounded-xl p-4 text-center text-sm text-slate-400">
+          Drop a <b>.js</b> file here or
+          <label class="text-brand-300 underline cursor-pointer">browse<input id="import-file" type="file" accept=".js,.txt" class="hidden" /></label>
+        </div>
+        <div>
+          <label class="label">…or paste bank code / raw text</label>
+          <textarea id="import-text" class="fld !font-mono !text-xs" rows="8" placeholder="window.CBT_SUBJECT_BANKS.push(`Subject: Physics ...`);"></textarea>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn" onclick="importFromGitHub()"><i class="fab fa-github"></i> Import from my GitHub Repo</button>
+          <button class="btn btn-primary" onclick="runParse()"><i class="fas fa-cogs"></i> Parse</button>
+        </div>
+        <div id="import-result"></div>
+        <div id="import-options" class="hidden">
+          <label class="label">When importing</label>
+          <div class="flex gap-5 text-sm">
+            <label class="flex items-center gap-2"><input type="radio" name="import-mode" value="replace" class="accent-teal-400" /> Replace current bank</label>
+            <label class="flex items-center gap-2"><input type="radio" name="import-mode" value="merge" class="accent-teal-400" checked /> Merge (dedupe by name)</label>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-ink-600 flex justify-end gap-2">
+        <button class="btn" onclick="closeModal('import-modal')">Cancel</button>
+        <button id="import-confirm" class="btn btn-primary" onclick="confirmImport()" disabled><i class="fas fa-check"></i> Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ EXPORT MODAL ============================ -->
+  <div id="export-modal" class="modal-bg" onclick="if(event.target===this)closeModal('export-modal')">
+    <div class="modal-card max-w-3xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-600">
+        <h3 class="font-bold"><i class="fas fa-file-export text-brand-300 mr-2"></i>Export bank as .js</h3>
+        <button class="btn" onclick="closeModal('export-modal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4 min-h-0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+          <div><label class="label">Filename</label><input id="export-filename" class="fld" /></div>
+          <label class="flex items-center gap-2 text-sm pb-2"><input id="export-shuffle" type="checkbox" class="accent-teal-400" onchange="refreshExport()" /> Shuffle options</label>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span id="export-summary"></span><span id="export-size"></span>
+        </div>
+        <pre id="export-preview" class="bg-ink-950 border border-ink-600 rounded-lg p-3 text-xs font-mono text-slate-300 overflow-auto max-h-80 whitespace-pre-wrap break-words"></pre>
+      </div>
+      <div class="px-5 py-3 border-t border-ink-600 flex justify-end gap-2">
+        <button class="btn" onclick="copyExport()"><i class="fas fa-copy"></i> Copy</button>
+        <button class="btn btn-primary" onclick="downloadExport()"><i class="fas fa-download"></i> Download .js</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PUBLISH MODAL ============================ -->
+  <div id="publish-modal" class="modal-bg" onclick="if(event.target===this)closeModal('publish-modal')">
+    <form class="modal-card max-w-md" onsubmit="doPublish(event)">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-600">
+        <h3 class="font-bold"><i class="fab fa-github text-brand-300 mr-2"></i>Publish to GitHub</h3>
+        <button type="button" class="btn" onclick="closeModal('publish-modal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-3">
+        <div><label class="label">GitHub owner</label><input id="pub-owner" class="fld" required placeholder="your-username" /></div>
+        <div><label class="label">Repository name</label><input id="pub-repo" class="fld" required placeholder="educbt" /></div>
+        <div><label class="label">Token (saved locally)</label><input id="pub-token" type="password" class="fld" placeholder="github_pat_…" autocomplete="off" /></div>
+        <div><label class="label">Filename</label><input id="pub-filename" class="fld" required placeholder="physics-bank.js" /></div>
+        <p class="text-xs text-slate-500">The server commits to <code class="text-brand-300">question-banks/&lt;filename&gt;</code> on branch <code class="text-brand-300">main</code> using its own <code>GITHUB_TOKEN</code>.</p>
+        <div id="pub-status" class="text-sm"></div>
+      </div>
+      <div class="px-5 py-3 border-t border-ink-600 flex justify-end gap-2">
+        <button type="button" class="btn" onclick="closeModal('publish-modal')">Close</button>
+        <button id="pub-submit" type="submit" class="btn btn-primary"><i class="fas fa-cloud-upload-alt"></i> Publish</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toasts"></div>
+
+<script>
+/* ==========================================================================
+   QUESTION BUILDER — all JS is inline (self-contained tool)
+   ========================================================================== */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = (p) => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const LETTERS = ['A', 'B', 'C', 'D'];
+const STORE_KEY = 'cbt_bank_builder_state';
+
+/* ----------------------------- state ----------------------------- */
+let appData = { bankName: 'Untitled Bank', subjects: [] };
+let sel = null;                 // { s, t, q }  (ids)
+let previewMode = false;
+let undoStack = [], redoStack = [];
+let expanded = new Set();
+let searchTerm = '';
+let inBurst = false, burstTimer = null, saveTimer = null, savedFlashTimer = null;
+let pendingImport = null;
+let popping = false;
+let lastExportCode = '';
+
+/* ----------------------------- model ----------------------------- */
+function normSubject(s) {
+  return { id: s.id || uid('s'), name: String(s.name || 'Untitled Subject'), duration: parseInt(s.duration, 10) || 30, topics: (s.topics || []).map(normTopic) };
+}
+function normTopic(t) {
+  return { id: t.id || uid('t'), name: String(t.name || 'Untitled Topic'), questions: (t.questions || []).map(normQuestion) };
+}
+function normQuestion(q) {
+  const tl = String(q.type || 'MCQ').toLowerCase();
+  const type = (tl === 'objective' || tl === 'mcq') ? 'MCQ' : tl === 'fill' ? 'Fill' : tl === 'theory' ? 'Theory' : 'MCQ';
+  const opts = ['', '', '', ''];
+  if (Array.isArray(q.options)) q.options.slice(0, 4).forEach((o, i) => { opts[i] = String(o == null ? '' : o); });
+  else if (q.options && typeof q.options === 'object') LETTERS.forEach((L, i) => { if (q.options[L] != null) opts[i] = String(q.options[L]); });
+  let correct = q.correct == null ? '' : String(q.correct);
+  if (type === 'MCQ') { correct = correct.trim().toUpperCase().charAt(0); if (LETTERS.indexOf(correct) < 0) correct = 'A'; }
+  return {
+    id: q.id || uid('q'), type: type, subTopic: String(q.subTopic || 'General'),
+    question: String(q.question != null ? q.question : (q.text != null ? q.text : '')),
+    options: opts, correct: correct, explanation: String(q.explanation || ''), maxMarks: parseInt(q.maxMarks, 10) || 10
+  };
+}
+function normalizeBank(b) {
+  return { bankName: String(b.bankName || 'Untitled Bank'), subjects: (b.subjects || []).map(normSubject) };
+}
+const newQuestion = (type, subTopic) => normQuestion({ type: type || 'MCQ', subTopic: subTopic || 'General', correct: (type || 'MCQ') === 'MCQ' ? 'A' : '' });
+const newTopic = (name) => ({ id: uid('t'), name: name || 'New Topic', questions: [] });
+const newSubject = (name) => ({ id: uid('s'), name: name || 'New Subject', duration: 30, topics: [] });
+
+function findSubject(id) { return appData.subjects.find((s) => s.id === id); }
+function findTopic(sId, tId) { const s = findSubject(sId); return s ? s.topics.find((t) => t.id === tId) : undefined; }
+function findQuestion(sId, tId, qId) { const t = findTopic(sId, tId); return t ? t.questions.find((q) => q.id === qId) : undefined; }
+function curQ() { return sel && sel.q ? findQuestion(sel.s, sel.t, sel.q) : undefined; }
+function pathExists(p) {
+  if (!p || !p.s) return false;
+  if (!findSubject(p.s)) return false;
+  if (p.t && !findTopic(p.s, p.t)) return false;
+  if (p.q && !findQuestion(p.s, p.t, p.q)) return false;
+  return true;
+}
+function qNumbers() {
+  const m = {}; let n = 0;
+  appData.subjects.forEach((s) => s.topics.forEach((t) => t.questions.forEach((q) => { m[q.id] = ++n; })));
+  return m;
+}
+const qLabel = (n) => 'Q' + String(n).padStart(3, '0');
+function countSummary(subjects) {
+  let t = 0, q = 0;
+  subjects.forEach((s) => { t += s.topics.length; s.topics.forEach((x) => { q += x.questions.length; }); });
+  return subjects.length + ' Subject' + (subjects.length === 1 ? '' : 's') + ' · ' + t + ' Topic' + (t === 1 ? '' : 's') + ' · ' + q + ' Question' + (q === 1 ? '' : 's');
+}
+function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function shuffleOpts(q) {
+  if (q.type !== 'MCQ') return;
+  const items = q.options.map((t, i) => ({ t: t, c: LETTERS[i] === q.correct })).filter((x) => String(x.t).trim() !== '');
+  if (items.length < 2) return;
+  shuffleArr(items);
+  const opts = items.map((x) => x.t);
+  while (opts.length < 4) opts.push('');
+  q.options = opts;
+  const ci = items.findIndex((x) => x.c);
+  if (ci >= 0) q.correct = LETTERS[ci];
+}
+
+/* --------------------------- toast / modal --------------------------- */
+function toast(msg, kind) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind || '');
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+/* --------------------------- persistence --------------------------- */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) { const p = JSON.parse(raw); if (p && Array.isArray(p.subjects)) appData = normalizeBank(p); }
+  } catch (e) { console.warn('Could not load builder state', e); }
+}
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(appData)); flashSaved(); }
+    catch (e) { toast('Auto-save failed: ' + e.message, 'err'); }
+  }, 500);
+}
+function flashSaved() {
+  const el = $('saved-indicator');
+  el.classList.remove('opacity-0');
+  clearTimeout(savedFlashTimer);
+  savedFlashTimer = setTimeout(() => el.classList.add('opacity-0'), 1500);
+}
+
+/* --------------------------- undo / redo --------------------------- */
+function snapshot() { return JSON.stringify({ d: appData, sel: sel }); }
+function pushUndoState() {
+  undoStack.push(snapshot());
+  if (undoStack.length > 50) undoStack.shift();
+  redoStack = [];
+  updateUndoButtons();
+}
+function restoreSnapshot(snap) {
+  const o = JSON.parse(snap);
+  appData = o.d;
+  sel = (o.sel && pathExists(o.sel)) ? o.sel : null;
+  inBurst = false;
+  render();
+  scheduleSave();
+}
+function undo() {
+  if (!undoStack.length) return;
+  redoStack.push(snapshot());
+  if (redoStack.length > 50) redoStack.shift();
+  restoreSnapshot(undoStack.pop());
+}
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(snapshot());
+  if (undoStack.length > 50) undoStack.shift();
+  restoreSnapshot(redoStack.pop());
+}
+function updateUndoButtons() { $('btn-undo').disabled = !undoStack.length; $('btn-redo').disabled = !redoStack.length; }
+
+// typing bursts count as ONE undo step; discrete actions always push first
+function edit(fn) {
+  if (!inBurst) { pushUndoState(); inBurst = true; }
+  clearTimeout(burstTimer);
+  burstTimer = setTimeout(() => { inBurst = false; }, 900);
+  fn();
+  scheduleSave();
+}
+function act(fn) {
+  pushUndoState();
+  inBurst = false;
+  fn();
+  scheduleSave();
+  render();
+}
+document.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+});
+
+/* --------------------------- MathJax --------------------------- */
+const pendingTypeset = new Set();
+let typesetTimer = null, typesetTries = 0;
+function typeset(el) {
+  if (el) pendingTypeset.add(el);
+  clearTimeout(typesetTimer);
+  typesetTimer = setTimeout(runTypeset, 150);
+}
+function runTypeset() {
+  if (!(window.MathJax && MathJax.typesetPromise)) { if (typesetTries++ < 40) typesetTimer = setTimeout(runTypeset, 300); return; }
+  const els = Array.from(pendingTypeset).filter((e) => document.body.contains(e));
+  pendingTypeset.clear();
+  if (!els.length) return;
+  try { if (MathJax.typesetClear) MathJax.typesetClear(els); } catch (e) { /* ignore */ }
+  MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise(els)).catch(() => {});
+}
+function queuePreview(id, text) { const el = $(id); if (el) { el.textContent = text; typeset(el); } }
+
+/* --------------------------- selection / history --------------------------- */
+function selectPath(p) {
+  sel = p || null;
+  if (sel) { expanded.add(sel.s); if (sel.t) expanded.add(sel.t); }
+  if (!popping) history.pushState({ path: sel }, '', '#builder');
+  if (window.innerWidth < 768) closeSidebar();
+  render();
+  const pane = $('editor-pane'); if (pane) pane.scrollTop = 0;
+}
+window.addEventListener('popstate', (e) => {
+  popping = true;
+  const p = e.state && e.state.path;
+  sel = (p && pathExists(p)) ? p : null;
+  if (sel) { expanded.add(sel.s); if (sel.t) expanded.add(sel.t); }
+  render();
+  popping = false;
+});
+function openSidebar() { $('sidebar').classList.add('open'); $('sidebar-backdrop').classList.add('open'); }
+function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebar-backdrop').classList.remove('open'); }
+function toggleExpand(id, ev) { ev.stopPropagation(); if (expanded.has(id)) expanded.delete(id); else expanded.add(id); renderSidebar(); }
+
+/* --------------------------- rendering --------------------------- */
+function render() {
+  const has = appData.subjects.length > 0;
+  $('empty-view').style.display = has ? 'none' : 'flex';
+  $('editor-view').style.display = has ? 'flex' : 'none';
+  if (document.activeElement !== $('bank-name')) $('bank-name').value = appData.bankName;
+  $('btn-preview').classList.toggle('btn-active', previewMode);
+  updateUndoButtons();
+  if (!has) return;
+  renderSidebar();
+  renderBreadcrumb();
+  renderPane();
+}
+function refreshChrome() { renderSidebar(); renderBreadcrumb(); }
+
+function renderSidebar() {
+  const term = searchTerm.trim().toLowerCase();
+  const nums = qNumbers();
+  let html = '';
+  appData.subjects.forEach((s) => {
+    const sMatch = !term || s.name.toLowerCase().indexOf(term) >= 0;
+    let topicsHtml = '';
+    let anyVisible = sMatch;
+    s.topics.forEach((t) => {
+      const tMatch = sMatch || t.name.toLowerCase().indexOf(term) >= 0;
+      const qs = t.questions.filter((q) => tMatch || (q.question || '').toLowerCase().indexOf(term) >= 0 || (q.subTopic || '').toLowerCase().indexOf(term) >= 0);
+      if (term && !tMatch && !qs.length) return;
+      anyVisible = true;
+      const open = term ? true : expanded.has(t.id);
+      const tActive = sel && sel.t === t.id && !sel.q;
+      topicsHtml += `
+        <div class="tree-row ${tActive ? 'active' : ''}" style="padding-left:1.3rem" onclick="selectPath({s:'${s.id}',t:'${t.id}'})">
+          <i class="fas fa-chevron-${open ? 'down' : 'right'} text-[10px] w-3 text-slate-500" onclick="toggleExpand('${t.id}',event)"></i>
+          <i class="fas fa-folder text-amber-400/80 text-xs"></i>
+          <span class="truncate">${esc(t.name)}</span>
+          <span class="text-[10px] text-slate-500">${t.questions.length}</span>
+          <span class="acts"><button class="tree-mini" title="Add question" onclick="event.stopPropagation();addQuestion('MCQ','${s.id}','${t.id}')"><i class="fas fa-plus"></i></button></span>
+        </div>`;
+      if (open) {
+        qs.forEach((q) => {
+          const qActive = sel && sel.q === q.id;
+          topicsHtml += `
+            <div class="tree-row ${qActive ? 'active' : ''}" style="padding-left:2.6rem" onclick="selectPath({s:'${s.id}',t:'${t.id}',q:'${q.id}'})">
+              <span class="dot dot-${q.type}"></span>
+              <span class="text-[11px] font-mono text-slate-500">${qLabel(nums[q.id])}</span>
+              <span class="truncate">${esc((q.question || '(empty question)').slice(0, 60))}</span>
+            </div>`;
+        });
+      }
+    });
+    if (term && !anyVisible) return;
+    const open = term ? true : expanded.has(s.id);
+    const sActive = sel && sel.s === s.id && !sel.t;
+    html += `
+      <div class="tree-row ${sActive ? 'active' : ''} font-semibold" onclick="selectPath({s:'${s.id}'})">
+        <i class="fas fa-chevron-${open ? 'down' : 'right'} text-[10px] w-3 text-slate-500" onclick="toggleExpand('${s.id}',event)"></i>
+        <i class="fas fa-book text-brand-400 text-xs"></i>
+        <span class="truncate">${esc(s.name)}</span>
+        <span class="acts"><button class="tree-mini" title="Add topic" onclick="event.stopPropagation();addTopic('${s.id}')"><i class="fas fa-plus"></i></button></span>
+      </div>${open ? topicsHtml : ''}`;
+  });
+  $('tree').innerHTML = html || '<div class="p-4 text-sm text-slate-500">No matches.</div>';
+}
+
+function renderBreadcrumb() {
+  const parts = [];
+  if (sel) {
+    const s = findSubject(sel.s);
+    if (s) parts.push(esc(s.name));
+    const t = sel.t ? findTopic(sel.s, sel.t) : null;
+    if (t) parts.push(esc(t.name));
+    if (sel.q) { const nums = qNumbers(); parts.push(qLabel(nums[sel.q] || 0)); }
+  }
+  const crumbs = parts.length ? parts.map((p, i) => `<span class="${i === parts.length - 1 ? 'text-brand-300 font-semibold' : 'text-slate-400'}">${p}</span>`).join('<i class="fas fa-chevron-right text-[9px] text-slate-600"></i>') : '<span class="text-slate-500">Select a subject, topic or question</span>';
+  $('breadcrumb').innerHTML = crumbs + (previewMode ? '<span class="ml-auto btn btn-active !py-1 cursor-pointer" onclick="togglePreview()"><i class="fas fa-eye"></i> Preview Mode</span>' : '');
+}
+
+function renderPane() {
+  const pane = $('editor-pane');
+  if (previewMode) { pane.innerHTML = previewHtml(); typeset(pane); return; }
+  if (!sel) { pane.innerHTML = '<div class="h-full flex items-center justify-center text-slate-500 p-10 text-center"><div><i class="fas fa-hand-point-left text-4xl mb-3 opacity-50"></i><p>Pick something from the tree to start editing.</p></div></div>'; return; }
+  const s = findSubject(sel.s);
+  if (!s) { sel = null; renderPane(); return; }
+  if (!sel.t) { pane.innerHTML = subjectEditorHtml(s); return; }
+  const t = findTopic(sel.s, sel.t);
+  if (!t) { sel = { s: sel.s }; renderPane(); return; }
+  if (!sel.q) { pane.innerHTML = topicEditorHtml(s, t); return; }
+  const q = findQuestion(sel.s, sel.t, sel.q);
+  if (!q) { sel = { s: sel.s, t: sel.t }; renderPane(); return; }
+  pane.innerHTML = questionEditorHtml(s, t, q);
+  queuePreview('qp-text', q.question);
+  queuePreview('qp-exp', q.explanation);
+}
+
+/* --------------------------- editors --------------------------- */
+function subjectEditorHtml(s) {
+  const qCount = s.topics.reduce((n, t) => n + t.questions.length, 0);
+  return `
+  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-brand-600/20 text-brand-300 flex items-center justify-center"><i class="fas fa-book"></i></div>
+      <div><h2 class="text-lg font-bold">Subject</h2><p class="text-xs text-slate-500">${s.topics.length} topics · ${qCount} questions</p></div>
+    </div>
+    <div><label class="label">Subject name</label><input class="fld" value="${esc(s.name)}" oninput="setSubjectField('${s.id}','name',this.value)"></div>
+    <div><label class="label">Default duration (minutes)</label><input type="number" min="1" max="999" class="fld" value="${s.duration}" oninput="setSubjectField('${s.id}','duration',this.value)"></div>
+    <div>
+      <label class="label">Topics</label>
+      <div class="space-y-2">${s.topics.map((t) => `
+        <button class="w-full text-left bg-ink-900 border border-ink-600 hover:border-brand-500 rounded-lg px-3 py-2 flex items-center gap-2" onclick="selectPath({s:'${s.id}',t:'${t.id}'})">
+          <i class="fas fa-folder text-amber-400/80"></i><span class="font-semibold truncate">${esc(t.name)}</span><span class="ml-auto text-xs text-slate-500">${t.questions.length} Q</span>
+        </button>`).join('') || '<p class="text-sm text-slate-500">No topics yet.</p>'}</div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button class="btn btn-primary" onclick="addTopic('${s.id}')"><i class="fas fa-plus"></i> Add Topic</button>
+      <button class="btn btn-amber" onclick="setPreview(true)"><i class="fas fa-eye"></i> Preview subject</button>
+      <button class="btn btn-danger ml-auto" onclick="deleteSubject('${s.id}')"><i class="fas fa-trash"></i> Delete Subject</button>
+    </div>
+  </div>`;
+}
+
+function topicEditorHtml(s, t) {
+  const nums = qNumbers();
+  return `
+  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-400/15 text-amber-300 flex items-center justify-center"><i class="fas fa-folder"></i></div>
+      <div><h2 class="text-lg font-bold">Topic</h2><p class="text-xs text-slate-500">${esc(s.name)} · ${t.questions.length} questions</p></div>
+    </div>
+    <div><label class="label">Topic name</label><input class="fld" value="${esc(t.name)}" oninput="setTopicField('${s.id}','${t.id}',this.value)"></div>
+    <div>
+      <label class="label">Add a question</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn" onclick="addQuestion('MCQ')"><span class="dot dot-MCQ"></span> MCQ</button>
+        <button class="btn" onclick="addQuestion('Fill')"><span class="dot dot-Fill"></span> Fill in gap</button>
+        <button class="btn" onclick="addQuestion('Theory')"><span class="dot dot-Theory"></span> Theory</button>
+      </div>
+    </div>
+    <div>
+      <label class="label">Questions</label>
+      <div class="space-y-2">${t.questions.map((q) => `
+        <button class="w-full text-left bg-ink-900 border border-ink-600 hover:border-brand-500 rounded-lg px-3 py-2 flex items-center gap-2 min-w-0" onclick="selectPath({s:'${s.id}',t:'${t.id}',q:'${q.id}'})">
+          <span class="dot dot-${q.type}"></span><span class="text-xs font-mono text-slate-500">${qLabel(nums[q.id])}</span>
+          <span class="truncate">${esc((q.question || '(empty question)').slice(0, 90))}</span>
+          <span class="ml-auto text-[10px] text-slate-500 shrink-0">${esc(q.subTopic)}</span>
+        </button>`).join('') || '<p class="text-sm text-slate-500">No questions yet.</p>'}</div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button class="btn" onclick="shuffleTopicOptions('${s.id}','${t.id}')"><i class="fas fa-random"></i> Shuffle Options</button>
+      <button class="btn btn-amber" onclick="setPreview(true)"><i class="fas fa-eye"></i> Preview topic</button>
+      <button class="btn btn-danger ml-auto" onclick="deleteTopic('${s.id}','${t.id}')"><i class="fas fa-trash"></i> Delete Topic</button>
+    </div>
+  </div>`;
+}
+
+function questionEditorHtml(s, t, q) {
+  const nums = qNumbers();
+  const seg = ['MCQ', 'Fill', 'Theory'].map((ty) => `<button class="${q.type === ty ? 'on' : ''}" onclick="setQType('${ty}')">${ty}</button>`).join('');
+  let body = '';
+  if (q.type === 'MCQ') {
+    body = `
+      <div>
+        <div class="flex items-center justify-between mb-1"><label class="label !mb-0">Options (select the correct one)</label>
+          <button class="btn !py-1" onclick="shuffleThisQuestion()"><i class="fas fa-random"></i> Shuffle</button></div>
+        <div class="space-y-2">${LETTERS.map((L, i) => `
+          <div class="flex items-center gap-2">
+            <input type="radio" name="correct-opt" class="accent-teal-400 w-4 h-4 shrink-0" ${q.correct === L ? 'checked' : ''} onchange="setCorrect('${L}')" title="Mark ${L} as correct">
+            <span class="w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 ${q.correct === L ? 'bg-brand-600 text-white' : 'bg-ink-700 text-slate-300'}">${L}</span>
+            <input class="fld" value="${esc(q.options[i])}" placeholder="Option ${L}" oninput="setOption(${i},this.value)">
+          </div>`).join('')}</div>
+      </div>`;
+  } else if (q.type === 'Fill') {
+    body = `<div><label class="label">Correct answer (exact text)</label><input class="fld" value="${esc(q.correct)}" oninput="qField('correct',this.value)"></div>`;
+  } else {
+    body = `<div><label class="label">Maximum marks</label><input type="number" min="1" max="100" class="fld !w-32" value="${q.maxMarks}" oninput="qField('maxMarks',parseInt(this.value,10)||10)">
+      <p class="text-xs text-slate-500 mt-1">Use the explanation below as the model answer the AI grades against.</p></div>`;
+  }
+  return `
+  <div class="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-sm font-mono text-slate-400">${qLabel(nums[q.id])}</span>
+      <div class="seg">${seg}</div>
+      <div class="ml-auto flex gap-2">
+        <button class="btn" onclick="duplicateQuestion()"><i class="fas fa-clone"></i><span class="hidden sm:inline">Duplicate</span></button>
+        <button class="btn btn-danger" onclick="deleteQuestion()"><i class="fas fa-trash"></i><span class="hidden sm:inline">Delete</span></button>
+      </div>
+    </div>
+    <div><label class="label">SubTopic</label><input class="fld" value="${esc(q.subTopic)}" placeholder="General" oninput="qField('subTopic',this.value)"></div>
+    <div>
+      <label class="label">Question (LaTeX: $x^2$ or \\(x^2\\))</label>
+      <textarea class="fld" rows="4" oninput="qField('question',this.value)">${esc(q.question)}</textarea>
+      <div id="qp-text" class="preview-box mt-2"></div>
+    </div>
+    ${body}
+    <div>
+      <label class="label">${q.type === 'Theory' ? 'Model answer / explanation' : 'Explanation'}</label>
+      <textarea class="fld" rows="4" oninput="qField('explanation',this.value)">${esc(q.explanation)}</textarea>
+      <div id="qp-exp" class="preview-box mt-2"></div>
+    </div>
+  </div>`;
+}
+
+/* --------------------------- editor handlers --------------------------- */
+function setSubjectField(id, field, value) {
+  edit(() => { const s = findSubject(id); if (s) s[field] = field === 'duration' ? (parseInt(value, 10) || 30) : value; });
+  refreshChrome();
+}
+function setTopicField(sId, tId, value) { edit(() => { const t = findTopic(sId, tId); if (t) t.name = value; }); refreshChrome(); }
+function qField(field, value) {
+  edit(() => { const q = curQ(); if (q) q[field] = value; });
+  if (field === 'question') queuePreview('qp-text', value);
+  if (field === 'explanation') queuePreview('qp-exp', value);
+  if (field === 'question' || field === 'subTopic') refreshChrome();
+}
+function setOption(i, value) { edit(() => { const q = curQ(); if (q) q.options[i] = value; }); }
+function setCorrect(L) { act(() => { const q = curQ(); if (q) q.correct = L; }); }
+function setQType(type) {
+  act(() => {
+    const q = curQ(); if (!q || q.type === type) return;
+    const idx = LETTERS.indexOf(q.correct);
+    if (q.type === 'MCQ' && type === 'Fill') q.correct = (idx >= 0 && q.options[idx]) ? q.options[idx] : '';
+    if (type === 'MCQ') q.correct = 'A';
+    if (type === 'Theory') { q.correct = ''; q.maxMarks = q.maxMarks || 10; }
+    q.type = type;
+  });
+}
+function shuffleThisQuestion() { act(() => { const q = curQ(); if (q) shuffleOpts(q); }); }
+function shuffleTopicOptions(sId, tId) {
+  act(() => { const t = findTopic(sId, tId); if (t) t.questions.forEach(shuffleOpts); });
+  toast('Options shuffled for every MCQ in this topic', 'ok');
+}
+
+function addSubject() {
+  pushUndoState(); inBurst = false;
+  const s = newSubject('New Subject');
+  appData.subjects.push(s);
+  scheduleSave();
+  selectPath({ s: s.id });
+}
+function addTopic(sId) {
+  const s = findSubject(sId || (sel && sel.s)); if (!s) return;
+  pushUndoState(); inBurst = false;
+  const t = newTopic('New Topic');
+  s.topics.push(t);
+  scheduleSave();
+  selectPath({ s: s.id, t: t.id });
+}
+function addQuestion(type, sId, tId) {
+  const s = sId || (sel && sel.s), tt = tId || (sel && sel.t);
+  const t = findTopic(s, tt); if (!t) return;
+  pushUndoState(); inBurst = false;
+  const last = t.questions[t.questions.length - 1];
+  const q = newQuestion(type, last ? last.subTopic : 'General');
+  t.questions.push(q);
+  scheduleSave();
+  selectPath({ s: s, t: tt, q: q.id });
+}
+function duplicateQuestion() {
+  const t = findTopic(sel.s, sel.t); const q = curQ(); if (!t || !q) return;
+  pushUndoState(); inBurst = false;
+  const copy = JSON.parse(JSON.stringify(q));
+  copy.id = uid('q');
+  t.questions.splice(t.questions.indexOf(q) + 1, 0, copy);
+  scheduleSave();
+  selectPath({ s: sel.s, t: sel.t, q: copy.id });
+}
+function deleteQuestion() {
+  if (!confirm('Delete this question?')) return;
+  const t = findTopic(sel.s, sel.t); const q = curQ(); if (!t || !q) return;
+  pushUndoState(); inBurst = false;
+  t.questions.splice(t.questions.indexOf(q), 1);
+  scheduleSave();
+  selectPath({ s: sel.s, t: sel.t });
+}
+function deleteTopic(sId, tId) {
+  if (!confirm('Delete this topic and all of its questions?')) return;
+  const s = findSubject(sId); if (!s) return;
+  pushUndoState(); inBurst = false;
+  s.topics = s.topics.filter((t) => t.id !== tId);
+  scheduleSave();
+  selectPath({ s: sId });
+}
+function deleteSubject(sId) {
+  if (!confirm('Delete this subject, all its topics and questions?')) return;
+  pushUndoState(); inBurst = false;
+  appData.subjects = appData.subjects.filter((s) => s.id !== sId);
+  scheduleSave();
+  selectPath(null);
+}
+
+/* --------------------------- preview mode --------------------------- */
+function setPreview(on) { previewMode = on; render(); }
+function togglePreview() { setPreview(!previewMode); }
+function scopeQuestions() {
+  const items = [];
+  appData.subjects.forEach((s) => {
+    if (sel && sel.s && s.id !== sel.s) return;
+    s.topics.forEach((t) => {
+      if (sel && sel.t && t.id !== sel.t) return;
+      t.questions.forEach((q) => { if (sel && sel.q && q.id !== sel.q) return; items.push({ s: s, t: t, q: q }); });
+    });
+  });
+  return items;
+}
+function previewHtml() {
+  const items = scopeQuestions();
+  const nums = qNumbers();
+  if (!items.length) return '<div class="p-10 text-center text-slate-500">No questions in this scope yet.</div>';
+  return `<div class="max-w-3xl mx-auto p-4 space-y-4">${items.map((it) => {
+    const q = it.q;
+    let ans = '';
+    if (q.type === 'MCQ') {
+      ans = `<div class="space-y-2 mt-3">${LETTERS.map((L, i) => q.options[i] ? `
+        <div class="pv-opt" data-correct="${q.correct === L ? 1 : 0}"><span class="font-bold text-slate-400">${L}</span><span class="min-w-0">${esc(q.options[i])}</span></div>` : '').join('')}</div>
+        ${q.explanation ? `<div class="pv-exp mt-3 p-3 rounded-lg bg-amber-400/10 border-l-4 border-amber-400 text-sm whitespace-pre-wrap">${esc(q.explanation)}</div>` : ''}`;
+    } else if (q.type === 'Fill') {
+      ans = `<div class="mt-3 text-sm"><span class="text-slate-400">Answer: </span><span class="pv-answer font-bold text-brand-300">${esc(q.correct) || '(none)'}</span></div>
+        ${q.explanation ? `<div class="pv-exp mt-3 p-3 rounded-lg bg-amber-400/10 border-l-4 border-amber-400 text-sm whitespace-pre-wrap">${esc(q.explanation)}</div>` : ''}`;
+    } else {
+      ans = `<div class="mt-3 text-sm"><div class="text-slate-400 mb-1">Model answer (${q.maxMarks} marks)</div><div class="pv-answer whitespace-pre-wrap">${esc(q.explanation) || '(none)'}</div></div>`;
+    }
+    return `
+      <div class="pv-card">
+        <div class="flex items-center gap-2 text-xs text-slate-400 mb-2 flex-wrap">
+          <span class="dot dot-${q.type}"></span><span class="font-mono">${qLabel(nums[q.id])}</span><span>· ${q.type}</span>
+          <span>· ${esc(q.subTopic)}</span><span class="ml-auto truncate max-w-[50%]">${esc(it.s.name)} › ${esc(it.t.name)}</span>
+        </div>
+        <div class="whitespace-pre-wrap break-words">${esc(q.question) || '<em class="text-slate-500">(empty question)</em>'}</div>
+        ${ans}
+        <button class="btn btn-amber mt-3" onclick="togglePv(this)"><i class="fas fa-eye"></i> Reveal</button>
+      </div>`;
+  }).join('')}</div>`;
+}
+function togglePv(btn) {
+  const card = btn.closest('.pv-card');
+  const on = card.classList.toggle('revealed');
+  btn.innerHTML = on ? '<i class="fas fa-eye-slash"></i> Hide' : '<i class="fas fa-eye"></i> Reveal';
+}
+
+/* --------------------------- empty view actions --------------------------- */
+function createBlank() {
+  pushUndoState();
+  const s = newSubject('New Subject'); const t = newTopic('New Topic'); const q = newQuestion('MCQ', 'General');
+  t.questions.push(q); s.topics.push(t);
+  appData = { bankName: 'Untitled Bank', subjects: [s] };
+  scheduleSave();
+  selectPath({ s: s.id, t: t.id, q: q.id });
+}
+function loadSample() {
+  const code = `window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
+window.CBT_SUBJECT_BANKS.push(\`Subject: Physics
+Duration: 45
+
+Topic: Thermodynamics
+
+SubTopic: First Law & Energy
+Type: MCQ
+Q001: A gas absorbs 500 J of heat and does 200 J of work. What is \\\\( \\\\Delta U \\\\)?
+Option: A: 200 J
+Option: B: 300 J
+Option: C: 500 J
+Option: D: 700 J
+Answer: B
+Explanation: By the first law, \\\\( \\\\Delta U = Q - W = 500 - 200 = 300 \\\\) J.
+
+Type: Fill
+Q002: A process with no heat exchange is called an ____ process.
+Answer: adiabatic
+Explanation: In an adiabatic process \\\\( Q = 0 \\\\).
+
+Type: Theory
+Q003: State the first law of thermodynamics.
+Marks: 10
+Explanation: Energy is conserved: the change in internal energy equals heat added to the system minus work done by the system.
+\`);`;
+  const warnings = [];
+  const subjects = parseImportCode(code, warnings);
+  pushUndoState();
+  appData = { bankName: 'Sample Physics Bank', subjects: subjects };
+  scheduleSave();
+  const s = subjects[0], t = s.topics[0];
+  selectPath({ s: s.id, t: t.id, q: t.questions[0].id });
+}
+
+/* --------------------------- IMPORT --------------------------- */
+function mergeSubjects(target, incoming) {
+  const same = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  incoming.forEach((inS) => {
+    const s = target.find((x) => same(x.name, inS.name));
+    if (!s) { target.push(inS); return; }
+    inS.topics.forEach((inT) => {
+      const t = s.topics.find((x) => same(x.name, inT.name));
+      if (!t) { s.topics.push(inT); return; }
+      inT.questions.forEach((q) => { if (!t.questions.some((e) => e.question.trim() === q.question.trim())) t.questions.push(q); });
+    });
+  });
+}
+
+function parseDSL(text, warnings) {
+  const subjects = [];
+  let S = null, T = null, subT = 'General', Q = null, inExp = false;
+  const short = (s) => String(s || '').slice(0, 40);
+  const ensureT = (name) => {
+    if (!S) { S = normSubject({ name: 'Imported Subject' }); subjects.push(S); }
+    let t = S.topics.find((x) => x.name === name);
+    if (!t) { t = normTopic({ name: name }); S.topics.push(t); }
+    return t;
+  };
+  const flush = () => {
+    if (!Q) return;
+    if (Q.type === 'MCQ') {
+      if (Q.options.filter((o) => o.trim()).length < 2) warnings.push('MCQ "' + short(Q.question) + '" has fewer than 2 options.');
+      if (!Q.correct) { warnings.push('MCQ "' + short(Q.question) + '" has no Answer — defaulted to A.'); Q.correct = 'A'; }
+    } else if (Q.type === 'Fill' && !Q.correct) warnings.push('Fill "' + short(Q.question) + '" has no Answer.');
+    else if (Q.type === 'Theory' && !Q.question) warnings.push('A Theory question has no text.');
+    Q = null; inExp = false;
+  };
+  const lines = String(text).split(/\r?\n/);
+  for (let n = 0; n < lines.length; n++) {
+    const line = lines[n].trim();
+    if (!line || line.indexOf('===') === 0 || line.indexOf('//') === 0) continue;
+    let m;
+    if ((m = line.match(/^Subject:\s*(.*)$/i))) { flush(); S = normSubject({ name: m[1].trim() || 'Untitled Subject' }); subjects.push(S); T = null; subT = 'General'; continue; }
+    if (!Q && (m = line.match(/^Duration:\s*(\d+)/i))) { if (S) S.duration = parseInt(m[1], 10) || 30; continue; }
+    if ((m = line.match(/^Topic:\s*(.*)$/i))) { flush(); T = ensureT(m[1].trim() || 'General'); subT = 'General'; continue; }
+    if ((m = line.match(/^SubTopic:\s*(.*)$/i))) { flush(); subT = m[1].trim() || 'General'; continue; }
+    if ((m = line.match(/^Type:\s*(MCQ|Theory|Fill)\b/i))) {
+      flush(); if (!T) T = ensureT('General');
+      const tl = m[1].toLowerCase();
+      Q = { id: uid('q'), type: tl === 'mcq' ? 'MCQ' : tl === 'fill' ? 'Fill' : 'Theory', subTopic: subT, question: '', options: ['', '', '', ''], correct: '', explanation: '', maxMarks: 10 };
+      T.questions.push(Q); continue;
+    }
+    if ((m = line.match(/^Q\d+:\s*(.*)$/i))) { if (!Q) { warnings.push('Question text without a Type: line was ignored.'); continue; } Q.question = m[1].trim(); inExp = false; continue; }
+    if ((m = line.match(/^Marks:\s*(\d+)/i))) { if (Q) Q.maxMarks = parseInt(m[1], 10) || 10; continue; }
+    if ((m = line.match(/^Option:\s*([A-Za-z])\s*[:.)]\s*(.*)$/i))) {
+      if (Q) { const i = LETTERS.indexOf(m[1].toUpperCase()); if (i >= 0) Q.options[i] = m[2].trim(); else warnings.push('Option ' + m[1].toUpperCase() + ' ignored (only A–D supported).'); }
+      inExp = false; continue;
+    }
+    if (Q && Q.type === 'MCQ' && !inExp && (m = line.match(/^([A-D])\s*[:.)]\s*(.*)$/))) { Q.options[LETTERS.indexOf(m[1])] = m[2].trim(); continue; }
+    if ((m = line.match(/^Answer:\s*(.*)$/i))) { if (Q) Q.correct = Q.type === 'MCQ' ? m[1].trim().toUpperCase().charAt(0) : m[1].trim(); inExp = false; continue; }
+    if ((m = line.match(/^Explanation:\s*(.*)$/i))) { if (Q) { Q.explanation = m[1].trim(); inExp = true; } continue; }
+    // smart recovery: unknown line + no subject yet => treat it as the subject name
+    if (!S && !Q) { S = normSubject({ name: line }); subjects.push(S); warnings.push('No "Subject:" tag found — assumed "' + short(line) + '" is the subject name.'); continue; }
+    if (Q && inExp) { Q.explanation += (Q.explanation ? ' ' : '') + line; continue; }
+    if (Q && Q.question && !Q.options.some((o) => o) && !Q.correct) { Q.question += '\n' + line; continue; }
+    warnings.push('Ignored unrecognised line: "' + short(line) + '"');
+  }
+  flush();
+  return subjects;
+}
+
+function normalizeObjects(item, warnings) {
+  let subs = [];
+  if (Array.isArray(item)) subs = item;
+  else if (item && Array.isArray(item.subjects)) subs = item.subjects;
+  else if (item && Array.isArray(item.topics)) subs = [item];
+  else { warnings.push('An unsupported bank entry was skipped.'); return []; }
+  return subs.map((s) => {
+    const ns = normSubject({ name: s.name, duration: s.duration, topics: [] });
+    ns.topics = (s.topics || []).map((t) => {
+      const nt = normTopic({ name: t.name, questions: [] });
+      nt.questions = (t.questions || []).map((q) => normQuestion(Object.assign({}, q, { id: undefined })));
+      return nt;
+    });
+    return ns;
+  });
+}
+
+function parseImportCode(code, warnings) {
+  let banks = null;
+  try {
+    banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + code + '\nreturn window.CBT_SUBJECT_BANKS;')();
+  } catch (e) {
+    warnings.push('Could not execute as JavaScript (' + e.message + ') — treating the input as raw bank text.');
+    banks = null;
+  }
+  if (!Array.isArray(banks) || !banks.length) {
+    if (banks !== null) warnings.push('No CBT_SUBJECT_BANKS entries found — parsed the text as a raw bank.');
+    banks = [code];
+  }
+  const out = [];
+  banks.forEach((item) => {
+    if (typeof item === 'string') mergeSubjects(out, parseDSL(item, warnings));
+    else mergeSubjects(out, normalizeObjects(item, warnings));
+  });
+  return out;
+}
+
+function openImportModal(text, filename) {
+  pendingImport = null;
+  $('import-text').value = text || '';
+  $('import-result').innerHTML = '';
+  $('import-options').classList.add('hidden');
+  $('import-confirm').disabled = true;
+  const merge = document.querySelector('input[name="import-mode"][value="merge"]');
+  const replace = document.querySelector('input[name="import-mode"][value="replace"]');
+  (appData.subjects.length ? merge : replace).checked = true;
+  openModal('import-modal');
+  if (text) runParse(filename);
+}
+function runParse(filename) {
+  const code = $('import-text').value;
+  if (!code.trim()) { toast('Paste or load some bank code first.', 'err'); return; }
+  const warnings = [];
+  let subjects = [];
+  try { subjects = parseImportCode(code, warnings); } catch (e) { warnings.push('Parser error: ' + e.message); }
+  const total = subjects.reduce((n, s) => n + s.topics.reduce((m, t) => m + t.questions.length, 0), 0);
+  pendingImport = total ? { subjects: subjects, filename: typeof filename === 'string' ? filename : (pendingImport && pendingImport.filename) } : null;
+  $('import-result').innerHTML = `
+    <div class="rounded-lg border ${total ? 'border-brand-600/60 bg-brand-600/10' : 'border-rose-500/50 bg-rose-500/10'} p-3 text-sm">
+      <div class="font-semibold ${total ? 'text-brand-300' : 'text-rose-300'}">${total ? '<i class="fas fa-check-circle"></i> ' + countSummary(subjects) : '<i class="fas fa-exclamation-triangle"></i> No questions could be parsed.'}</div>
+      ${warnings.length ? `<ul class="mt-2 text-xs text-amber-300 list-disc pl-5 space-y-0.5 max-h-32 overflow-y-auto">${warnings.slice(0, 40).map((w) => '<li>' + esc(w) + '</li>').join('')}</ul>` : ''}
+    </div>`;
+  $('import-options').classList.toggle('hidden', !total);
+  $('import-confirm').disabled = !total;
+}
+function confirmImport() {
+  if (!pendingImport) return;
+  const mode = (document.querySelector('input[name="import-mode"]:checked') || {}).value || 'merge';
+  pushUndoState(); inBurst = false;
+  if (mode === 'replace' || !appData.subjects.length) {
+    appData.subjects = pendingImport.subjects;
+    if (pendingImport.filename) appData.bankName = pendingImport.filename.replace(/\.(js|txt)$/i, '');
+  } else {
+    mergeSubjects(appData.subjects, pendingImport.subjects);
+  }
+  pendingImport = null;
+  closeModal('import-modal');
+  scheduleSave();
+  const s = appData.subjects[0];
+  selectPath(s ? { s: s.id } : null);
+  toast('Import complete', 'ok');
+}
+async function importFromGitHub() {
+  let owner = localStorage.getItem('gh_owner');
+  let repo = localStorage.getItem('gh_repo');
+  if (!owner) { owner = (prompt('GitHub username / owner:') || '').trim(); if (!owner) return; localStorage.setItem('gh_owner', owner); }
+  if (!repo) { repo = (prompt('Repository name:') || '').trim(); if (!repo) return; localStorage.setItem('gh_repo', repo); }
+  const filename = (prompt('Bank filename inside question-banks/ (e.g. physics-bank.js):', 'physics-bank.js') || '').trim();
+  if (!filename) return;
+  try {
+    const url = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/main/question-banks/' + filename;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — check owner, repo and filename.');
+    $('import-text').value = await res.text();
+    runParse(filename);
+  } catch (e) { toast('GitHub import failed: ' + e.message, 'err'); }
+}
+
+/* drag & drop + file pickers */
+function readFileThen(file, cb) {
+  const r = new FileReader();
+  r.onload = () => cb(String(r.result), file.name);
+  r.onerror = () => toast('Could not read the file.', 'err');
+  r.readAsText(file);
+}
+function wireDrop(el, cb) {
+  ['dragenter', 'dragover'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.add('drop-active'); }));
+  ['dragleave', 'drop'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.remove('drop-active'); }));
+  el.addEventListener('drop', (e) => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) readFileThen(f, cb); });
+}
+wireDrop($('drop-zone'), (text, name) => openImportModal(text, name));
+wireDrop($('import-drop'), (text, name) => { $('import-text').value = text; runParse(name); });
+$('file-input').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) readFileThen(f, (t, n) => openImportModal(t, n)); e.target.value = ''; });
+$('import-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) readFileThen(f, (t, n) => { $('import-text').value = t; runParse(n); }); e.target.value = ''; });
+
+/* --------------------------- EXPORT --------------------------- */
+// LaTeX backslashes (and template-literal specials) must be escaped because the output sits inside a JS template literal.
+function fixMath(s) {
+  return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+}
+function generateExportJSCode(shuffle) {
+  const data = JSON.parse(JSON.stringify(appData));
+  if (shuffle) data.subjects.forEach((s) => s.topics.forEach((t) => t.questions.forEach(shuffleOpts)));
+  let n = 0;
+  const blocks = data.subjects.map((s) => {
+    let b = 'Subject: ' + fixMath(s.name) + '\nDuration: ' + (s.duration || 30) + '\n\n';
+    s.topics.forEach((t) => {
+      b += 'Topic: ' + fixMath(t.name) + '\n\n';
+      let lastSub = null;
+      t.questions.forEach((q) => {
+        n++;
+        const sub = String(q.subTopic || 'General').trim() || 'General';
+        if (sub !== lastSub) { b += 'SubTopic: ' + fixMath(sub) + '\n'; lastSub = sub; }
+        b += 'Type: ' + q.type + '\n';
+        b += 'Q' + String(n).padStart(3, '0') + ': ' + fixMath(q.question) + '\n';
+        if (q.type === 'MCQ') {
+          LETTERS.forEach((L, i) => { if (String(q.options[i]).trim()) b += 'Option: ' + L + ': ' + fixMath(q.options[i]) + '\n'; });
+          b += 'Answer: ' + q.correct + '\n';
+        } else if (q.type === 'Fill') {
+          b += 'Answer: ' + fixMath(q.correct) + '\n';
+        } else {
+          b += 'Marks: ' + (q.maxMarks || 10) + '\n';
+        }
+        if (String(q.explanation).trim()) b += 'Explanation: ' + fixMath(q.explanation) + '\n';
+        b += '\n';
+      });
+    });
+    return b;
+  });
+  return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' +
+    blocks.map((b) => 'window.CBT_SUBJECT_BANKS.push(`' + b + '`);\n').join('\n');
+}
+const slug = (s) => String(s || 'question').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'question';
+function exportFilename() { const f = appData.subjects[0]; return slug(f ? f.name : 'question') + '-bank.js'; }
+function openExportModal() {
+  if (!appData.subjects.length) { toast('Nothing to export yet.', 'err'); return; }
+  $('export-filename').value = exportFilename();
+  $('export-shuffle').checked = false;
+  refreshExport();
+  openModal('export-modal');
+}
+function refreshExport() {
+  lastExportCode = generateExportJSCode($('export-shuffle').checked);
+  $('export-preview').textContent = lastExportCode;
+  $('export-size').textContent = (new Blob([lastExportCode]).size / 1024).toFixed(1) + ' KB';
+  $('export-summary').textContent = countSummary(appData.subjects);
+}
+function copyExport() {
+  const done = () => toast('Copied to clipboard', 'ok');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lastExportCode).then(done, () => toast('Copy failed', 'err'));
+  else { const ta = document.createElement('textarea'); ta.value = lastExportCode; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); }
+}
+function downloadExport() {
+  let name = $('export-filename').value.trim() || exportFilename();
+  if (!/\.js$/i.test(name)) name += '.js';
+  const url = URL.createObjectURL(new Blob([lastExportCode], { type: 'text/javascript' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* --------------------------- PUBLISH --------------------------- */
+function openPublishModal() {
+  if (!appData.subjects.length) { toast('Nothing to publish yet.', 'err'); return; }
+  $('pub-owner').value = localStorage.getItem('gh_owner') || '';
+  $('pub-repo').value = localStorage.getItem('gh_repo') || '';
+  $('pub-token').value = localStorage.getItem('gh_token') || '';
+  $('pub-filename').value = exportFilename();
+  $('pub-status').innerHTML = '';
+  openModal('publish-modal');
+}
+async function doPublish(ev) {
+  ev.preventDefault();
+  const owner = $('pub-owner').value.trim(), repo = $('pub-repo').value.trim();
+  const token = $('pub-token').value.trim();
+  let filename = $('pub-filename').value.trim();
+  if (!/\.js$/i.test(filename)) filename += '.js';
+  localStorage.setItem('gh_owner', owner);
+  localStorage.setItem('gh_repo', repo);
+  if (token) localStorage.setItem('gh_token', token);
+  const btn = $('pub-submit'), status = $('pub-status');
+  btn.disabled = true;
+  status.innerHTML = '<span class="text-slate-400"><i class="fas fa-spinner fa-spin"></i> Publishing…</span>';
+  try {
+    const res = await fetch('/api/publish-bank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: filename, code: generateExportJSCode(false), githubToken: token, repoOwner: owner, repoName: repo })
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* ignore */ }
+    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    status.innerHTML = '<span class="text-brand-300"><i class="fas fa-check-circle"></i> ' + esc(data.message || 'Published!') + '</span>' +
+      (data.commitUrl ? ' <a class="underline text-brand-300" target="_blank" rel="noopener" href="' + esc(data.commitUrl) + '">View commit</a>' : '');
+  } catch (e) {
+    status.innerHTML = '<span class="text-rose-300"><i class="fas fa-exclamation-triangle"></i> ' + esc(e.message) + '</span>';
+  } finally { btn.disabled = false; }
+}
+
+/* --------------------------- boot --------------------------- */
+history.replaceState(null, '', '#builder');
+loadState();
+render();
+</script>
+</body>
+</html>
