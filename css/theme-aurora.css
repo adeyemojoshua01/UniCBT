@@ -1,0 +1,204 @@
+/* =========================================================================
+   eduCBT — css/theme-aurora.css  ("Aurora Obsidian")
+   Loaded AFTER style.css. Every override is !important and relies on cascade
+   order. The markup keeps its light Tailwind classes — this overlay is the
+   entire dark-theme mechanism:
+     green  -> teal      blue   -> amber     purple -> violet
+     red    -> rose      yellow -> amber     white/gray -> ink
+   ========================================================================= */
+
+:root {
+  --ink-950: #05070d; --ink-900: #0a0e18; --ink-850: #0f1522; --ink-800: #141b2b;
+  --ink-700: #1b2438; --ink-600: #253049; --ink-500: #334160;
+  --tx-hi: #e8edf7; --tx-mid: #aab4c8; --tx-lo: #7b87a1;
+  --teal-300: #5eead4; --teal-400: #2dd4bf; --teal-500: #14b8a6; --teal-600: #0d9488; --teal-700: #0f766e; --teal-800: #115e59;
+  --amber-300: #fcd34d; --amber-400: #fbbf24; --amber-500: #f59e0b; --amber-600: #d97706; --on-amber: #1a1204;
+  --violet-300: #c4b5fd; --violet-400: #a78bfa; --violet-500: #8b5cf6; --violet-600: #7c3aed;
+  --rose-300: #fda4af; --rose-400: #fb7185; --rose-600: #e11d48; --rose-700: #be123c;
+  --emerald-400: #34d399; --emerald-500: #10b981;
+}
+
+/* ---------- Canvas ---------- */
+html, body {
+  height: 100dvh !important;
+  color-scheme: dark;
+  color: var(--tx-hi) !important;
+  background:
+    radial-gradient(1100px 650px at 10% -10%, rgba(20, 184, 166, .16), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(139, 92, 246, .13), transparent 55%),
+    var(--ink-950) !important;
+  background-attachment: fixed !important;
+}
+header.bg-green-700 {
+  background: linear-gradient(135deg, var(--teal-800), var(--teal-700) 55%, #0b5566) !important;
+  border-bottom: 1px solid rgba(94, 234, 212, .25);
+  color: #fff !important;
+}
+#app-container {
+  height: calc(100dvh - 72px) !important;
+  overflow-y: auto !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+.flex { min-width: 0; }
+
+/* ---------- Surfaces ---------- */
+.bg-white { background-color: var(--ink-850) !important; }
+.bg-gray-50 { background-color: var(--ink-800) !important; }
+.bg-gray-100 { background-color: var(--ink-700) !important; }
+.bg-gray-200 { background-color: var(--ink-600) !important; }
+.bg-gray-300 { background-color: var(--ink-500) !important; }
+.bg-gray-800 { background-color: var(--ink-900) !important; }
+.bg-gray-900 { background-color: var(--ink-950) !important; }
+.hover\:bg-gray-50:hover { background-color: var(--ink-700) !important; }
+.hover\:bg-gray-100:hover { background-color: var(--ink-600) !important; }
+.hover\:bg-gray-200:hover { background-color: var(--ink-500) !important; }
+
+/* ---------- Text ---------- */
+.text-gray-900, .text-gray-800 { color: var(--tx-hi) !important; }
+.text-gray-700 { color: #d3dbea !important; }
+.text-gray-600 { color: var(--tx-mid) !important; }
+.text-gray-500, .text-gray-400 { color: var(--tx-lo) !important; }
+
+/* ---------- Borders ---------- */
+.border-gray-100, .border-gray-200 { border-color: var(--ink-600) !important; }
+.border-gray-300 { border-color: var(--ink-500) !important; }
+.divide-gray-200 > :not(:last-child) { border-color: var(--ink-600) !important; }
+
+/* ---------- GREEN -> TEAL ---------- */
+.bg-green-50 { background-color: rgba(20, 184, 166, .10) !important; }
+.bg-green-100 { background-color: rgba(20, 184, 166, .18) !important; }
+.bg-green-500, .bg-green-600 { background-color: var(--teal-600) !important; }
+.bg-green-700 { background-color: var(--teal-700) !important; }
+.bg-green-800 { background-color: var(--teal-800) !important; }
+.hover\:bg-green-600:hover { background-color: var(--teal-500) !important; }
+.hover\:bg-green-700:hover { background-color: var(--teal-600) !important; }
+.hover\:bg-green-800:hover { background-color: var(--teal-700) !important; }
+.text-green-500, .text-green-600 { color: var(--teal-400) !important; }
+.text-green-700, .text-green-800 { color: var(--teal-300) !important; }
+.border-green-200, .border-green-300 { border-color: rgba(45, 212, 191, .38) !important; }
+.border-green-500, .border-green-600 { border-color: var(--teal-500) !important; }
+
+/* ---------- BLUE -> AMBER ---------- */
+.bg-blue-50 { background-color: rgba(245, 158, 11, .10) !important; }
+.bg-blue-100 { background-color: rgba(245, 158, 11, .18) !important; }
+.bg-blue-500, .bg-blue-600 { background-color: var(--amber-500) !important; color: var(--on-amber) !important; }
+.bg-blue-700 { background-color: var(--amber-600) !important; color: var(--on-amber) !important; }
+.hover\:bg-blue-600:hover { background-color: var(--amber-400) !important; color: var(--on-amber) !important; }
+.hover\:bg-blue-700:hover { background-color: var(--amber-400) !important; color: var(--on-amber) !important; }
+.hover\:bg-blue-100:hover, .hover\:bg-blue-200:hover { background-color: rgba(245, 158, 11, .26) !important; }
+.text-blue-500, .text-blue-600, .text-blue-700, .text-blue-800 { color: var(--amber-300) !important; }
+.border-blue-200, .border-blue-300 { border-color: rgba(245, 158, 11, .38) !important; }
+.border-blue-400, .border-blue-500, .border-blue-600 { border-color: var(--amber-500) !important; }
+
+/* ---------- PURPLE -> VIOLET ---------- */
+.bg-purple-50 { background-color: rgba(139, 92, 246, .10) !important; }
+.bg-purple-100 { background-color: rgba(139, 92, 246, .20) !important; }
+.bg-purple-500, .bg-purple-600 { background-color: var(--violet-600) !important; }
+.bg-purple-700 { background-color: #6d28d9 !important; }
+.hover\:bg-purple-200:hover { background-color: rgba(139, 92, 246, .32) !important; }
+.hover\:bg-purple-600:hover, .hover\:bg-purple-700:hover { background-color: var(--violet-500) !important; }
+.text-purple-500, .text-purple-600, .text-purple-700, .text-purple-800 { color: var(--violet-300) !important; }
+.border-purple-200, .border-purple-300 { border-color: rgba(167, 139, 250, .40) !important; }
+.border-purple-500 { border-color: var(--violet-500) !important; }
+
+/* ---------- RED -> ROSE ---------- */
+.bg-red-50 { background-color: rgba(244, 63, 94, .10) !important; }
+.bg-red-100 { background-color: rgba(244, 63, 94, .18) !important; }
+.bg-red-500, .bg-red-600 { background-color: var(--rose-600) !important; }
+.bg-red-700 { background-color: var(--rose-700) !important; }
+.hover\:bg-red-600:hover, .hover\:bg-red-700:hover { background-color: var(--rose-700) !important; }
+.text-red-500, .text-red-600 { color: var(--rose-400) !important; }
+.text-red-700, .text-red-800 { color: var(--rose-300) !important; }
+.border-red-200, .border-red-300 { border-color: rgba(251, 113, 133, .40) !important; }
+.border-red-500 { border-color: var(--rose-400) !important; }
+
+/* ---------- YELLOW -> AMBER ---------- */
+.bg-yellow-50 { background-color: rgba(245, 158, 11, .10) !important; }
+.bg-yellow-100 { background-color: rgba(245, 158, 11, .18) !important; }
+.bg-yellow-400, .bg-yellow-500 { background-color: var(--amber-500) !important; color: var(--on-amber) !important; }
+.text-yellow-600, .text-yellow-700, .text-yellow-800 { color: var(--amber-300) !important; }
+.border-yellow-300, .border-yellow-400 { border-color: rgba(245, 158, 11, .45) !important; }
+.hover\:bg-yellow-500:hover, .hover\:bg-yellow-600:hover { background-color: var(--amber-400) !important; }
+
+/* ---------- Form controls ---------- */
+input, select, textarea {
+  background-color: var(--ink-800) !important;
+  color: var(--tx-hi) !important;
+  border-color: var(--ink-500) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--tx-lo) !important; }
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border-color: var(--teal-400) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, .25) !important;
+}
+input:disabled, select:disabled, textarea:disabled { opacity: .55; }
+select option { background: var(--ink-800); color: var(--tx-hi); }
+input[type="checkbox"] { accent-color: var(--teal-500); }
+input[type="file"] { background-color: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+
+/* ---------- MCQ radio ---------- */
+.cbt-radio:checked + label {
+  border-color: var(--amber-400) !important;
+  background-color: rgba(245, 158, 11, .14) !important;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, .35) inset;
+}
+.study-option:hover { background-color: var(--ink-700) !important; }
+
+/* ---------- Study-mode feedback ---------- */
+.explanation-box { color: var(--tx-hi); }
+.explanation-box > .bg-white, .explanation-box > .bg-blue-50 {
+  background-color: rgba(245, 158, 11, .09) !important;
+  border-left-color: var(--amber-500) !important;
+}
+.correct-option-highlight { border-color: var(--emerald-500) !important; background-color: rgba(16, 185, 129, .16) !important; }
+.wrong-answer-selected { border-color: var(--rose-400) !important; background-color: rgba(244, 63, 94, .16) !important; }
+.correct-badge { background: var(--emerald-500) !important; color: #03140d !important; }
+.fill-correct-highlight { border-color: var(--emerald-500) !important; background: rgba(16, 185, 129, .16) !important; color: var(--emerald-400) !important; }
+
+/* ---------- Study materials & images ---------- */
+.note-card { background: linear-gradient(135deg, rgba(139, 92, 246, .55), rgba(13, 148, 136, .55)) !important; border: 1px solid rgba(167, 139, 250, .35); color: var(--tx-hi) !important; }
+.image-gallery { background: #04060d !important; }
+.image-toolbar { background: linear-gradient(90deg, var(--ink-800), var(--ink-700)) !important; border-bottom: 1px solid var(--ink-600); }
+.image-item { background: var(--ink-800) !important; border: 1px solid var(--ink-600); }
+.image-item .filename { color: var(--tx-mid) !important; }
+.cbt-modal { background: rgba(2, 4, 10, .72) !important; }
+
+/* ---------- Fullscreen explanation modal (higher specificity re-theme) ---------- */
+#fullscreen-explain-modal.open .theme-white { --fx-bg: #f8fafc; --fx-fg: #0f172a; --fx-head: #eef2f7; --fx-line: #d9e0ea; --fx-panel: #ffffff; --fx-accent: #d97706; }
+#fullscreen-explain-modal.open .theme-dark { --fx-bg: #0b1220; --fx-fg: #e6ebf5; --fx-head: #070c17; --fx-line: #1b2740; --fx-panel: #111a2e; --fx-accent: #fbbf24; }
+#fullscreen-explain-modal.open .theme-sepia { --fx-bg: #f4ecd8; --fx-fg: #5b4636; --fx-head: #eadfc4; --fx-line: #d8c8a2; --fx-panel: #faf3e1; --fx-accent: #b45309; }
+#fullscreen-explain-modal.open .modal-content { background: var(--fx-bg) !important; color: var(--fx-fg) !important; }
+#fullscreen-explain-modal.open .modal-content .modal-header { background: var(--fx-head) !important; border-color: var(--fx-line) !important; }
+#fullscreen-explain-modal.open .theme-white .modal-header,
+#fullscreen-explain-modal.open .theme-dark .modal-header,
+#fullscreen-explain-modal.open .theme-sepia .modal-header { color: var(--fx-fg) !important; }
+#fullscreen-explain-modal.open .theme-white .modal-actions button,
+#fullscreen-explain-modal.open .theme-dark .modal-actions button,
+#fullscreen-explain-modal.open .theme-sepia .modal-actions button { color: var(--fx-fg) !important; background: transparent !important; border-color: var(--fx-line) !important; }
+#fullscreen-explain-modal.open .theme-white .modal-actions button:hover,
+#fullscreen-explain-modal.open .theme-dark .modal-actions button:hover,
+#fullscreen-explain-modal.open .theme-sepia .modal-actions button:hover { background: var(--fx-line) !important; }
+#fullscreen-explain-modal.open .modal-body .bg-white,
+#fullscreen-explain-modal.open .modal-body .bg-blue-50,
+#fullscreen-explain-modal.open .modal-body .bg-gray-50,
+#fullscreen-explain-modal.open .modal-body .bg-green-50 { background-color: var(--fx-panel) !important; border-color: var(--fx-accent) !important; }
+#fullscreen-explain-modal.open .modal-body [class*="text-"] { color: var(--fx-fg) !important; }
+
+/* ---------- Blink button ---------- */
+body .blink-btn {
+  background: linear-gradient(135deg, var(--amber-400), var(--amber-600)) !important;
+  color: var(--on-amber) !important;
+  animation: blink-pulse-amber 1.6s ease-in-out infinite;
+}
+@keyframes blink-pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, .6); opacity: 1; }
+  50% { box-shadow: 0 0 0 9px rgba(245, 158, 11, 0); opacity: .8; }
+}
+
+/* ---------- Scrollbars ---------- */
+* { scrollbar-width: thin; scrollbar-color: var(--ink-500) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--ink-500); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
