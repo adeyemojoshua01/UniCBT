@@ -245,11 +245,13 @@
       var subNotes  = EXT_NOTES[ns.name]  || {};
       var subImages = EXT_IMAGES[ns.name] || {};
 
-      ns.topics.forEach(function (t) {
-        if (subNotes[t.name] && (!ns.notes[t.id] || String(ns.notes[t.id]).trim() === '')) {
+            ns.topics.forEach(function (t) {
+        // Force the new external notes to overwrite old cached notes
+        if (subNotes[t.name]) {
           ns.notes[t.id] = subNotes[t.name];
         }
-        if (subImages[t.name] && (!ns.topicImages[t.id] || !ns.topicImages[t.id].length)) {
+        // Force the new external images to overwrite old cached images
+        if (subImages[t.name]) {
           ns.topicImages[t.id] = subImages[t.name].slice();
         }
       });
