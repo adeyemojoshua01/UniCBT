@@ -20,8 +20,3 @@ window.CBT_SUBJECT_IMAGES['Bible Studies'] = {
     { data: 'question-banks/bible-studies/gospel-timeline.svg', filename: 'gospel-timeline.svg' }
   ]
 };
-
-window.CBT_SUBJECT_REFERENCE_IMAGES = window.CBT_SUBJECT_REFERENCE_IMAGES || {};
-window.CBT_SUBJECT_REFERENCE_IMAGES['Bible Studies'] = [
-  { data: 'question-banks/bible-studies/bible-studies-reference.svg', filename: 'bible-studies-reference.svg' }
-];
