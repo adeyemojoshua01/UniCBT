@@ -32,9 +32,13 @@ window.MathJax = {
   .preview-content p { margin-bottom: 1em; color: var(--text-muted); }
   .preview-content ul { list-style-type: disc; margin: 1em 0 1em 1.5em; color: var(--text-muted); }
   .preview-content blockquote { border-left: 4px solid var(--accent); padding: 10px; margin: 1em 0; color: #cbd5e1; font-style: italic; background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; }
-  #sidebar-overlay { transition: opacity 0.3s; }
-  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  /* Sidebar */
+  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
   #sidebar.open { transform: translateX(0); }
+  #sidebar-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
+  #sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+
   .svg-item-btn { transition: all 0.2s; }
   .svg-item-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.1); }
 </style>
@@ -80,16 +84,14 @@ window.MathJax = {
 
       <!-- TAB 2: SVG STUDIO -->
       <div id="pane-svg" class="tab-pane h-full flex flex-col space-y-4">
-        <!-- SVG List -->
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs font-bold text-[#8598AC] uppercase">Attached SVGs</label>
-            <button onclick="createNewSVG()" class="px-2 py-1 bg-indigo-600 text-white rounded text-[10px] font-bold"><i class="fas fa-plus"></i> New SVG</button>
+            <button onclick="createNewSVG()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95"><i class="fas fa-plus"></i> New SVG</button>
           </div>
           <div id="svg-list-container" class="flex gap-2 overflow-x-auto pb-2"></div>
         </div>
 
-        <!-- SVG Editor Area -->
         <div id="svg-editor-area" class="hidden flex-col flex-grow space-y-3">
           <div class="bg-[#101830] border border-[#1e2740] rounded-xl p-3">
             <h3 class="text-sm font-bold text-[#E7EEF6] mb-2"><i class="fas fa-magic text-[#f59e0b] mr-1"></i> Template Generator</h3>
@@ -123,7 +125,7 @@ window.MathJax = {
           <h2 class="font-bold text-lg mb-4 text-white" id="preview-topic-title">Topic</h2>
           <div id="preview-notes-content" class="preview-content"></div>
           <div id="preview-svg-container" class="mt-6 border-t border-[#1e2740] pt-4">
-            <h4 class="text-xs font-bold text-[#8598AC] uppercase mb-3">Attached Images</h4>
+            <h4 class="text-xs font-bold text-[#8598AC] uppercase mb-3">Attached Images (Tap to zoom)</h4>
             <div id="preview-svg-gallery" class="grid grid-cols-2 gap-3"></div>
           </div>
         </div>
@@ -142,8 +144,8 @@ window.MathJax = {
   </div>
 
   <!-- SIDEBAR -->
-  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none" onclick="toggleSidebar()"></div>
-  <aside id="sidebar" class="fixed top-0 left-0 w-[280px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 transform -translate-x-full flex flex-col">
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40" onclick="toggleSidebar()"></div>
+  <aside id="sidebar" class="fixed top-0 left-0 w-[280px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 flex flex-col">
     <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
       <h2 class="font-extrabold text-sm">Library</h2>
       <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-[#1e2740] flex items-center justify-center"><i class="fas fa-times"></i></button>
@@ -155,7 +157,7 @@ window.MathJax = {
     <div class="flex-grow overflow-y-auto p-3 space-y-2" id="sidebar-tree"></div>
   </aside>
 
-  <!-- MODALS & TOASTS -->
+  <!-- MODALS -->
   <div id="github-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
     <div class="bg-[#0B1020] border border-[#1e2740] rounded-2xl w-full max-w-sm">
       <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0c1222]">
@@ -182,23 +184,18 @@ window.MathJax = {
   <div id="toast-layer" class="fixed top-16 right-4 z-[999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
   <script>
-    /* =========================================================
-       DYNAMIC STATE
-       ========================================================= */
     let state = {
       activeSubject: '',
       activeTopic: '',
       activeSvgIndex: -1,
-      data: {}, // Format: { "Subject": { "Topic": { notes: "", svgs: [{filename, code}] } } }
+      data: {}, 
       github: { owner: '', repo: '', token: '' }
     };
 
-    // Initialize or Load from LocalStorage
     const saved = localStorage.getItem('cbt_studio_v2');
     if (saved) {
       state = JSON.parse(saved);
     } else {
-      // Start with a blank slate
       state.data = { "Untitled Subject": { "Untitled Topic": { notes: "", svgs: [] } } };
       state.activeSubject = "Untitled Subject";
       state.activeTopic = "Untitled Topic";
@@ -210,9 +207,15 @@ window.MathJax = {
        NAVIGATION & SIDEBAR
        ========================================================= */
     function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
-      document.getElementById('sidebar-overlay').classList.toggle('opacity-0');
-      document.getElementById('sidebar-overlay').classList.toggle('pointer-events-none');
+      const sb = document.getElementById('sidebar');
+      const ov = document.getElementById('sidebar-overlay');
+      if (sb.classList.contains('open')) {
+        sb.classList.remove('open');
+        ov.classList.remove('open');
+      } else {
+        sb.classList.add('open');
+        ov.classList.add('open');
+      }
     }
 
     function renderSidebar() {
@@ -227,7 +230,7 @@ window.MathJax = {
           const isActive = state.activeSubject === subj && state.activeTopic === topic;
           html += `<div class="flex items-center justify-between group">
             <button onclick="selectTopic('${subj}', '${topic}')" class="flex-grow text-left px-2 py-1.5 rounded-lg text-sm ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830]'}">${topic}</button>
-            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-600 hover:text-rose-500 px-2 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-times text-[10px]"></i></button>
+            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-600 hover:text-rose-500 px-2 opacity-50 group-hover:opacity-100 transition-opacity"><i class="fas fa-times text-[10px]"></i></button>
           </div>`;
         }
         html += `</div></div>`;
@@ -277,7 +280,7 @@ window.MathJax = {
       delete state.data[subj][topic];
       const firstTopic = Object.keys(state.data[subj])[0];
       if (firstTopic) selectTopic(subj, firstTopic);
-      else selectTopic(subj, ""); // Might be empty
+      else selectTopic(subj, ""); 
       saveState();
     }
 
@@ -320,7 +323,6 @@ window.MathJax = {
       const oldName = state.activeTopic;
       const draft = state.data[state.activeSubject][oldName];
       
-      // Rename the key in the object
       state.data[state.activeSubject][newName] = draft;
       delete state.data[state.activeSubject][oldName];
       
@@ -359,8 +361,18 @@ window.MathJax = {
 
       container.innerHTML = svgs.map((svg, i) => {
         const isActive = state.activeSvgIndex === i;
+        
+        // Fallback if the code is empty (e.g. just loaded from GitHub filenames)
+        let previewUrl = '';
+        if (svg.code && svg.code.trim().startsWith('<svg')) {
+          const blob = new Blob([svg.code], {type: 'image/svg+xml'});
+          previewUrl = URL.createObjectURL(blob);
+        } else {
+          previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/${svg.filename}`;
+        }
+
         return `<button onclick="selectSVG(${i})" class="svg-item-btn flex-none w-20 h-16 rounded-lg border border-[#1e2740] bg-[#101830] p-1 overflow-hidden flex flex-col items-center justify-center ${isActive ? 'active' : ''}">
-          <img src="data:image/svg+xml;utf8,${encodeURIComponent(svg.code)}" class="w-full h-8 object-contain mb-1">
+          <img src="${previewUrl}" class="w-full h-8 object-contain mb-1" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Code%3C/text%3E%3C/svg%3E'">
           <span class="text-[8px] truncate w-full text-center text-gray-400">${svg.filename || 'image.svg'}</span>
         </button>`;
       }).join('');
@@ -433,7 +445,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       PREVIEW & GITHUB
+       PREVIEW & FULLSCREEN IMAGE
        ========================================================= */
     function updatePreview() {
       if (!state.activeSubject || !state.activeTopic) return;
@@ -445,8 +457,20 @@ window.MathJax = {
       const gallery = document.getElementById('preview-svg-gallery');
       if (draft.svgs && draft.svgs.length > 0) {
         gallery.innerHTML = draft.svgs.map(svg => {
-          const blob = new Blob([svg.code], {type: 'image/svg+xml'}); const url = URL.createObjectURL(blob);
-          return `<div class="bg-[#101830] border border-[#1e2740] rounded-lg p-2"><img src="${url}" class="w-full h-auto rounded"></div>`;
+          let imgUrl = '';
+          
+          // If there is code, render it as a Blob
+          if (svg.code && svg.code.trim().startsWith('<svg')) {
+            const blob = new Blob([svg.code], {type: 'image/svg+xml'});
+            imgUrl = URL.createObjectURL(blob);
+          } else {
+            // If no code, load from GitHub URL (or local fallback)
+            imgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/${svg.filename}`;
+          }
+
+          return `<div onclick="viewImageFullscreen('${imgUrl}')" class="bg-[#101830] border border-[#1e2740] rounded-lg p-2 cursor-pointer transition-transform active:scale-95">
+            <img src="${imgUrl}" class="w-full h-32 object-contain rounded" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+          </div>`;
         }).join('');
       } else {
         gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images attached.</p>';
@@ -455,6 +479,17 @@ window.MathJax = {
       if (window.MathJax) MathJax.typesetPromise([document.getElementById('pane-preview')]).catch(()=>{});
     }
 
+    function viewImageFullscreen(url) {
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn';
+      overlay.onclick = () => overlay.remove();
+      overlay.innerHTML = `<img src="${url}" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl bg-[#0B1020] border border-[#1e2740]">`;
+      document.body.appendChild(overlay);
+    }
+
+    /* =========================================================
+       GITHUB FETCH & PUBLISH
+       ========================================================= */
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -485,25 +520,34 @@ window.MathJax = {
         const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
         const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
 
-        // Rebuild state from fetched data
-        state.data[state.activeSubject] = {}; // Clear current
+        state.data[state.activeSubject] = {}; 
 
-        // Merge notes
         for (const [topic, noteContent] of Object.entries(notesObj)) {
           if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
           state.data[state.activeSubject][topic].notes = noteContent;
         }
 
-        // Merge images (filenames)
+        // Fetch actual SVG codes from the filenames
         for (const [topic, imgArray] of Object.entries(imagesObj)) {
            if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
-           state.data[state.activeSubject][topic].svgs = imgArray.map(img => ({
-             filename: img.filename,
-             code: '' // We will fetch raw SVG code below if needed, but for now leave empty since it's an external file
+           
+           state.data[state.activeSubject][topic].svgs = await Promise.all(imgArray.map(async img => {
+             let svgCode = '';
+             if (img.data && !img.data.startsWith('data:') && !img.data.startsWith('<svg')) {
+               try {
+                 const svgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/${img.data}`;
+                 const svgRes = await fetch(svgUrl);
+                 if (svgRes.ok) svgCode = await svgRes.text();
+               } catch (e) { console.warn('Could not fetch SVG file', e); }
+             } else if (img.data.startsWith('<svg')) {
+               svgCode = img.data; // Old format where raw svg was inside notes.js
+             }
+             return { filename: img.filename, code: svgCode };
            }));
         }
 
-        selectTopic(state.activeSubject, Object.keys(state.data[state.activeSubject])[0] || 'General');
+        const firstTopic = Object.keys(state.data[state.activeSubject])[0];
+        selectTopic(state.activeSubject, firstTopic || 'General');
         saveState(); 
         toast('Loaded from GitHub!', 'success');
       } catch (err) {
@@ -521,17 +565,14 @@ window.MathJax = {
       let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = {\n`;
       let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = {\n`;
 
-      // 1. Loop through all topics in this subject
       for (const [topic, draft] of Object.entries(state.data[subj])) {
         if (draft.notes) notesContent += `  '${topic}': \`${draft.notes.replace(/`/g, '\\`')}\`,\n`;
         
         if (draft.svgs && draft.svgs.length > 0) {
           imagesContent += `  '${topic}': [\n`;
           for (const svg of draft.svgs) {
-            // Add to notes.js reference
             imagesContent += `    { data: 'question-banks/${subjSlug}/${svg.filename}', filename: '${svg.filename}' },\n`;
             
-            // 2. Publish actual SVG file if it has code
             if (svg.code && svg.code.trim().length > 0) {
                await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -547,7 +588,6 @@ window.MathJax = {
       imagesContent += `};\n`;
       const finalCode = notesContent + imagesContent;
 
-      // 3. Publish the updated notes.js file
       try {
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
