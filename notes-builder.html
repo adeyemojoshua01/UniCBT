@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<!-- ADDED: Marked.js for Markdown parsing -->
+<!-- Marked.js for Markdown parsing -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 window.MathJax = {
@@ -41,6 +41,10 @@ window.MathJax = {
   .preview-content ol { list-style-type: decimal; }
   .preview-content blockquote { border-left: 4px solid var(--accent); padding: 10px; margin: 1em 0; color: #cbd5e1; font-style: italic; background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; }
   .preview-content strong { color: #fff; font-weight: 700; }
+  .preview-content table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
+  .preview-content th, .preview-content td { border: 1px solid var(--border-dark); padding: 8px 12px; text-align: left; }
+  .preview-content th { background: #101830; color: #fff; font-weight: 700; }
+  .preview-content hr { border: 0; border-top: 1px solid var(--border-dark); margin: 1.5em 0; }
   
   /* Sidebar */
   #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
@@ -456,15 +460,51 @@ window.MathJax = {
     /* =========================================================
        PREVIEW & FULLSCREEN IMAGE
        ========================================================= */
+    // HELPER: Protect LaTeX from Markdown parser
+    function parseMarkdownWithMath(rawText) {
+      if (!rawText) return '';
+      if (!window.marked) return rawText;
+
+      const mathBlocks = [];
+      let text = rawText;
+
+      // Hide Display Math \[ ... \]
+      text = text.replace(/\\\[([\s\S]*?)\\\]/g, function(match) {
+        mathBlocks.push(match);
+        return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
+      });
+      
+      // Hide Display Math $$ ... $$
+      text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match) {
+        mathBlocks.push(match);
+        return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
+      });
+
+      // Hide Inline Math \( ... \)
+      text = text.replace(/\\\((.*?)\\\)/g, function(match) {
+        mathBlocks.push(match);
+        return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
+      });
+
+      // Parse Markdown
+      let html = window.marked.parse(text);
+
+      // Restore Math Blocks
+      html = html.replace(/@@MATHBLOCK(\d+)@@/g, function(match, index) {
+        return mathBlocks[index];
+      });
+
+      return html;
+    }
+
     function updatePreview() {
       if (!state.activeSubject || !state.activeTopic) return;
       const draft = state.data[state.activeSubject][state.activeTopic];
       
       document.getElementById('preview-topic-title').textContent = state.activeTopic;
       
-      // NEW: Parse Markdown into HTML before injecting
       const rawMarkdown = draft.notes || '';
-      const htmlContent = window.marked ? marked.parse(rawMarkdown) : rawMarkdown;
+      const htmlContent = parseMarkdownWithMath(rawMarkdown);
       
       document.getElementById('preview-notes-content').innerHTML = htmlContent || '<p class="text-gray-500 italic">No notes yet...</p>';
       
@@ -487,7 +527,6 @@ window.MathJax = {
         gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images attached.</p>';
       }
       
-      // MathJax runs AFTER Markdown is rendered
       if (window.MathJax) MathJax.typesetPromise([document.getElementById('pane-preview')]).catch(()=>{});
     }
 
