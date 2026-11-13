@@ -417,7 +417,7 @@
 
 
 
-         showAllNotes: function () {
+   showAllNotes: function () {
       this.data.mode = 'all-notes';
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
@@ -426,28 +426,35 @@
       var container = document.getElementById('app-container');
       if (!container) return;
 
-      var allNotes = [];
+      var allMaterials = [];
       Object.values(this.data.subjects).forEach(function (s) {
-        var topics = self.studyMaterialTopics(s).filter(function (t) { return t.hasNotes; });
+        // This gets topics that have notes OR images
+        var topics = self.studyMaterialTopics(s); 
         if (topics.length > 0) {
-          allNotes.push({ subjectName: s.name, subjectId: s.id, topics: topics });
+          allMaterials.push({ subjectName: s.name, subjectId: s.id, topics: topics });
         }
       });
 
       var contentHTML = '';
-      if (allNotes.length === 0) {
-        contentHTML = '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">📭</div><p class="text-gray-500">No notes available.</p></div>';
+      if (allMaterials.length === 0) {
+        contentHTML = '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">📭</div><p class="text-gray-500">No notes or images available.</p></div>';
       } else {
-        contentHTML = '<div class="space-y-4">' + allNotes.map(function (group) {
+        contentHTML = '<div class="space-y-4">' + allMaterials.map(function (group) {
           var topicCards = group.topics.map(function (t) {
-            return '<button onclick="app.viewTopicNote(\'' + group.subjectId + '\',\'' + t.id + '\',\'' + self.esc(t.name) + '\')" class="w-full text-left rounded-xl border border-gray-200 bg-gray-50 hover:bg-white hover:border-blue-400 p-4 transition-all flex items-center justify-between group">' +
+            return '<div class="w-full rounded-xl border border-gray-200 bg-gray-50 p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">' +
               '<div class="flex items-center gap-3 min-w-0">' +
               '<div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fas fa-file-lines text-sm"></i></div>' +
               '<span class="font-semibold text-gray-700 truncate min-w-0">' + self.esc(t.name) + '</span>' +
               '</div>' +
-              '<i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-500 transition-colors"></i>' +
-              '</button>';
+              
+              // Actions: Read Notes & View Images
+              '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
+              (t.hasNotes ? '<button onclick="app.viewTopicNote(\'' + group.subjectId + '\',\'' + t.id + '\',\'' + self.esc(t.name) + '\')" class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-bold hover:bg-blue-200 transition-colors"><i class="fas fa-book-open mr-1"></i> Read Notes</button>' : '') +
+              (t.images > 0 ? '<button onclick="app.viewTopicImages(\'' + group.subjectId + '\',\'' + t.id + '\')" class="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200 transition-colors"><i class="fas fa-images mr-1"></i> View Images (' + t.images + ')</button>' : '') +
+              '</div>' +
+              '</div>';
           }).join('');
+          
           return '<div class="rounded-2xl bg-white border border-gray-200 p-5 shadow-lg">' +
             '<h3 class="font-extrabold text-lg text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fas fa-book text-purple-600 mr-2"></i>' + self.esc(group.subjectName) + '</h3>' +
             '<div class="space-y-2">' + topicCards + '</div>' +
@@ -458,8 +465,8 @@
       container.innerHTML = '<div class="max-w-4xl mx-auto">' +
         '<button onclick="app.showLanding()" class="text-xs font-bold text-gray-500 hover:text-green-600 mb-3 inline-flex items-center gap-1.5"><i class="fas fa-arrow-left"></i> Back to home</button>' +
         '<div class="mb-5">' +
-        '<h2 class="text-2xl font-extrabold text-gray-800">Study Notes Library</h2>' +
-        '<p class="text-sm text-gray-500 mt-1">Browse notes across all available subjects.</p>' +
+        '<h2 class="text-2xl font-extrabold text-gray-800">Study Notes & Images Library</h2>' +
+        '<p class="text-sm text-gray-500 mt-1">Browse materials across all available subjects.</p>' +
         '</div>' + contentHTML + '</div>';
     },
      
