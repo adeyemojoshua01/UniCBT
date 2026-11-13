@@ -23,8 +23,3 @@ window.CBT_SUBJECT_IMAGES['Physics'] = {
     { data: 'question-banks/physics/carnot-cycle.svg',  filename: 'carnot-cycle.svg' }
   ]
 };
-
-window.CBT_SUBJECT_REFERENCE_IMAGES = window.CBT_SUBJECT_REFERENCE_IMAGES || {};
-window.CBT_SUBJECT_REFERENCE_IMAGES['Physics'] = [
-  { data: 'question-banks/physics/physics-reference.svg', filename: 'physics-reference.svg' }
-];
