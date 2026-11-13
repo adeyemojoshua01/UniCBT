@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>eduCBT — Admin Studio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  options: { ignoreHtmlClass: 'no-mathjax' }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  :root { --bg-dark: #070A12; --panel-dark: #0B1020; --border-dark: #1e2740; --text-main: #E7EEF6; --text-muted: #8598AC; --accent: #f59e0b; }
+  body { background-color: var(--bg-dark); color: var(--text-main); font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 4px; }
+  .input-dark { background-color: #101830; border: 1px solid var(--border-dark); color: var(--text-main); border-radius: 8px; padding: 10px 12px; width: 100%; font-size: 14px; transition: border-color 0.2s; }
+  .input-dark:focus { outline: none; border-color: var(--accent); }
+  .code-editor { font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.5; resize: vertical; background-color: #05080f; }
+  .tab-btn { flex: 1; padding: 12px 0; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .preview-content { font-size: 15px; line-height: 1.6; }
+  .preview-content h2, .preview-content h3 { font-weight: 700; margin: 1em 0 0.5em; color: #fff; }
+  .preview-content p { margin-bottom: 1em; color: var(--text-muted); }
+  .preview-content ul { list-style-type: disc; margin: 1em 0 1em 1.5em; color: var(--text-muted); }
+  .preview-content blockquote { border-left: 4px solid var(--accent); padding: 10px; margin: 1em 0; color: #cbd5e1; font-style: italic; background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; }
+  #sidebar-overlay { transition: opacity 0.3s; }
+  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  #sidebar.open { transform: translateX(0); }
+</style>
+</head>
+<body class="h-[100dvh] flex flex-col overflow-hidden">
+
+  <header class="flex-none bg-[#0B1020] border-b border-[#1e2740] px-4 py-3 flex items-center justify-between z-20">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 class="font-extrabold text-sm leading-tight">Studio</h1>
+        <p id="current-subject-label" class="text-[11px] text-[#8598AC] leading-tight truncate max-w-[150px]">Select a topic...</p>
+      </div>
+    </div>
+    <button onclick="openModal('github-modal')" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95"><i class="fab fa-github text-lg"></i></button>
+  </header>
+
+  <main class="flex-grow flex flex-col overflow-hidden">
+    <div class="flex-none flex border-b border-[#1e2740] bg-[#0B1020]">
+      <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn active"><i class="fas fa-file-lines mr-1.5"></i> Notes</button>
+      <button onclick="switchTab('svg')" id="tab-svg" class="tab-btn"><i class="fas fa-image mr-1.5"></i> SVG Studio</button>
+      <button onclick="switchTab('preview')" id="tab-preview" class="tab-btn"><i class="fas fa-eye mr-1.5"></i> Preview</button>
+    </div>
+
+    <div class="flex-grow overflow-y-auto p-4 pb-24">
+      <div id="pane-notes" class="tab-pane active h-full flex flex-col">
+        <div class="mb-2 flex items-center justify-between">
+          <label class="text-xs font-bold text-[#8598AC] uppercase">HTML & LaTeX</label>
+          <div class="flex gap-1">
+            <button onclick="insertText('note-editor', '<h2>')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">H2</button>
+            <button onclick="insertText('note-editor', '<ul>\n<li></li>\n</ul>')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">List</button>
+            <button onclick="insertText('note-editor', '\\\\( x^2 \\\\)')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">Math</button>
+          </div>
+        </div>
+        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[300px]" placeholder="Type notes... HTML and MathJax supported."></textarea>
+      </div>
+
+      <div id="pane-svg" class="tab-pane h-full flex flex-col space-y-4">
+        <div class="bg-[#101830] border border-[#1e2740] rounded-xl p-3">
+          <h3 class="text-sm font-bold text-[#E7EEF6] mb-2"><i class="fas fa-magic text-[#f59e0b] mr-1"></i> Template</h3>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <input type="text" id="svg-title" class="input-dark" placeholder="Title">
+            <input type="text" id="svg-filename" class="input-dark" placeholder="Filename (e.g. gospel.svg)">
+          </div>
+          <div class="flex gap-2">
+            <select id="svg-type" class="input-dark flex-grow">
+              <option value="pvd">PV Diagram</option>
+              <option value="tree">Tree</option>
+              <option value="matrix">Matrix</option>
+              <option value="timeline">Timeline</option>
+            </select>
+            <button onclick="generateSVG()" class="bg-[#4f46e5] text-white px-4 py-2 rounded-lg text-xs font-bold">Generate</button>
+          </div>
+        </div>
+        <div class="flex-grow flex flex-col">
+          <label class="text-xs font-bold text-[#8598AC] uppercase mb-2">Raw SVG Code</label>
+          <textarea id="svg-editor" class="input-dark code-editor flex-grow min-h-[200px]" placeholder="<svg>...</svg>"></textarea>
+        </div>
+      </div>
+
+      <div id="pane-preview" class="tab-pane h-full">
+        <div class="bg-[#0B1020] border border-[#1e2740] rounded-xl p-5 shadow-lg">
+          <div id="preview-notes-content" class="preview-content"></div>
+          <div id="preview-svg-container" class="mt-6 border-t border-[#1e2740] pt-4">
+            <h4 class="text-xs font-bold text-[#8598AC] uppercase mb-3">Attached Images</h4>
+            <div id="preview-svg-gallery" class="grid grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="fixed bottom-0 left-0 w-full bg-[#0B1020] border-t border-[#1e2740] p-3 flex gap-3 z-20">
+    <button onclick="loadFromGitHub()" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+      <i class="fas fa-download"></i> Load
+    </button>
+    <button onclick="publishToGitHub()" class="flex-[2] bg-amber-500 text-black py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2">
+      <i class="fab fa-github"></i> Publish
+    </button>
+  </div>
+
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none" onclick="toggleSidebar()"></div>
+  <aside id="sidebar" class="fixed top-0 left-0 w-[280px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 transform -translate-x-full flex flex-col">
+    <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
+      <h2 class="font-extrabold text-sm">Library</h2>
+      <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-[#1e2740] flex items-center justify-center"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="flex-grow overflow-y-auto p-3 space-y-2" id="sidebar-tree"></div>
+  </aside>
+
+  <div id="github-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+    <div class="bg-[#0B1020] border border-[#1e2740] rounded-2xl w-full max-w-sm">
+      <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0c1222]">
+        <h3 class="font-bold text-sm"><i class="fab fa-github mr-1"></i> GitHub Settings</h3>
+        <button onclick="closeModal('github-modal')" class="text-gray-400"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-[#8598AC] uppercase mb-1 block">Owner / Repo</label>
+          <div class="flex gap-2">
+            <input type="text" id="gh-owner" class="input-dark !w-1/2" placeholder="User">
+            <input type="text" id="gh-repo" class="input-dark !w-1/2" placeholder="Repo">
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-[#8598AC] uppercase mb-1 block">Token</label>
+          <input type="password" id="gh-token" class="input-dark" placeholder="ghp_...">
+        </div>
+        <button onclick="saveGithubSettings()" class="w-full bg-[#4f46e5] text-white py-2.5 rounded-lg text-sm font-bold mt-2">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-layer" class="fixed top-16 right-4 z-[999] flex flex-col gap-2 items-end pointer-events-none"></div>
+
+  <script>
+    const state = {
+      activeSubject: 'Physics',
+      activeTopic: 'Thermodynamics',
+      subjects: {
+        'Physics': ['Thermodynamics', 'Mechanics', 'Waves'],
+        'Probability': ['Combinatorics', 'Conditional Probability'],
+        'Bible Studies': ['Gospels', 'Wisdom Literature'],
+        'Linear Algebra': ['Matrices', 'Vector Spaces']
+      },
+      drafts: {}, // { "Subject::Topic": { notes: "", svg: "", svgFilename: "" } }
+      github: { owner: '', repo: '', token: '' }
+    };
+
+    const savedState = localStorage.getItem('cbt_studio_state');
+    if (savedState) Object.assign(state, JSON.parse(savedState));
+
+    function saveState() { localStorage.setItem('cbt_studio_state', JSON.stringify(state)); updatePreview(); }
+
+    // --- NAVIGATION ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('opacity-0'); overlay.classList.toggle('pointer-events-none');
+    }
+
+    function renderSidebar() {
+      let html = '';
+      for (const [subj, topics] of Object.entries(state.subjects)) {
+        html += `<div class="mb-3"><h4 class="text-xs font-extrabold text-indigo-400 mb-1"><i class="fas fa-book mr-1"></i>${subj}</h4><div class="space-y-1 ml-2 border-l border-[#1e2740] pl-2">`;
+        topics.forEach(topic => {
+          const isActive = state.activeSubject === subj && state.activeTopic === topic;
+          html += `<button onclick="selectTopic('${subj}', '${topic}')" class="w-full text-left px-3 py-2 rounded-lg text-sm ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830]'}">${topic}</button>`;
+        });
+        html += `</div></div>`;
+      }
+      document.getElementById('sidebar-tree').innerHTML = html;
+    }
+
+    function selectTopic(subj, topic) {
+      state.activeSubject = subj; state.activeTopic = topic;
+      document.getElementById('current-subject-label').textContent = `${subj} > ${topic}`;
+      loadDraftIntoEditor(); toggleSidebar(); renderSidebar();
+    }
+
+    // --- EDITOR ---
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.getElementById(`pane-${tab}`).classList.add('active');
+      if (tab === 'preview') updatePreview();
+    }
+
+    function insertText(id, text) {
+      const el = document.getElementById(id), start = el.selectionStart, end = el.selectionEnd;
+      el.value = el.value.substring(0, start) + text + el.value.substring(end);
+      el.focus(); el.selectionStart = el.selectionEnd = start + text.length; saveDraft();
+    }
+
+    function getDraftKey() { return `${state.activeSubject}::${state.activeTopic}`; }
+
+    function saveDraft() {
+      const key = getDraftKey();
+      if (!state.drafts[key]) state.drafts[key] = { notes: '', svg: '', svgFilename: '' };
+      state.drafts[key].notes = document.getElementById('note-editor').value;
+      state.drafts[key].svg = document.getElementById('svg-editor').value.trim();
+      state.drafts[key].svgFilename = document.getElementById('svg-filename').value.trim() || 'image.svg';
+      saveState();
+    }
+
+    function loadDraftIntoEditor() {
+      const draft = state.drafts[getDraftKey()] || { notes: '', svg: '', svgFilename: '' };
+      document.getElementById('note-editor').value = draft.notes || '';
+      document.getElementById('svg-editor').value = draft.svg || '';
+      document.getElementById('svg-filename').value = draft.svgFilename || '';
+      updatePreview();
+    }
+
+    document.getElementById('note-editor').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(saveDraft, 500); });
+    document.getElementById('svg-editor').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(saveDraft, 500); });
+    document.getElementById('svg-filename').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(saveDraft, 500); });
+
+    // --- SVG GENERATOR ---
+    function generateSVG() {
+      const title = document.getElementById('svg-title').value || 'Title';
+      const filename = document.getElementById('svg-filename').value || (title.toLowerCase().replace(/\s+/g, '-') + '.svg');
+      document.getElementById('svg-filename').value = filename;
+      
+      const type = document.getElementById('svg-type').value;
+      let shapes = '';
+      if (type === 'pvd') shapes = '<path d="M90 300 C 180 140, 260 120, 330 90" stroke="#2DD4BF" stroke-width="4" fill="none"/><path d="M90 300 C 170 240, 250 210, 340 200" stroke="#7c3aed" stroke-width="3" stroke-dasharray="7 6" fill="none"/>';
+      else if (type === 'tree') shapes = '<g stroke="#64748b" stroke-width="2"><line x1="200" y1="90" x2="120" y2="170"/><line x1="200" y1="90" x2="280" y2="170"/><line x1="120" y1="170" x2="80" y2="250"/><line x1="120" y1="170" x2="160" y2="250"/><line x1="280" y1="170" x2="240" y2="250"/><line x1="280" y1="170" x2="320" y2="250"/></g><circle cx="200" cy="90" r="16" fill="#2DD4BF"/><circle cx="120" cy="170" r="12" fill="#0d9488"/><circle cx="280" cy="170" r="12" fill="#0d9488"/>';
+      else if (type === 'matrix') shapes = '<g stroke="#334155" stroke-width="1"><line x1="80" y1="120" x2="340" y2="120"/><line x1="80" y1="180" x2="340" y2="180"/><line x1="80" y1="240" x2="340" y2="240"/><line x1="120" y1="80" x2="120" y2="290"/><line x1="180" y1="80" x2="180" y2="290"/><line x1="240" y1="80" x2="240" y2="290"/><line x1="300" y1="80" x2="300" y2="290"/></g><polygon points="180,120 300,120 240,240 120,240" fill="#2DD4BF" opacity=".35" stroke="#2DD4BF" stroke-width="3"/>';
+      else shapes = '<line x1="70" y1="210" x2="340" y2="210" stroke="#475569" stroke-width="3"/><circle cx="110" cy="210" r="8" fill="#2DD4BF"/><circle cx="190" cy="210" r="8" fill="#14b8a6"/><circle cx="270" cy="210" r="8" fill="#a78bfa"/><circle cx="330" cy="210" r="8" fill="#f59e0b"/>';
+
+      document.getElementById('svg-editor').value = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">\n  <rect width="420" height="320" rx="16" fill="#0B1020"/>\n  <rect x="1" y="1" width="418" height="318" rx="16" fill="none" stroke="#22304F"/>\n  <text x="28" y="44" fill="#EAF2F6" font-family="sans-serif" font-size="18" font-weight="700">${title}</text>\n  <text x="28" y="64" fill="#8598AC" font-family="sans-serif" font-size="12">Subtitle</text>\n  ${shapes}\n</svg>`;
+      
+      saveDraft(); switchTab('preview'); toast('SVG Generated!', 'success');
+    }
+
+    // --- PREVIEW ---
+    function updatePreview() {
+      document.getElementById('preview-notes-content').innerHTML = document.getElementById('note-editor').value || '<p class="text-gray-500 italic">No notes yet...</p>';
+      
+      const svgCode = document.getElementById('svg-editor').value.trim();
+      const gallery = document.getElementById('preview-svg-gallery');
+      if (svgCode) {
+        const blob = new Blob([svgCode], {type: 'image/svg+xml'}); const url = URL.createObjectURL(blob);
+        gallery.innerHTML = `<div class="bg-[#101830] border border-[#1e2740] rounded-lg p-2"><img src="${url}" class="w-full h-auto rounded"></div>`;
+      } else {
+        gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images.</p>';
+      }
+      if (window.MathJax) MathJax.typesetPromise([document.getElementById('pane-preview')]).catch(()=>{});
+    }
+
+    // --- GITHUB FETCH & PUBLISH ---
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function saveGithubSettings() {
+      state.github.owner = document.getElementById('gh-owner').value.trim();
+      state.github.repo = document.getElementById('gh-repo').value.trim();
+      state.github.token = document.getElementById('gh-token').value.trim();
+      saveState(); closeModal('github-modal'); toast('Settings saved', 'success');
+    }
+
+    function getSubjectSlug() { return state.activeSubject.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+
+    async function loadFromGitHub() {
+      if (!state.github.owner || !state.github.repo) return toast('Set GitHub settings first', 'error');
+      const path = `question-banks/${getSubjectSlug()}/notes.js`;
+      toast('Fetching ' + path + '...', 'info');
+      
+      try {
+        const url = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/${path}`;
+        const res = await fetch(url + '?t=' + Date.now()); // bust cache
+        if (!res.ok) throw new Error('File not found on GitHub');
+        const text = await res.text();
+
+        const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
+        new Function('window', text)(dummyWindow);
+        
+        const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
+        const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
+
+        for (const [topic, noteContent] of Object.entries(notesObj)) {
+          const key = `${state.activeSubject}::${topic}`;
+          if (!state.drafts[key]) state.drafts[key] = { notes: '', svg: '', svgFilename: '' };
+          state.drafts[key].notes = noteContent;
+        }
+
+        // Extract SVG filename from the path
+        for (const [topic, imgArray] of Object.entries(imagesObj)) {
+           const key = `${state.activeSubject}::${topic}`;
+           if (imgArray.length && imgArray[0].filename) {
+              if (!state.drafts[key]) state.drafts[key] = { notes: '', svg: '', svgFilename: '' };
+              state.drafts[key].svgFilename = imgArray[0].filename;
+           }
+        }
+
+        saveState(); loadDraftIntoEditor(); toast('Loaded from GitHub!', 'success');
+      } catch (err) {
+        toast('Fetch failed: ' + err.message, 'error');
+      }
+    }
+
+    async function publishToGitHub() {
+      if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
+      
+      const subj = state.activeSubject;
+      const subjSlug = getSubjectSlug();
+      toast('Publishing to GitHub...', 'info');
+      
+      // 1. Build the notes.js string
+      let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = {\n`;
+      let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = {\n`;
+
+      state.subjects[subj].forEach(topic => {
+        const draft = state.drafts[`${subj}::${topic}`];
+        if (draft) {
+          if (draft.notes) notesContent += `  '${topic}': \`${draft.notes.replace(/`/g, '\\`')}\`,\n`;
+          
+          // If they generated an SVG, link it to the new external .svg file
+          if (draft.svg) {
+             const fn = draft.svgFilename || 'image.svg';
+             imagesContent += `  '${topic}': [{ data: 'question-banks/${subjSlug}/${fn}', filename: '${fn}' }],\n`;
+          }
+        }
+      });
+      
+      notesContent += `};\n\n`;
+      imagesContent += `};\n`;
+      const finalCode = notesContent + imagesContent;
+
+      try {
+        // 2. Publish the SVG file (if it exists)
+        const currentDraft = state.drafts[`${subj}::${state.activeTopic}`];
+        if (currentDraft && currentDraft.svg) {
+           const svgFn = currentDraft.svgFilename || 'image.svg';
+           await fetch('/api/publish-bank', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filename: `${subjSlug}/${svgFn}`, code: currentDraft.svg, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+           });
+        }
+
+        // 3. Publish the notes.js file
+        const res = await fetch('/api/publish-bank', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: `${subjSlug}/notes.js`, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+        });
+        
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
+        
+        toast('Published successfully!', 'success');
+      } catch (err) {
+        toast('Publish failed: ' + err.message, 'error');
+      }
+    }
+
+    // --- INIT ---
+    function toast(msg, type) {
+      const el = document.createElement('div');
+      el.className = `text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl mb-2 ${type==='error'?'bg-rose-600':(type==='success'?'bg-emerald-600':'bg-indigo-600')}`;
+      el.textContent = msg;
+      document.getElementById('toast-layer').appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+    }
+
+    window.onload = () => {
+      document.getElementById('gh-owner').value = state.github.owner || '';
+      document.getElementById('gh-repo').value = state.github.repo || '';
+      document.getElementById('gh-token').value = state.github.token || '';
+      renderSidebar(); loadDraftIntoEditor();
+      document.getElementById('current-subject-label').textContent = `${state.activeSubject} > ${state.activeTopic}`;
+    };
+  </script>
+</body>
+</html>
