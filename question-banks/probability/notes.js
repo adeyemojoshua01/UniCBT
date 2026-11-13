@@ -17,8 +17,3 @@ window.CBT_SUBJECT_IMAGES['Probability'] = {
     { data: 'question-banks/probability/probability-tree.svg', filename: 'probability-tree.svg' }
   ]
 };
-
-window.CBT_SUBJECT_REFERENCE_IMAGES = window.CBT_SUBJECT_REFERENCE_IMAGES || {};
-window.CBT_SUBJECT_REFERENCE_IMAGES['Probability'] = [
-  { data: 'question-banks/probability/probability-reference.svg', filename: 'probability-reference.svg' }
-];
