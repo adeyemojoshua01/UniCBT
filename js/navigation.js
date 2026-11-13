@@ -55,6 +55,9 @@
           if (state.subjectId && typeof app.showModeSelection === 'function') app.showModeSelection(state.subjectId);
           else app.showCandidateOptions();
           break;
+        case 'all-notes':
+          app.showAllNotes();
+          break;
         case 'login-practice':
           if (state.subjectId) app.showCandidateLogin('practice', state.subjectId);
           else app.showCandidateOptions();
@@ -112,6 +115,7 @@
     wrap('showLanding', function () { return { type: 'replace', screen: 'landing', state: {} }; });
     wrap('showCandidateOptions', function () { return { type: 'push', screen: 'candidate-options', state: {} }; });
     wrap('showModeSelection', function (args) { return { type: 'push', screen: 'mode-selection', state: { subjectId: args[0] } }; });
+     wrap('showAllNotes', function () { return { type: 'push', screen: 'all-notes', state: {} }; });
     wrap('showCandidateLogin', function (args) {
       var mode = args[0] || 'practice';
       return { type: 'push', screen: 'login-' + mode, state: { mode: mode, subjectId: args[1] } };
