@@ -364,7 +364,7 @@
 
     
    viewTopicImages: function (subjectId, topicId) {
-       viewTopicImages: function (subjectId, topicId) {
+       
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.topicImages) return;
       var list = subject.topicImages[topicId] || [];
