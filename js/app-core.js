@@ -609,7 +609,7 @@
             '<input type="checkbox" name="exam-topic" value="' + subId + '" data-qids="' + JSON.stringify(qids).replace(/"/g, '&quot;') + '" data-sub-topic-id="' + subId + '" id="exam-topic-' + subId + '" class="w-4 h-4 accent-green-600" onchange="app.toggleSubTopicQuantity(this)">' +
             '<label for="exam-topic-' + subId + '" class="flex-grow text-sm font-semibold text-gray-700 cursor-pointer min-w-0">' + app.esc(name) + '</label>' +
             '<div class="flex items-center gap-1.5 shrink-0">' +
-            '<input type="number" class="topic-quantity w-16 px-2 py-1.5 rounded-lg border border-gray-300 text-sm text-center disabled:opacity-50" data-sub-topic-id="' + subId + '" value="' + qids.length + '" min="0" max="' + qids.length + '" disabled onchange="app.clampSubTopicQuantity(this)" oninput="app.clampSubTopicQuantity(this)">' +
+            '<input type="number" class="topic-quantity w-16 px-2 py-1.5 rounded-lg border border-gray-300 text-sm text-center disabled:opacity-50" data-sub-topic-id="' + subId + '" value="' + qids.length + '" min="0" max="' + qids.length + '" disabled onchange="app.clampSubTopicQuantity(this)" oninput="app.clampSubTopicQuantity(this)" onblur="app.clampSubTopicQuantity(this)">' +     
             '<span class="text-xs text-gray-400">/ ' + qids.length + '</span></div></div>';
         }).join('') + '</div>';
     },
@@ -621,20 +621,30 @@
       if (checkbox.checked && Number(qty.value) === 0) qty.value = qty.max;
     },
 
-    clampSubTopicQuantity: function (input) {
+   clampSubTopicQuantity: function (input) {
       var max = Number(input.max) || 0;
       var val = Number(input.value);
+      
+      // 1. If the user cleared the field to type a new number, let them!
+      // Do not disable the input or uncheck the box immediately.
+      if (input.value === '') {
+        return; 
+      }
+      
+      // 2. Clamp the value between 0 and max
       if (isNaN(val)) val = 0;
       if (val < 0) val = 0;
       if (val > max) val = max;
       input.value = val;
+      
+      // 3. Sync the checkbox state in the background
       var checkbox = document.querySelector('input[name="exam-topic"][data-sub-topic-id="' + input.getAttribute('data-sub-topic-id') + '"]');
       if (checkbox) {
-        checkbox.checked = val > 0;
-        input.disabled = !checkbox.checked;
+        checkbox.checked = (val > 0);
+        // REMOVED: input.disabled = !checkbox.checked; 
+        // This was causing the input to lock you out while typing!
       }
     },
-
     shuffle: function (arr) {
       for (var i = arr.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
