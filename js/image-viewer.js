@@ -123,6 +123,7 @@
       overlay.addEventListener('click', function () { overlay.remove(); });
       document.body.appendChild(overlay);
     },
+    
     applyScale: function () {
       document.querySelectorAll('#image-gallery .image-item img').forEach(function (img) {
         img.style.transform = 'scale(' + imageViewer.scale + ')';
