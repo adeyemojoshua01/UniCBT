@@ -16,8 +16,3 @@ window.CBT_SUBJECT_IMAGES['Linear Algebra'] = {
     { data: 'question-banks/linear-algebra/linear-map.svg', filename: 'linear-map.svg' }
   ]
 };
-
-window.CBT_SUBJECT_REFERENCE_IMAGES = window.CBT_SUBJECT_REFERENCE_IMAGES || {};
-window.CBT_SUBJECT_REFERENCE_IMAGES['Linear Algebra'] = [
-  { data: 'question-banks/linear-algebra/linear-algebra-reference.svg', filename: 'linear-algebra-reference.svg' }
-];
