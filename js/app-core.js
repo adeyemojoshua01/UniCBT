@@ -229,7 +229,7 @@
         avg = Math.round(this.data.results.reduce(function (acc, r) { return acc + (Number(r.percentage) || 0); }, 0) / doneExams);
       }
 
-      var html = '' +
+            var html = '' +
         '<section class="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl mb-6">' +
         '<div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-purple-100 blur-2xl"></div>' +
         '<div class="absolute -bottom-24 -left-20 w-64 h-64 rounded-full bg-green-100 blur-2xl"></div>' +
@@ -248,17 +248,12 @@
         '<div class="rounded-xl bg-gray-50 border border-gray-200 p-3"><div class="text-2xl font-extrabold text-gray-800">' + (doneExams ? avg + '%' : '—') + '</div><div class="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Avg. score</div></div>' +
         '</div></div></section>' +
 
-        (materialCount > 0 ?
-          '<section class="mb-6">' +
-          '<div class="flex items-center justify-between gap-3 mb-3">' +
-          '<div><h3 class="text-lg font-bold text-gray-800"><i class="fas fa-book text-purple-600 mr-2"></i>Study Materials</h3>' +
-          '<p class="text-sm text-gray-500">Notes and worked-image libraries per subject.</p></div>' +
-          '<span class="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold">' + materialCount + ' libraries</span></div>' +
-          '<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">' + materialCards + '</div>' +
-          '</section>' : '') +
+        // REMOVED THE STUDY MATERIALS SECTION HERE
 
-                '<section class="grid md:grid-cols-3 gap-4">' +
+        '<section class="grid md:grid-cols-3 gap-4">' +
         '<div class="md:col-span-2 flex flex-col gap-4">' +
+        
+        // Candidate Button
         '<button onclick="app.showCandidateOptions()" class="text-left rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:border-green-500 transition-colors group">' +
         '<div class="flex items-center gap-4">' +
         '<div class="w-14 h-14 rounded-2xl bg-green-700 text-white flex items-center justify-center shrink-0"><i class="fas fa-user-graduate text-2xl"></i></div>' +
@@ -271,8 +266,8 @@
         '<span class="px-2.5 py-1 rounded-lg bg-green-50 text-green-700 text-[11px] font-bold"><i class="fas fa-lightbulb mr-1"></i>Study mode</span>' +
         '<span class="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 text-[11px] font-bold"><i class="fas fa-robot mr-1"></i>AI theory grading</span>' +
         '</div></button>' +
-        
-        // --- NEW NOTES BUTTON CARD HERE ---
+
+        // Notes Library Button
         '<button onclick="app.showAllNotes()" class="text-left rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:border-blue-500 transition-colors group">' +
         '<div class="flex items-center gap-4">' +
         '<div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0"><i class="fas fa-book-open text-2xl"></i></div>' +
@@ -280,8 +275,10 @@
         '<p class="text-sm text-gray-500 mt-0.5">Access all compiled study notes and materials across every subject.</p></div>' +
         '<i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>' +
         '</div></button>' +
+        
         '</div>' +
         
+        // Recent Results
         '<div class="rounded-2xl bg-white border border-gray-200 p-6 shadow-lg">' +
         '<h3 class="font-bold text-gray-800"><i class="fas fa-clock-rotate-left text-green-600 mr-2"></i>Recent Results</h3>' +
         (this.data.results.length ? this.data.results.slice(-3).reverse().map(function (r) {
