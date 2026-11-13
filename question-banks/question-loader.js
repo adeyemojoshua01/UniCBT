@@ -294,15 +294,7 @@
     try { savedImages = JSON.parse(localStorage.getItem('cbt_images') || '{}') || {}; } catch (e) { savedImages = {}; }
     Object.keys(savedImages).forEach(function (k) { window.app.data.images[k] = savedImages[k]; });
 
-    /* seed reference-image boards from the external notes.js files */
-    var refBoards = window.CBT_SUBJECT_REFERENCE_IMAGES || {};
-    Object.values(parsed).forEach(function (s) {
-      if (!window.app.data.images[s.id] || !window.app.data.images[s.id].length) {
-        if (refBoards[s.name] && refBoards[s.name].length) {
-          window.app.data.images[s.id] = refBoards[s.name].slice();
-        }
-      }
-    });
+    
 
     if (typeof window.app.saveImages === 'function') window.app.saveImages();
     window.app.data.refreshLocked = false;
