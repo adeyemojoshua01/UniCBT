@@ -362,26 +362,27 @@
       this.triggerMathJax();
     },
 
-    viewTopicImages: function (subjectId, topicId) {
+    
+   viewTopicImages: function (subjectId, topicId) {
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.topicImages) return;
       var list = subject.topicImages[topicId] || [];
       var topic = (subject.topics || []).find(function (t) { return t.id === topicId; });
+      
       var titleEl = document.getElementById('topic-image-modal-title');
       if (titleEl) titleEl.textContent = (topic ? topic.name : 'Topic') + ' · Images';
+      
       var gallery = document.getElementById('topic-image-gallery');
       if (gallery) {
         gallery.innerHTML = list.length ? list.map(function (img, i) {
-          return '<div class="image-item" data-i="' + i + '"><img src="' + img.data + '" alt="' + app.esc(img.filename || 'image') + '">' +
+          var imgData = img.data || '';
+          // We use inline onclick here to guarantee the click works
+          return '<div class="image-item cursor-pointer" onclick="window.imageViewer.viewFullSize(\'' + imgData + '\')">' +
+            '<img src="' + imgData + '" alt="' + app.esc(img.filename || 'image') + '">' +
             '<div class="filename">' + app.esc(img.filename || ('image-' + (i + 1))) + '</div></div>';
         }).join('') : '<p class="text-sm text-gray-500 col-span-2 md:col-span-3 text-center py-8">No images for this topic.</p>';
-        gallery.querySelectorAll('.image-item').forEach(function (el) {
-          el.addEventListener('click', function () {
-            var i = parseInt(el.getAttribute('data-i'), 10);
-            imageViewer.viewFullSize(list[i] ? list[i].data : null);
-          });
-        });
       }
+      
       var modal = document.getElementById('topic-image-modal');
       if (modal) modal.classList.remove('hidden');
     },
