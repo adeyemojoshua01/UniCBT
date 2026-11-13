@@ -35,6 +35,8 @@ window.MathJax = {
   #sidebar-overlay { transition: opacity 0.3s; }
   #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   #sidebar.open { transform: translateX(0); }
+  .svg-item-btn { transition: all 0.2s; }
+  .svg-item-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.1); }
 </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
@@ -44,7 +46,7 @@ window.MathJax = {
       <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95"><i class="fas fa-bars"></i></button>
       <div>
         <h1 class="font-extrabold text-sm leading-tight">Studio</h1>
-        <p id="current-subject-label" class="text-[11px] text-[#8598AC] leading-tight truncate max-w-[150px]">Select a topic...</p>
+        <p id="current-subject-label" class="text-[11px] text-[#8598AC] leading-tight truncate max-w-[150px]">Loading...</p>
       </div>
     </div>
     <button onclick="openModal('github-modal')" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95"><i class="fab fa-github text-lg"></i></button>
@@ -58,43 +60,67 @@ window.MathJax = {
     </div>
 
     <div class="flex-grow overflow-y-auto p-4 pb-24">
+      
+      <!-- TAB 1: NOTES -->
       <div id="pane-notes" class="tab-pane active h-full flex flex-col">
+        <div class="mb-3">
+          <label class="text-xs font-bold text-[#8598AC] uppercase">Topic Name (Editable)</label>
+          <input type="text" id="topic-name-input" class="input-dark mt-1 font-bold" oninput="updateTopicName(this.value)">
+        </div>
         <div class="mb-2 flex items-center justify-between">
-          <label class="text-xs font-bold text-[#8598AC] uppercase">HTML & LaTeX</label>
+          <label class="text-xs font-bold text-[#8598AC] uppercase">Content</label>
           <div class="flex gap-1">
             <button onclick="insertText('note-editor', '<h2>')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">H2</button>
             <button onclick="insertText('note-editor', '<ul>\n<li></li>\n</ul>')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">List</button>
             <button onclick="insertText('note-editor', '\\\\( x^2 \\\\)')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">Math</button>
           </div>
         </div>
-        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[300px]" placeholder="Type notes... HTML and MathJax supported."></textarea>
+        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[300px]" placeholder="Type notes... HTML and MathJax supported." oninput="saveDraft()"></textarea>
       </div>
 
+      <!-- TAB 2: SVG STUDIO -->
       <div id="pane-svg" class="tab-pane h-full flex flex-col space-y-4">
-        <div class="bg-[#101830] border border-[#1e2740] rounded-xl p-3">
-          <h3 class="text-sm font-bold text-[#E7EEF6] mb-2"><i class="fas fa-magic text-[#f59e0b] mr-1"></i> Template</h3>
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="text" id="svg-title" class="input-dark" placeholder="Title">
-            <input type="text" id="svg-filename" class="input-dark" placeholder="Filename (e.g. gospel.svg)">
+        <!-- SVG List -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-[#8598AC] uppercase">Attached SVGs</label>
+            <button onclick="createNewSVG()" class="px-2 py-1 bg-indigo-600 text-white rounded text-[10px] font-bold"><i class="fas fa-plus"></i> New SVG</button>
           </div>
-          <div class="flex gap-2">
-            <select id="svg-type" class="input-dark flex-grow">
-              <option value="pvd">PV Diagram</option>
-              <option value="tree">Tree</option>
-              <option value="matrix">Matrix</option>
-              <option value="timeline">Timeline</option>
-            </select>
-            <button onclick="generateSVG()" class="bg-[#4f46e5] text-white px-4 py-2 rounded-lg text-xs font-bold">Generate</button>
-          </div>
+          <div id="svg-list-container" class="flex gap-2 overflow-x-auto pb-2"></div>
         </div>
-        <div class="flex-grow flex flex-col">
-          <label class="text-xs font-bold text-[#8598AC] uppercase mb-2">Raw SVG Code</label>
-          <textarea id="svg-editor" class="input-dark code-editor flex-grow min-h-[200px]" placeholder="<svg>...</svg>"></textarea>
+
+        <!-- SVG Editor Area -->
+        <div id="svg-editor-area" class="hidden flex-col flex-grow space-y-3">
+          <div class="bg-[#101830] border border-[#1e2740] rounded-xl p-3">
+            <h3 class="text-sm font-bold text-[#E7EEF6] mb-2"><i class="fas fa-magic text-[#f59e0b] mr-1"></i> Template Generator</h3>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <input type="text" id="svg-title" class="input-dark" placeholder="Title">
+              <input type="text" id="svg-filename" class="input-dark" placeholder="Filename (e.g. pv.svg)" oninput="updateActiveSVGFilename()">
+            </div>
+            <div class="flex gap-2">
+              <select id="svg-type" class="input-dark flex-grow">
+                <option value="pvd">PV Diagram</option>
+                <option value="tree">Tree</option>
+                <option value="matrix">Matrix</option>
+                <option value="timeline">Timeline</option>
+              </select>
+              <button onclick="generateSVG()" class="bg-[#4f46e5] text-white px-4 py-2 rounded-lg text-xs font-bold">Generate</button>
+            </div>
+          </div>
+          <div class="flex-grow flex flex-col">
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-bold text-[#8598AC] uppercase">Raw SVG Code</label>
+              <button onclick="deleteActiveSVG()" class="text-rose-500 text-xs font-bold hover:underline">Delete this SVG</button>
+            </div>
+            <textarea id="svg-editor" class="input-dark code-editor flex-grow min-h-[150px]" placeholder="<svg>...</svg>" oninput="saveDraft()"></textarea>
+          </div>
         </div>
       </div>
 
+      <!-- TAB 3: PREVIEW -->
       <div id="pane-preview" class="tab-pane h-full">
         <div class="bg-[#0B1020] border border-[#1e2740] rounded-xl p-5 shadow-lg">
+          <h2 class="font-bold text-lg mb-4 text-white" id="preview-topic-title">Topic</h2>
           <div id="preview-notes-content" class="preview-content"></div>
           <div id="preview-svg-container" class="mt-6 border-t border-[#1e2740] pt-4">
             <h4 class="text-xs font-bold text-[#8598AC] uppercase mb-3">Attached Images</h4>
@@ -105,24 +131,31 @@ window.MathJax = {
     </div>
   </main>
 
+  <!-- STICKY BOTTOM BAR -->
   <div class="fixed bottom-0 left-0 w-full bg-[#0B1020] border-t border-[#1e2740] p-3 flex gap-3 z-20">
     <button onclick="loadFromGitHub()" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
       <i class="fas fa-download"></i> Load
     </button>
     <button onclick="publishToGitHub()" class="flex-[2] bg-amber-500 text-black py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2">
-      <i class="fab fa-github"></i> Publish
+      <i class="fab fa-github"></i> Publish Subject
     </button>
   </div>
 
+  <!-- SIDEBAR -->
   <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none" onclick="toggleSidebar()"></div>
   <aside id="sidebar" class="fixed top-0 left-0 w-[280px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 transform -translate-x-full flex flex-col">
     <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
       <h2 class="font-extrabold text-sm">Library</h2>
       <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-[#1e2740] flex items-center justify-center"><i class="fas fa-times"></i></button>
     </div>
+    <div class="p-3 border-b border-[#1e2740] flex gap-2">
+      <button onclick="addNewSubject()" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold"><i class="fas fa-plus"></i> Subject</button>
+      <button onclick="addNewTopic()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold"><i class="fas fa-plus"></i> Topic</button>
+    </div>
     <div class="flex-grow overflow-y-auto p-3 space-y-2" id="sidebar-tree"></div>
   </aside>
 
+  <!-- MODALS & TOASTS -->
   <div id="github-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
     <div class="bg-[#0B1020] border border-[#1e2740] rounded-2xl w-full max-w-sm">
       <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0c1222]">
@@ -149,51 +182,108 @@ window.MathJax = {
   <div id="toast-layer" class="fixed top-16 right-4 z-[999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
   <script>
-    const state = {
-      activeSubject: 'Physics',
-      activeTopic: 'Thermodynamics',
-      subjects: {
-        'Physics': ['Thermodynamics', 'Mechanics', 'Waves'],
-        'Probability': ['Combinatorics', 'Conditional Probability'],
-        'Bible Studies': ['Gospels', 'Wisdom Literature'],
-        'Linear Algebra': ['Matrices', 'Vector Spaces']
-      },
-      drafts: {}, // { "Subject::Topic": { notes: "", svg: "", svgFilename: "" } }
+    /* =========================================================
+       DYNAMIC STATE
+       ========================================================= */
+    let state = {
+      activeSubject: '',
+      activeTopic: '',
+      activeSvgIndex: -1,
+      data: {}, // Format: { "Subject": { "Topic": { notes: "", svgs: [{filename, code}] } } }
       github: { owner: '', repo: '', token: '' }
     };
 
-    const savedState = localStorage.getItem('cbt_studio_state');
-    if (savedState) Object.assign(state, JSON.parse(savedState));
+    // Initialize or Load from LocalStorage
+    const saved = localStorage.getItem('cbt_studio_v2');
+    if (saved) {
+      state = JSON.parse(saved);
+    } else {
+      // Start with a blank slate
+      state.data = { "Untitled Subject": { "Untitled Topic": { notes: "", svgs: [] } } };
+      state.activeSubject = "Untitled Subject";
+      state.activeTopic = "Untitled Topic";
+    }
 
-    function saveState() { localStorage.setItem('cbt_studio_state', JSON.stringify(state)); updatePreview(); }
+    function saveState() { localStorage.setItem('cbt_studio_v2', JSON.stringify(state)); }
 
-    // --- NAVIGATION ---
+    /* =========================================================
+       NAVIGATION & SIDEBAR
+       ========================================================= */
     function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('sidebar-overlay');
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('opacity-0'); overlay.classList.toggle('pointer-events-none');
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('opacity-0');
+      document.getElementById('sidebar-overlay').classList.toggle('pointer-events-none');
     }
 
     function renderSidebar() {
       let html = '';
-      for (const [subj, topics] of Object.entries(state.subjects)) {
-        html += `<div class="mb-3"><h4 class="text-xs font-extrabold text-indigo-400 mb-1"><i class="fas fa-book mr-1"></i>${subj}</h4><div class="space-y-1 ml-2 border-l border-[#1e2740] pl-2">`;
-        topics.forEach(topic => {
+      for (const [subj, topics] of Object.entries(state.data)) {
+        html += `<div class="mb-3"><h4 class="text-xs font-extrabold text-indigo-400 mb-1 flex justify-between items-center">
+          <span><i class="fas fa-book mr-1"></i>${subj}</span>
+          <button onclick="deleteSubject('${subj}')" class="text-gray-500 hover:text-rose-500 px-1"><i class="fas fa-trash text-[10px]"></i></button>
+        </h4><div class="space-y-1 ml-2 border-l border-[#1e2740] pl-2">`;
+        
+        for (const topic of Object.keys(topics)) {
           const isActive = state.activeSubject === subj && state.activeTopic === topic;
-          html += `<button onclick="selectTopic('${subj}', '${topic}')" class="w-full text-left px-3 py-2 rounded-lg text-sm ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830]'}">${topic}</button>`;
-        });
+          html += `<div class="flex items-center justify-between group">
+            <button onclick="selectTopic('${subj}', '${topic}')" class="flex-grow text-left px-2 py-1.5 rounded-lg text-sm ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830]'}">${topic}</button>
+            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-600 hover:text-rose-500 px-2 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fas fa-times text-[10px]"></i></button>
+          </div>`;
+        }
         html += `</div></div>`;
       }
       document.getElementById('sidebar-tree').innerHTML = html;
     }
 
     function selectTopic(subj, topic) {
-      state.activeSubject = subj; state.activeTopic = topic;
-      document.getElementById('current-subject-label').textContent = `${subj} > ${topic}`;
-      loadDraftIntoEditor(); toggleSidebar(); renderSidebar();
+      state.activeSubject = subj; 
+      state.activeTopic = topic;
+      state.activeSvgIndex = -1;
+      loadTopicIntoEditor(); 
+      toggleSidebar(); 
+      renderSidebar();
     }
 
-    // --- EDITOR ---
+    function addNewSubject() {
+      const name = prompt("Enter new Subject name:");
+      if (!name) return;
+      if (state.data[name]) return toast('Subject already exists', 'error');
+      state.data[name] = { "General": { notes: "", svgs: [] } };
+      selectTopic(name, "General");
+      saveState();
+    }
+
+    function addNewTopic() {
+      if (!state.activeSubject) return toast('Select a subject first', 'error');
+      const name = prompt("Enter new Topic name for " + state.activeSubject + ":");
+      if (!name) return;
+      if (state.data[state.activeSubject][name]) return toast('Topic already exists', 'error');
+      state.data[state.activeSubject][name] = { notes: "", svgs: [] };
+      selectTopic(state.activeSubject, name);
+      saveState();
+    }
+
+    function deleteSubject(subj) {
+      if (!confirm(`Delete subject "${subj}" and ALL its topics?`)) return;
+      delete state.data[subj];
+      const firstSubj = Object.keys(state.data)[0];
+      if (firstSubj) selectTopic(firstSubj, Object.keys(state.data[firstSubj])[0]);
+      else location.reload();
+      saveState();
+    }
+
+    function deleteTopic(subj, topic) {
+      if (!confirm(`Delete topic "${topic}"?`)) return;
+      delete state.data[subj][topic];
+      const firstTopic = Object.keys(state.data[subj])[0];
+      if (firstTopic) selectTopic(subj, firstTopic);
+      else selectTopic(subj, ""); // Might be empty
+      saveState();
+    }
+
+    /* =========================================================
+       EDITOR LOGIC
+       ========================================================= */
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
@@ -208,63 +298,163 @@ window.MathJax = {
       el.focus(); el.selectionStart = el.selectionEnd = start + text.length; saveDraft();
     }
 
-    function getDraftKey() { return `${state.activeSubject}::${state.activeTopic}`; }
-
-    function saveDraft() {
-      const key = getDraftKey();
-      if (!state.drafts[key]) state.drafts[key] = { notes: '', svg: '', svgFilename: '' };
-      state.drafts[key].notes = document.getElementById('note-editor').value;
-      state.drafts[key].svg = document.getElementById('svg-editor').value.trim();
-      state.drafts[key].svgFilename = document.getElementById('svg-filename').value.trim() || 'image.svg';
-      saveState();
-    }
-
-    function loadDraftIntoEditor() {
-      const draft = state.drafts[getDraftKey()] || { notes: '', svg: '', svgFilename: '' };
+    function loadTopicIntoEditor() {
+      if (!state.activeSubject || !state.activeTopic) {
+        document.getElementById('current-subject-label').textContent = "No topic selected";
+        return;
+      }
+      
+      document.getElementById('current-subject-label').textContent = `${state.activeSubject} > ${state.activeTopic}`;
+      document.getElementById('topic-name-input').value = state.activeTopic;
+      
+      const draft = state.data[state.activeSubject][state.activeTopic];
       document.getElementById('note-editor').value = draft.notes || '';
-      document.getElementById('svg-editor').value = draft.svg || '';
-      document.getElementById('svg-filename').value = draft.svgFilename || '';
+      
+      renderSVGList();
+      closeSVGEditor();
       updatePreview();
     }
 
-    document.getElementById('note-editor').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(saveDraft, 500); });
-    document.getElementById('svg-editor').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(saveDraft, 500); });
-    document.getElementById('svg-filename').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(saveDraft, 500); });
-
-    // --- SVG GENERATOR ---
-    function generateSVG() {
-      const title = document.getElementById('svg-title').value || 'Title';
-      const filename = document.getElementById('svg-filename').value || (title.toLowerCase().replace(/\s+/g, '-') + '.svg');
-      document.getElementById('svg-filename').value = filename;
+    function updateTopicName(newName) {
+      if (!newName.trim() || newName === state.activeTopic) return;
+      const oldName = state.activeTopic;
+      const draft = state.data[state.activeSubject][oldName];
       
+      // Rename the key in the object
+      state.data[state.activeSubject][newName] = draft;
+      delete state.data[state.activeSubject][oldName];
+      
+      state.activeTopic = newName;
+      document.getElementById('current-subject-label').textContent = `${state.activeSubject} > ${state.activeTopic}`;
+      renderSidebar();
+      saveState();
+    }
+
+    function saveDraft() {
+      if (!state.activeSubject || !state.activeTopic) return;
+      
+      state.data[state.activeSubject][state.activeTopic].notes = document.getElementById('note-editor').value;
+      
+      if (state.activeSvgIndex > -1) {
+        const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
+        svgs[state.activeSvgIndex].code = document.getElementById('svg-editor').value.trim();
+      }
+      
+      saveState();
+      updatePreview();
+    }
+
+    /* =========================================================
+       SVG MANAGEMENT
+       ========================================================= */
+    function renderSVGList() {
+      if (!state.activeSubject || !state.activeTopic) return;
+      const container = document.getElementById('svg-list-container');
+      const svgs = state.data[state.activeSubject][state.activeTopic].svgs || [];
+      
+      if (svgs.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-500 italic py-2">No SVGs yet. Click "New SVG" to add one.</p>';
+        return;
+      }
+
+      container.innerHTML = svgs.map((svg, i) => {
+        const isActive = state.activeSvgIndex === i;
+        return `<button onclick="selectSVG(${i})" class="svg-item-btn flex-none w-20 h-16 rounded-lg border border-[#1e2740] bg-[#101830] p-1 overflow-hidden flex flex-col items-center justify-center ${isActive ? 'active' : ''}">
+          <img src="data:image/svg+xml;utf8,${encodeURIComponent(svg.code)}" class="w-full h-8 object-contain mb-1">
+          <span class="text-[8px] truncate w-full text-center text-gray-400">${svg.filename || 'image.svg'}</span>
+        </button>`;
+      }).join('');
+    }
+
+    function createNewSVG() {
+      if (!state.activeSubject || !state.activeTopic) return toast('Select a topic first', 'error');
+      
+      const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
+      const newIndex = svgs.length;
+      svgs.push({ filename: `image-${newIndex + 1}.svg`, code: '' });
+      
+      selectSVG(newIndex);
+    }
+
+    function selectSVG(index) {
+      state.activeSvgIndex = index;
+      const svg = state.data[state.activeSubject][state.activeTopic].svgs[index];
+      
+      document.getElementById('svg-editor-area').classList.remove('hidden');
+      document.getElementById('svg-editor-area').classList.add('flex');
+      document.getElementById('svg-editor').value = svg.code || '';
+      document.getElementById('svg-filename').value = svg.filename || '';
+      
+      renderSVGList();
+    }
+
+    function closeSVGEditor() {
+      state.activeSvgIndex = -1;
+      document.getElementById('svg-editor-area').classList.add('hidden');
+      document.getElementById('svg-editor-area').classList.remove('flex');
+      renderSVGList();
+    }
+
+    function deleteActiveSVG() {
+      if (state.activeSvgIndex === -1) return;
+      if (!confirm('Delete this SVG?')) return;
+      
+      const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
+      svgs.splice(state.activeSvgIndex, 1);
+      closeSVGEditor();
+      saveState();
+    }
+
+    function updateActiveSVGFilename() {
+      if (state.activeSvgIndex === -1) return;
+      const val = document.getElementById('svg-filename').value;
+      state.data[state.activeSubject][state.activeTopic].svgs[state.activeSvgIndex].filename = val;
+      saveState();
+      renderSVGList();
+    }
+
+    function generateSVG() {
+      if (state.activeSvgIndex === -1) return toast('Click "New SVG" first', 'error');
+      
+      const title = document.getElementById('svg-title').value || 'Title';
       const type = document.getElementById('svg-type').value;
+      
       let shapes = '';
       if (type === 'pvd') shapes = '<path d="M90 300 C 180 140, 260 120, 330 90" stroke="#2DD4BF" stroke-width="4" fill="none"/><path d="M90 300 C 170 240, 250 210, 340 200" stroke="#7c3aed" stroke-width="3" stroke-dasharray="7 6" fill="none"/>';
       else if (type === 'tree') shapes = '<g stroke="#64748b" stroke-width="2"><line x1="200" y1="90" x2="120" y2="170"/><line x1="200" y1="90" x2="280" y2="170"/><line x1="120" y1="170" x2="80" y2="250"/><line x1="120" y1="170" x2="160" y2="250"/><line x1="280" y1="170" x2="240" y2="250"/><line x1="280" y1="170" x2="320" y2="250"/></g><circle cx="200" cy="90" r="16" fill="#2DD4BF"/><circle cx="120" cy="170" r="12" fill="#0d9488"/><circle cx="280" cy="170" r="12" fill="#0d9488"/>';
       else if (type === 'matrix') shapes = '<g stroke="#334155" stroke-width="1"><line x1="80" y1="120" x2="340" y2="120"/><line x1="80" y1="180" x2="340" y2="180"/><line x1="80" y1="240" x2="340" y2="240"/><line x1="120" y1="80" x2="120" y2="290"/><line x1="180" y1="80" x2="180" y2="290"/><line x1="240" y1="80" x2="240" y2="290"/><line x1="300" y1="80" x2="300" y2="290"/></g><polygon points="180,120 300,120 240,240 120,240" fill="#2DD4BF" opacity=".35" stroke="#2DD4BF" stroke-width="3"/>';
       else shapes = '<line x1="70" y1="210" x2="340" y2="210" stroke="#475569" stroke-width="3"/><circle cx="110" cy="210" r="8" fill="#2DD4BF"/><circle cx="190" cy="210" r="8" fill="#14b8a6"/><circle cx="270" cy="210" r="8" fill="#a78bfa"/><circle cx="330" cy="210" r="8" fill="#f59e0b"/>';
 
-      document.getElementById('svg-editor').value = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">\n  <rect width="420" height="320" rx="16" fill="#0B1020"/>\n  <rect x="1" y="1" width="418" height="318" rx="16" fill="none" stroke="#22304F"/>\n  <text x="28" y="44" fill="#EAF2F6" font-family="sans-serif" font-size="18" font-weight="700">${title}</text>\n  <text x="28" y="64" fill="#8598AC" font-family="sans-serif" font-size="12">Subtitle</text>\n  ${shapes}\n</svg>`;
+      document.getElementById('svg-editor').value = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">\n  <rect width="420" height="320" rx="16" fill="#0B1020"/>\n  <rect x="1" y="1" width="418" height="318" rx="16" fill="none" stroke="#22304F"/>\n  <text x="28" y="44" fill="#EAF2F6" font-family="sans-serif" font-size="18" font-weight="700">${title}</text>\n  ${shapes}\n</svg>`;
       
-      saveDraft(); switchTab('preview'); toast('SVG Generated!', 'success');
+      saveDraft(); 
+      switchTab('preview'); 
+      toast('SVG Generated!', 'success');
     }
 
-    // --- PREVIEW ---
+    /* =========================================================
+       PREVIEW & GITHUB
+       ========================================================= */
     function updatePreview() {
-      document.getElementById('preview-notes-content').innerHTML = document.getElementById('note-editor').value || '<p class="text-gray-500 italic">No notes yet...</p>';
+      if (!state.activeSubject || !state.activeTopic) return;
+      const draft = state.data[state.activeSubject][state.activeTopic];
       
-      const svgCode = document.getElementById('svg-editor').value.trim();
+      document.getElementById('preview-topic-title').textContent = state.activeTopic;
+      document.getElementById('preview-notes-content').innerHTML = draft.notes || '<p class="text-gray-500 italic">No notes yet...</p>';
+      
       const gallery = document.getElementById('preview-svg-gallery');
-      if (svgCode) {
-        const blob = new Blob([svgCode], {type: 'image/svg+xml'}); const url = URL.createObjectURL(blob);
-        gallery.innerHTML = `<div class="bg-[#101830] border border-[#1e2740] rounded-lg p-2"><img src="${url}" class="w-full h-auto rounded"></div>`;
+      if (draft.svgs && draft.svgs.length > 0) {
+        gallery.innerHTML = draft.svgs.map(svg => {
+          const blob = new Blob([svg.code], {type: 'image/svg+xml'}); const url = URL.createObjectURL(blob);
+          return `<div class="bg-[#101830] border border-[#1e2740] rounded-lg p-2"><img src="${url}" class="w-full h-auto rounded"></div>`;
+        }).join('');
       } else {
-        gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images.</p>';
+        gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images attached.</p>';
       }
+      
       if (window.MathJax) MathJax.typesetPromise([document.getElementById('pane-preview')]).catch(()=>{});
     }
 
-    // --- GITHUB FETCH & PUBLISH ---
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -275,16 +465,17 @@ window.MathJax = {
       saveState(); closeModal('github-modal'); toast('Settings saved', 'success');
     }
 
-    function getSubjectSlug() { return state.activeSubject.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+    function getSlug(str) { return str.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
 
     async function loadFromGitHub() {
       if (!state.github.owner || !state.github.repo) return toast('Set GitHub settings first', 'error');
-      const path = `question-banks/${getSubjectSlug()}/notes.js`;
+      const subjSlug = getSlug(state.activeSubject);
+      const path = `question-banks/${subjSlug}/notes.js`;
       toast('Fetching ' + path + '...', 'info');
       
       try {
         const url = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/${path}`;
-        const res = await fetch(url + '?t=' + Date.now()); // bust cache
+        const res = await fetch(url + '?t=' + Date.now());
         if (!res.ok) throw new Error('File not found on GitHub');
         const text = await res.text();
 
@@ -294,22 +485,27 @@ window.MathJax = {
         const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
         const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
 
+        // Rebuild state from fetched data
+        state.data[state.activeSubject] = {}; // Clear current
+
+        // Merge notes
         for (const [topic, noteContent] of Object.entries(notesObj)) {
-          const key = `${state.activeSubject}::${topic}`;
-          if (!state.drafts[key]) state.drafts[key] = { notes: '', svg: '', svgFilename: '' };
-          state.drafts[key].notes = noteContent;
+          if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
+          state.data[state.activeSubject][topic].notes = noteContent;
         }
 
-        // Extract SVG filename from the path
+        // Merge images (filenames)
         for (const [topic, imgArray] of Object.entries(imagesObj)) {
-           const key = `${state.activeSubject}::${topic}`;
-           if (imgArray.length && imgArray[0].filename) {
-              if (!state.drafts[key]) state.drafts[key] = { notes: '', svg: '', svgFilename: '' };
-              state.drafts[key].svgFilename = imgArray[0].filename;
-           }
+           if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
+           state.data[state.activeSubject][topic].svgs = imgArray.map(img => ({
+             filename: img.filename,
+             code: '' // We will fetch raw SVG code below if needed, but for now leave empty since it's an external file
+           }));
         }
 
-        saveState(); loadDraftIntoEditor(); toast('Loaded from GitHub!', 'success');
+        selectTopic(state.activeSubject, Object.keys(state.data[state.activeSubject])[0] || 'General');
+        saveState(); 
+        toast('Loaded from GitHub!', 'success');
       } catch (err) {
         toast('Fetch failed: ' + err.message, 'error');
       }
@@ -319,42 +515,40 @@ window.MathJax = {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
       const subj = state.activeSubject;
-      const subjSlug = getSubjectSlug();
+      const subjSlug = getSlug(subj);
       toast('Publishing to GitHub...', 'info');
       
-      // 1. Build the notes.js string
       let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = {\n`;
       let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = {\n`;
 
-      state.subjects[subj].forEach(topic => {
-        const draft = state.drafts[`${subj}::${topic}`];
-        if (draft) {
-          if (draft.notes) notesContent += `  '${topic}': \`${draft.notes.replace(/`/g, '\\`')}\`,\n`;
-          
-          // If they generated an SVG, link it to the new external .svg file
-          if (draft.svg) {
-             const fn = draft.svgFilename || 'image.svg';
-             imagesContent += `  '${topic}': [{ data: 'question-banks/${subjSlug}/${fn}', filename: '${fn}' }],\n`;
+      // 1. Loop through all topics in this subject
+      for (const [topic, draft] of Object.entries(state.data[subj])) {
+        if (draft.notes) notesContent += `  '${topic}': \`${draft.notes.replace(/`/g, '\\`')}\`,\n`;
+        
+        if (draft.svgs && draft.svgs.length > 0) {
+          imagesContent += `  '${topic}': [\n`;
+          for (const svg of draft.svgs) {
+            // Add to notes.js reference
+            imagesContent += `    { data: 'question-banks/${subjSlug}/${svg.filename}', filename: '${svg.filename}' },\n`;
+            
+            // 2. Publish actual SVG file if it has code
+            if (svg.code && svg.code.trim().length > 0) {
+               await fetch('/api/publish-bank', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ filename: `${subjSlug}/${svg.filename}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+               });
+            }
           }
+          imagesContent += `  ],\n`;
         }
-      });
+      }
       
       notesContent += `};\n\n`;
       imagesContent += `};\n`;
       const finalCode = notesContent + imagesContent;
 
+      // 3. Publish the updated notes.js file
       try {
-        // 2. Publish the SVG file (if it exists)
-        const currentDraft = state.drafts[`${subj}::${state.activeTopic}`];
-        if (currentDraft && currentDraft.svg) {
-           const svgFn = currentDraft.svgFilename || 'image.svg';
-           await fetch('/api/publish-bank', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ filename: `${subjSlug}/${svgFn}`, code: currentDraft.svg, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
-           });
-        }
-
-        // 3. Publish the notes.js file
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: `${subjSlug}/notes.js`, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
@@ -363,13 +557,15 @@ window.MathJax = {
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
         
-        toast('Published successfully!', 'success');
+        toast('Subject published successfully!', 'success');
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       }
     }
 
-    // --- INIT ---
+    /* =========================================================
+       INIT
+       ========================================================= */
     function toast(msg, type) {
       const el = document.createElement('div');
       el.className = `text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl mb-2 ${type==='error'?'bg-rose-600':(type==='success'?'bg-emerald-600':'bg-indigo-600')}`;
@@ -382,8 +578,14 @@ window.MathJax = {
       document.getElementById('gh-owner').value = state.github.owner || '';
       document.getElementById('gh-repo').value = state.github.repo || '';
       document.getElementById('gh-token').value = state.github.token || '';
-      renderSidebar(); loadDraftIntoEditor();
-      document.getElementById('current-subject-label').textContent = `${state.activeSubject} > ${state.activeTopic}`;
+      
+      const firstSubj = Object.keys(state.data)[0];
+      if (firstSubj) {
+        state.activeSubject = firstSubj;
+        state.activeTopic = Object.keys(state.data[firstSubj])[0];
+        loadTopicIntoEditor();
+      }
+      renderSidebar();
     };
   </script>
 </body>
