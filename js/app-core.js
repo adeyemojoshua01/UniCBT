@@ -291,9 +291,8 @@
         '</div>' +
         '</section>' +
 
-        '<footer class="mt-8 pb-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">' +
+        '<footer class="mt-8 pb-4 flex items-center justify-center text-xs text-gray-500">' +
         '<span>eduCBT · static app, no build step.</span>' +
-        '<a href="question-builder.html" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-purple-600 font-semibold"><i class="fas fa-pen-ruler"></i> Open Question Builder</a>' +
         '</footer>';
 
       container.innerHTML = html;
