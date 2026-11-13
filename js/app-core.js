@@ -364,6 +364,7 @@
 
     
    viewTopicImages: function (subjectId, topicId) {
+       viewTopicImages: function (subjectId, topicId) {
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.topicImages) return;
       var list = subject.topicImages[topicId] || [];
@@ -375,12 +376,22 @@
       var gallery = document.getElementById('topic-image-gallery');
       if (gallery) {
         gallery.innerHTML = list.length ? list.map(function (img, i) {
-          var imgData = img.data || '';
-          // We use inline onclick here to guarantee the click works
-          return '<div class="image-item cursor-pointer" onclick="window.imageViewer.viewFullSize(\'' + imgData + '\')">' +
-            '<img src="' + imgData + '" alt="' + app.esc(img.filename || 'image') + '">' +
+          return '<div class="image-item cursor-pointer" data-i="' + i + '">' +
+            '<img src="' + (img.data || '') + '" alt="' + app.esc(img.filename || 'image') + '">' +
             '<div class="filename">' + app.esc(img.filename || ('image-' + (i + 1))) + '</div></div>';
         }).join('') : '<p class="text-sm text-gray-500 col-span-2 md:col-span-3 text-center py-8">No images for this topic.</p>';
+        
+        // Attach the click event to the parent container (Event Delegation)
+        gallery.onclick = function(e) {
+          var item = e.target.closest('.image-item');
+          if (!item) return;
+          var i = parseInt(item.getAttribute('data-i'), 10);
+          if (list[i] && list[i].data) {
+            if (window.imageViewer && typeof window.imageViewer.viewFullSize === 'function') {
+              window.imageViewer.viewFullSize(list[i].data);
+            }
+          }
+        };
       }
       
       var modal = document.getElementById('topic-image-modal');
