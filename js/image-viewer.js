@@ -95,7 +95,10 @@
       if (!data) return;
       var overlay = document.createElement('div');
       overlay.className = 'image-item-fullscreen';
-      overlay.innerHTML = '<img class="max-h-[90vh] max-w-[90vw] object-contain rounded-lg" src="' + data + '" alt="Full size image">';
+      // Force absolute highest z-index to prevent modal blur from blocking it
+      overlay.style.zIndex = '9999999'; 
+      overlay.style.pointerEvents = 'auto';
+      overlay.innerHTML = '<img class="max-h-[90vh] max-w-[90vw] object-contain rounded-lg bg-white" src="' + data + '" alt="Full size image">';
       overlay.addEventListener('click', function () { overlay.remove(); });
       document.body.appendChild(overlay);
     },
