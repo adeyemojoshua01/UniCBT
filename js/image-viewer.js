@@ -91,18 +91,38 @@
       this.applyScale();
     },
 
-    viewFullSize: function (data) {
+        viewFullSize: function (data) {
       if (!data) return;
       var overlay = document.createElement('div');
-      overlay.className = 'image-item-fullscreen';
-      // Force absolute highest z-index to prevent modal blur from blocking it
-      overlay.style.zIndex = '9999999'; 
-      overlay.style.pointerEvents = 'auto';
-      overlay.innerHTML = '<img class="max-h-[90vh] max-w-[90vw] object-contain rounded-lg bg-white" src="' + data + '" alt="Full size image">';
+      
+      // Force inline styles to guarantee the absolute highest layer
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.backgroundColor = 'rgba(0,0,0,0.92)';
+      overlay.style.zIndex = '2147483647'; // Max possible z-index
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.padding = '20px';
+      overlay.style.cursor = 'zoom-out';
+      
+      var img = document.createElement('img');
+      img.src = data;
+      img.style.maxHeight = '90vh';
+      img.style.maxWidth = '90vw';
+      img.style.objectFit = 'contain';
+      img.style.borderRadius = '8px';
+      img.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+      
+      overlay.appendChild(img);
+      
+      // Click anywhere to close
       overlay.addEventListener('click', function () { overlay.remove(); });
       document.body.appendChild(overlay);
     },
-
     applyScale: function () {
       document.querySelectorAll('#image-gallery .image-item img').forEach(function (img) {
         img.style.transform = 'scale(' + imageViewer.scale + ')';
