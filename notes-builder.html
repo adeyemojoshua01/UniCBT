@@ -7,6 +7,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!-- ADDED: Marked.js for Markdown parsing -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 window.MathJax = {
   tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
@@ -27,11 +29,18 @@ window.MathJax = {
   .tab-pane { display: none; }
   .tab-pane.active { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  
+  /* Markdown & LaTeX Preview Styling */
   .preview-content { font-size: 15px; line-height: 1.6; }
-  .preview-content h2, .preview-content h3 { font-weight: 700; margin: 1em 0 0.5em; color: #fff; }
+  .preview-content h1, .preview-content h2, .preview-content h3 { font-weight: 700; margin: 1em 0 0.5em; color: #fff; }
+  .preview-content h1 { font-size: 1.5em; border-bottom: 1px solid var(--border-dark); padding-bottom: 5px; }
+  .preview-content h2 { font-size: 1.3em; }
   .preview-content p { margin-bottom: 1em; color: var(--text-muted); }
-  .preview-content ul { list-style-type: disc; margin: 1em 0 1em 1.5em; color: var(--text-muted); }
+  .preview-content ul, .preview-content ol { margin: 1em 0 1em 1.5em; color: var(--text-muted); }
+  .preview-content ul { list-style-type: disc; }
+  .preview-content ol { list-style-type: decimal; }
   .preview-content blockquote { border-left: 4px solid var(--accent); padding: 10px; margin: 1em 0; color: #cbd5e1; font-style: italic; background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; }
+  .preview-content strong { color: #fff; font-weight: 700; }
   
   /* Sidebar */
   #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
@@ -72,14 +81,17 @@ window.MathJax = {
           <input type="text" id="topic-name-input" class="input-dark mt-1 font-bold" oninput="updateTopicName(this.value)">
         </div>
         <div class="mb-2 flex items-center justify-between">
-          <label class="text-xs font-bold text-[#8598AC] uppercase">Content</label>
+          <label class="text-xs font-bold text-[#8598AC] uppercase">Markdown & LaTeX</label>
           <div class="flex gap-1">
-            <button onclick="insertText('note-editor', '<h2>')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">H2</button>
-            <button onclick="insertText('note-editor', '<ul>\n<li></li>\n</ul>')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">List</button>
+            <button onclick="insertText('note-editor', '**Bold**')" class="px-2 py-1 bg-[#1e2740] rounded text-xs font-bold">B</button>
+            <button onclick="insertText('note-editor', '*Italic*')" class="px-2 py-1 bg-[#1e2740] rounded text-xs italic">I</button>
+            <button onclick="insertText('note-editor', '## Header\n')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">H2</button>
+            <button onclick="insertText('note-editor', '- List Item\n')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">List</button>
+            <button onclick="insertText('note-editor', '> Quote\n')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">Quote</button>
             <button onclick="insertText('note-editor', '\\\\( x^2 \\\\)')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">Math</button>
           </div>
         </div>
-        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[300px]" placeholder="Type notes... HTML and MathJax supported." oninput="saveDraft()"></textarea>
+        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[300px]" placeholder="Type notes here... Markdown (e.g. # Header, **bold**) and MathJax \\( x^2 \\) are supported." oninput="saveDraft()"></textarea>
       </div>
 
       <!-- TAB 2: SVG STUDIO -->
@@ -362,7 +374,6 @@ window.MathJax = {
       container.innerHTML = svgs.map((svg, i) => {
         const isActive = state.activeSvgIndex === i;
         
-        // Fallback if the code is empty (e.g. just loaded from GitHub filenames)
         let previewUrl = '';
         if (svg.code && svg.code.trim().startsWith('<svg')) {
           const blob = new Blob([svg.code], {type: 'image/svg+xml'});
@@ -380,11 +391,9 @@ window.MathJax = {
 
     function createNewSVG() {
       if (!state.activeSubject || !state.activeTopic) return toast('Select a topic first', 'error');
-      
       const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
       const newIndex = svgs.length;
       svgs.push({ filename: `image-${newIndex + 1}.svg`, code: '' });
-      
       selectSVG(newIndex);
     }
 
@@ -452,19 +461,21 @@ window.MathJax = {
       const draft = state.data[state.activeSubject][state.activeTopic];
       
       document.getElementById('preview-topic-title').textContent = state.activeTopic;
-      document.getElementById('preview-notes-content').innerHTML = draft.notes || '<p class="text-gray-500 italic">No notes yet...</p>';
+      
+      // NEW: Parse Markdown into HTML before injecting
+      const rawMarkdown = draft.notes || '';
+      const htmlContent = window.marked ? marked.parse(rawMarkdown) : rawMarkdown;
+      
+      document.getElementById('preview-notes-content').innerHTML = htmlContent || '<p class="text-gray-500 italic">No notes yet...</p>';
       
       const gallery = document.getElementById('preview-svg-gallery');
       if (draft.svgs && draft.svgs.length > 0) {
         gallery.innerHTML = draft.svgs.map(svg => {
           let imgUrl = '';
-          
-          // If there is code, render it as a Blob
           if (svg.code && svg.code.trim().startsWith('<svg')) {
             const blob = new Blob([svg.code], {type: 'image/svg+xml'});
             imgUrl = URL.createObjectURL(blob);
           } else {
-            // If no code, load from GitHub URL (or local fallback)
             imgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/${svg.filename}`;
           }
 
@@ -476,6 +487,7 @@ window.MathJax = {
         gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images attached.</p>';
       }
       
+      // MathJax runs AFTER Markdown is rendered
       if (window.MathJax) MathJax.typesetPromise([document.getElementById('pane-preview')]).catch(()=>{});
     }
 
@@ -527,7 +539,6 @@ window.MathJax = {
           state.data[state.activeSubject][topic].notes = noteContent;
         }
 
-        // Fetch actual SVG codes from the filenames
         for (const [topic, imgArray] of Object.entries(imagesObj)) {
            if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
            
@@ -540,7 +551,7 @@ window.MathJax = {
                  if (svgRes.ok) svgCode = await svgRes.text();
                } catch (e) { console.warn('Could not fetch SVG file', e); }
              } else if (img.data.startsWith('<svg')) {
-               svgCode = img.data; // Old format where raw svg was inside notes.js
+               svgCode = img.data; 
              }
              return { filename: img.filename, code: svgCode };
            }));
@@ -603,9 +614,6 @@ window.MathJax = {
       }
     }
 
-    /* =========================================================
-       INIT
-       ========================================================= */
     function toast(msg, type) {
       const el = document.createElement('div');
       el.className = `text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl mb-2 ${type==='error'?'bg-rose-600':(type==='success'?'bg-emerald-600':'bg-indigo-600')}`;
