@@ -257,8 +257,9 @@
           '<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">' + materialCards + '</div>' +
           '</section>' : '') +
 
-        '<section class="grid md:grid-cols-3 gap-4">' +
-        '<button onclick="app.showCandidateOptions()" class="md:col-span-2 text-left rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:border-green-500 transition-colors group">' +
+                '<section class="grid md:grid-cols-3 gap-4">' +
+        '<div class="md:col-span-2 flex flex-col gap-4">' +
+        '<button onclick="app.showCandidateOptions()" class="text-left rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:border-green-500 transition-colors group">' +
         '<div class="flex items-center gap-4">' +
         '<div class="w-14 h-14 rounded-2xl bg-green-700 text-white flex items-center justify-center shrink-0"><i class="fas fa-user-graduate text-2xl"></i></div>' +
         '<div class="min-w-0 flex-grow"><h3 class="text-xl font-bold text-gray-800">I\'m a Candidate</h3>' +
@@ -270,6 +271,17 @@
         '<span class="px-2.5 py-1 rounded-lg bg-green-50 text-green-700 text-[11px] font-bold"><i class="fas fa-lightbulb mr-1"></i>Study mode</span>' +
         '<span class="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 text-[11px] font-bold"><i class="fas fa-robot mr-1"></i>AI theory grading</span>' +
         '</div></button>' +
+        
+        // --- NEW NOTES BUTTON CARD HERE ---
+        '<button onclick="app.showAllNotes()" class="text-left rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:border-blue-500 transition-colors group">' +
+        '<div class="flex items-center gap-4">' +
+        '<div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0"><i class="fas fa-book-open text-2xl"></i></div>' +
+        '<div class="min-w-0 flex-grow"><h3 class="text-xl font-bold text-gray-800">Notes Library</h3>' +
+        '<p class="text-sm text-gray-500 mt-0.5">Access all compiled study notes and materials across every subject.</p></div>' +
+        '<i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"></i>' +
+        '</div></button>' +
+        '</div>' +
+        
         '<div class="rounded-2xl bg-white border border-gray-200 p-6 shadow-lg">' +
         '<h3 class="font-bold text-gray-800"><i class="fas fa-clock-rotate-left text-green-600 mr-2"></i>Recent Results</h3>' +
         (this.data.results.length ? this.data.results.slice(-3).reverse().map(function (r) {
