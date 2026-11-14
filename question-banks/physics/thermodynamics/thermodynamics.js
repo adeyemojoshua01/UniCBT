@@ -18,5 +18,5 @@ The second law states that the total entropy of an isolated system can never dec
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Physics'] = window.CBT_SUBJECT_IMAGES['Physics'] || {};
 window.CBT_SUBJECT_IMAGES['Physics']['Thermodynamics'] = [
-  { data: 'question-banks/physics/pv-diagram.svg', filename: 'pv-diagram.svg' }
+  { data: 'question-banks/physics/svg/pv-diagram.svg', filename: 'pv-diagram.svg' }
 ];
