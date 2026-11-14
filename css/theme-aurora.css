@@ -2,7 +2,7 @@
    eduCBT — css/theme-aurora.css  ("Aurora Obsidian")
    Loaded AFTER style.css. Every override is !important and relies on cascade
    order. The markup keeps its light Tailwind classes — this overlay is the
-   entire dark-theme mechanism:
+   entire dark-thee mechanism:
      green  -> teal      blue   -> amber     purple -> violet
      red    -> rose      yellow -> amber     white/gray -> ink
    ========================================================================= */
@@ -329,15 +329,6 @@ mark.note-search-hit.active { background-color: #ef4444; color: #fff; }
 
 /* Tags */
 .dash-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: #101830; color: #8598AC; border: 1px solid #1e2740; }
-
-/* Quick Play Button */
-.quick-play-btn { 
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; 
-  padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 800; 
-  transition: all 0.2s; margin-top: 16px; width: 100%;
-}
-.quick-play-btn:hover { filter: brightness(1.2); }
-.quick-play-btn:active { transform: scale(0.95); }
 
 /* Score Badge */
 .score-badge { padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
