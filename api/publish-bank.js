@@ -1,4 +1,4 @@
-/* api/publish-bank.js — commits a file to GitHub, creating folders if necessary */
+/* api/publish-bank.js — commits a file to GitHub */
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -17,19 +17,14 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields.' });
     }
 
-    // Sanitize path (remove leading/trailing slashes, fix double slashes)
-        // 1. Remove any accidental "question-banks/" prefix sent by the frontend
-    filename = filename.replace(/^question-banks\//i, '');
+    // 1. Remove any duplicate 'question-banks/' or leading slashes
+    let cleanName = filename.replace(/^question-banks\//i, '').replace(/^\/+/, '');
     
-    // 2. Sanitize path (remove leading/trailing slashes, fix double slashes)
-    filename = filename.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+    // 2. Force the path to ALWAYS start with question-banks/
+    const path = `question-banks/${cleanName}`;
     
-    // 3. Force it into the question-banks folder
-    const path = 'question-banks/' + filename;
-
-    
-    // GitHub API requires each path segment to be encoded separately
-    const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
+    // 3. Encode the path properly for GitHub
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${encodedPath}`;
     
     const headers = {
@@ -39,26 +34,22 @@ module.exports = async function handler(req, res) {
       'User-Agent': 'eduCBT-builder'
     };
 
-    // 1. Check if file exists to get SHA (required for updating)
+    // Check if file exists to get SHA
     let sha = null;
     const existing = await fetch(apiUrl, { headers });
     
     if (existing.ok) {
       const existingData = await existing.json();
       sha = existingData.sha || null;
-    } else if (existing.status !== 404) {
-      const errText = await existing.text();
-      throw new Error(`GitHub lookup failed (${existing.status}): ${errText.slice(0, 300)}`);
     }
 
-    // 2. Prepare and Upload the file
-    // Note: GitHub's /contents API DOES allow creating nested files as long as the final path is encoded right.
+    // Upload
     const encoded = Buffer.from(String(code), 'utf8').toString('base64');
     const putRes = await fetch(apiUrl, {
       method: 'PUT',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: `chore: update ${filename}`,
+        message: `chore: update ${cleanName}`,
         content: encoded,
         sha: sha || undefined,
         branch: 'main'
@@ -67,13 +58,7 @@ module.exports = async function handler(req, res) {
 
     if (!putRes.ok) {
       const errText = await putRes.text();
-      
-      // If it fails because folder doesn't exist, we give a clearer error
-      if (putRes.status === 404 || putRes.status === 422) {
-        throw new Error(`GitHub rejected the path. Ensure the repository has the base folder 'question-banks/' created. Raw error: ${errText.slice(0, 100)}`);
-      }
-      
-      throw new Error(`GitHub commit failed (${putRes.status}): ${errText.slice(0, 300)}`);
+      throw new Error(`GitHub commit failed (${putRes.status}): ${errText.slice(0, 200)}`);
     }
 
     const commitData = await putRes.json();
