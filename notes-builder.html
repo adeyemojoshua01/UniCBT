@@ -7,7 +7,6 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<!-- Marked.js for Markdown parsing -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 window.MathJax = {
@@ -17,102 +16,111 @@ window.MathJax = {
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <style>
-  :root { --bg-dark: #070A12; --panel-dark: #0B1020; --border-dark: #1e2740; --text-main: #E7EEF6; --text-muted: #8598AC; --accent: #f59e0b; }
+  :root { --bg-dark: #05070D; --panel-dark: #0B1020; --border-dark: #1e2740; --text-main: #E7EEF6; --text-muted: #8598AC; --accent: #f59e0b; }
   body { background-color: var(--bg-dark); color: var(--text-main); font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 4px; }
-  .input-dark { background-color: #101830; border: 1px solid var(--border-dark); color: var(--text-main); border-radius: 8px; padding: 10px 12px; width: 100%; font-size: 14px; transition: border-color 0.2s; }
-  .input-dark:focus { outline: none; border-color: var(--accent); }
-  .code-editor { font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.5; resize: vertical; background-color: #05080f; }
-  .tab-btn { flex: 1; padding: 12px 0; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
+  
+  .input-dark { background-color: #101830; border: 1px solid var(--border-dark); color: var(--text-main); border-radius: 10px; padding: 12px 14px; width: 100%; font-size: 14px; transition: border-color 0.2s; }
+  .input-dark:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
+  .code-editor { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.6; resize: vertical; background-color: #020408; }
+  
+  .tab-btn { flex: 1; padding: 14px 0; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
   .tab-pane { display: none; }
-  .tab-pane.active { display: block; animation: fadeIn 0.3s ease; }
+  .tab-pane.active { display: flex; flex-direction: column; animation: fadeIn 0.3s ease; flex-grow: 1; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   
   /* Markdown & LaTeX Preview Styling */
-  .preview-content { font-size: 15px; line-height: 1.6; }
-  .preview-content h1, .preview-content h2, .preview-content h3 { font-weight: 700; margin: 1em 0 0.5em; color: #fff; }
+  .preview-content { font-size: 15px; line-height: 1.6; color: #cbd5e1; }
+  .preview-content h1, .preview-content h2, .preview-content h3 { font-weight: 800; margin: 1.2em 0 0.5em; color: #fff; line-height: 1.3; }
   .preview-content h1 { font-size: 1.5em; border-bottom: 1px solid var(--border-dark); padding-bottom: 5px; }
   .preview-content h2 { font-size: 1.3em; }
-  .preview-content p { margin-bottom: 1em; color: var(--text-muted); }
-  .preview-content ul, .preview-content ol { margin: 1em 0 1em 1.5em; color: var(--text-muted); }
-  .preview-content ul { list-style-type: disc; }
-  .preview-content ol { list-style-type: decimal; }
-  .preview-content blockquote { border-left: 4px solid var(--accent); padding: 10px; margin: 1em 0; color: #cbd5e1; font-style: italic; background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; }
-  .preview-content strong { color: #fff; font-weight: 700; }
+  .preview-content p { margin-bottom: 1em; }
+  .preview-content ul { list-style-type: disc; margin: 1em 0 1em 1.5em; }
+  .preview-content ol { list-style-type: decimal; margin: 1em 0 1em 1.5em; }
+  .preview-content blockquote { border-left: 4px solid var(--accent); padding: 10px 14px; margin: 1em 0; font-style: italic; background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; }
   .preview-content table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
   .preview-content th, .preview-content td { border: 1px solid var(--border-dark); padding: 8px 12px; text-align: left; }
   .preview-content th { background: #101830; color: #fff; font-weight: 700; }
   .preview-content hr { border: 0; border-top: 1px solid var(--border-dark); margin: 1.5em 0; }
+  .preview-content strong { color: #fff; font-weight: 700; }
   
   /* Sidebar */
-  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
+  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
   #sidebar.open { transform: translateX(0); }
   #sidebar-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
   #sidebar-overlay.open { opacity: 1; pointer-events: auto; }
 
   .svg-item-btn { transition: all 0.2s; }
   .svg-item-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.1); }
+  
+  /* Custom Loader */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
 
+  <!-- HEADER -->
   <header class="flex-none bg-[#0B1020] border-b border-[#1e2740] px-4 py-3 flex items-center justify-between z-20">
     <div class="flex items-center gap-3">
-      <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95"><i class="fas fa-bars"></i></button>
+      <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95 transition-transform"><i class="fas fa-bars"></i></button>
       <div>
-        <h1 class="font-extrabold text-sm leading-tight">Studio</h1>
-        <p id="current-subject-label" class="text-[11px] text-[#8598AC] leading-tight truncate max-w-[150px]">Loading...</p>
+        <h1 class="font-extrabold text-sm leading-tight flex items-center gap-1.5"><i class="fas fa-code text-amber-500"></i> Admin Studio</h1>
+        <p id="current-path-label" class="text-[11px] text-[#8598AC] leading-tight truncate max-w-[160px]">Loading...</p>
       </div>
     </div>
-    <button onclick="openModal('github-modal')" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95"><i class="fab fa-github text-lg"></i></button>
+    <button onclick="openModal('github-modal')" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95 transition-transform"><i class="fab fa-github text-lg"></i></button>
   </header>
 
-  <main class="flex-grow flex flex-col overflow-hidden">
-    <div class="flex-none flex border-b border-[#1e2740] bg-[#0B1020]">
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-grow flex flex-col overflow-hidden relative">
+    
+    <!-- TABS -->
+    <div class="flex-none flex border-b border-[#1e2740] bg-[#0B1020] z-10">
       <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn active"><i class="fas fa-file-lines mr-1.5"></i> Notes</button>
-      <button onclick="switchTab('svg')" id="tab-svg" class="tab-btn"><i class="fas fa-image mr-1.5"></i> SVG Studio</button>
+      <button onclick="switchTab('svg')" id="tab-svg" class="tab-btn"><i class="fas fa-image mr-1.5"></i> SVGs</button>
       <button onclick="switchTab('preview')" id="tab-preview" class="tab-btn"><i class="fas fa-eye mr-1.5"></i> Preview</button>
     </div>
 
     <div class="flex-grow overflow-y-auto p-4 pb-24">
       
       <!-- TAB 1: NOTES -->
-      <div id="pane-notes" class="tab-pane active h-full flex flex-col">
+      <div id="pane-notes" class="tab-pane active">
         <div class="mb-3">
           <label class="text-xs font-bold text-[#8598AC] uppercase">Topic Name (Editable)</label>
           <input type="text" id="topic-name-input" class="input-dark mt-1 font-bold" oninput="updateTopicName(this.value)">
         </div>
-        <div class="mb-2 flex items-center justify-between">
-          <label class="text-xs font-bold text-[#8598AC] uppercase">Markdown & LaTeX</label>
-          <div class="flex gap-1">
-            <button onclick="insertText('note-editor', '**Bold**')" class="px-2 py-1 bg-[#1e2740] rounded text-xs font-bold">B</button>
-            <button onclick="insertText('note-editor', '*Italic*')" class="px-2 py-1 bg-[#1e2740] rounded text-xs italic">I</button>
-            <button onclick="insertText('note-editor', '## Header\n')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">H2</button>
-            <button onclick="insertText('note-editor', '- List Item\n')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">List</button>
-            <button onclick="insertText('note-editor', '> Quote\n')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">Quote</button>
-            <button onclick="insertText('note-editor', '\\\\( x^2 \\\\)')" class="px-2 py-1 bg-[#1e2740] rounded text-xs">Math</button>
+        <div class="mb-2 flex items-center justify-between flex-wrap gap-2">
+          <label class="text-xs font-bold text-[#8598AC] uppercase">Markdown & LaTeX Editor</label>
+          <div class="flex flex-wrap gap-1">
+            <button onclick="insertText('note-editor', '**Bold**')" class="px-2 py-1 bg-[#1e2740] hover:bg-[#2a3a5e] rounded text-xs font-bold">B</button>
+            <button onclick="insertText('note-editor', '*Italic*')" class="px-2 py-1 bg-[#1e2740] hover:bg-[#2a3a5e] rounded text-xs italic">I</button>
+            <button onclick="insertText('note-editor', '## Header\n')" class="px-2 py-1 bg-[#1e2740] hover:bg-[#2a3a5e] rounded text-xs">H2</button>
+            <button onclick="insertText('note-editor', '- List Item\n')" class="px-2 py-1 bg-[#1e2740] hover:bg-[#2a3a5e] rounded text-xs">List</button>
+            <button onclick="insertText('note-editor', '> Quote\n')" class="px-2 py-1 bg-[#1e2740] hover:bg-[#2a3a5e] rounded text-xs">Quote</button>
+            <button onclick="insertText('note-editor', '\\\\( x^2 \\\\)')" class="px-2 py-1 bg-[#1e2740] hover:bg-[#2a3a5e] rounded text-xs text-amber-400">Math</button>
           </div>
         </div>
-        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[300px]" placeholder="Type notes here... Markdown (e.g. # Header, **bold**) and MathJax \\( x^2 \\) are supported." oninput="saveDraft()"></textarea>
+        <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[400px]" placeholder="Type notes here... Markdown (# Header, **bold**) and MathJax \\( x^2 \\) are supported." oninput="saveDraft()"></textarea>
       </div>
 
       <!-- TAB 2: SVG STUDIO -->
-      <div id="pane-svg" class="tab-pane h-full flex flex-col space-y-4">
-        <div>
+      <div id="pane-svg" class="tab-pane">
+        <div class="mb-4">
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs font-bold text-[#8598AC] uppercase">Attached SVGs</label>
-            <button onclick="createNewSVG()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95"><i class="fas fa-plus"></i> New SVG</button>
+            <button onclick="createNewSVG()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold active:scale-95 transition-transform"><i class="fas fa-plus"></i> New SVG</button>
           </div>
-          <div id="svg-list-container" class="flex gap-2 overflow-x-auto pb-2"></div>
+          <div id="svg-list-container" class="flex gap-2 overflow-x-auto pb-2 min-h-[80px]"></div>
         </div>
 
-        <div id="svg-editor-area" class="hidden flex-col flex-grow space-y-3">
-          <div class="bg-[#101830] border border-[#1e2740] rounded-xl p-3">
-            <h3 class="text-sm font-bold text-[#E7EEF6] mb-2"><i class="fas fa-magic text-[#f59e0b] mr-1"></i> Template Generator</h3>
-            <div class="grid grid-cols-2 gap-2 mb-2">
-              <input type="text" id="svg-title" class="input-dark" placeholder="Title">
+        <div id="svg-editor-area" class="hidden flex-col space-y-4">
+          <div class="bg-[#101830] border border-[#1e2740] rounded-xl p-4">
+            <h3 class="text-sm font-bold text-[#E7EEF6] mb-3"><i class="fas fa-magic text-[#f59e0b] mr-1"></i> Template Generator</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <input type="text" id="svg-title" class="input-dark" placeholder="Title (e.g. PV Diagram)">
               <input type="text" id="svg-filename" class="input-dark" placeholder="Filename (e.g. pv.svg)" oninput="updateActiveSVGFilename()">
             </div>
             <div class="flex gap-2">
@@ -122,65 +130,70 @@ window.MathJax = {
                 <option value="matrix">Matrix</option>
                 <option value="timeline">Timeline</option>
               </select>
-              <button onclick="generateSVG()" class="bg-[#4f46e5] text-white px-4 py-2 rounded-lg text-xs font-bold">Generate</button>
+              <button onclick="generateSVG()" class="bg-[#4f46e5] hover:bg-[#4338ca] text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">Generate</button>
             </div>
           </div>
           <div class="flex-grow flex flex-col">
-            <div class="flex justify-between items-center mb-1">
+            <div class="flex justify-between items-center mb-2">
               <label class="text-xs font-bold text-[#8598AC] uppercase">Raw SVG Code</label>
-              <button onclick="deleteActiveSVG()" class="text-rose-500 text-xs font-bold hover:underline">Delete this SVG</button>
+              <button onclick="deleteActiveSVG()" class="text-rose-500 hover:text-rose-400 text-xs font-bold transition-colors"><i class="fas fa-trash mr-1"></i> Delete</button>
             </div>
-            <textarea id="svg-editor" class="input-dark code-editor flex-grow min-h-[150px]" placeholder="<svg>...</svg>" oninput="saveDraft()"></textarea>
+            <textarea id="svg-editor" class="input-dark code-editor min-h-[250px]" placeholder="<svg>...</svg>" oninput="saveDraft()"></textarea>
           </div>
         </div>
       </div>
 
       <!-- TAB 3: PREVIEW -->
-      <div id="pane-preview" class="tab-pane h-full">
-        <div class="bg-[#0B1020] border border-[#1e2740] rounded-xl p-5 shadow-lg">
-          <h2 class="font-bold text-lg mb-4 text-white" id="preview-topic-title">Topic</h2>
+      <div id="pane-preview" class="tab-pane">
+        <div class="bg-[#0B1020] border border-[#1e2740] rounded-xl p-5 shadow-lg mb-6">
+          <div class="flex items-center gap-2 mb-4 border-b border-[#1e2740] pb-3">
+            <div class="w-8 h-8 rounded-lg bg-[#4f46e5] text-white flex items-center justify-center"><i class="fas fa-eye text-xs"></i></div>
+            <h2 class="font-bold text-sm">Live Preview</h2>
+          </div>
+          <h2 class="font-bold text-xl mb-4 text-white" id="preview-topic-title">Topic</h2>
           <div id="preview-notes-content" class="preview-content"></div>
-          <div id="preview-svg-container" class="mt-6 border-t border-[#1e2740] pt-4">
-            <h4 class="text-xs font-bold text-[#8598AC] uppercase mb-3">Attached Images (Tap to zoom)</h4>
-            <div id="preview-svg-gallery" class="grid grid-cols-2 gap-3"></div>
+          
+          <div id="preview-svg-container" class="mt-8 border-t border-[#1e2740] pt-5">
+            <h4 class="text-xs font-bold text-[#8598AC] uppercase mb-3"><i class="fas fa-images mr-1"></i> Attached Images (Tap to zoom)</h4>
+            <div id="preview-svg-gallery" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- STICKY BOTTOM BAR -->
-  <div class="fixed bottom-0 left-0 w-full bg-[#0B1020] border-t border-[#1e2740] p-3 flex gap-3 z-20">
-    <button onclick="loadFromGitHub()" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+  <!-- STICKY BOTTOM ACTION BAR -->
+  <div class="fixed bottom-0 left-0 w-full bg-[#0B1020] border-t border-[#1e2740] p-3 flex gap-3 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
+    <button onclick="loadFromGitHub()" id="btn-load" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
       <i class="fas fa-download"></i> Load
     </button>
-    <button onclick="publishToGitHub()" class="flex-[2] bg-amber-500 text-black py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2">
-      <i class="fab fa-github"></i> Publish Subject
+    <button onclick="publishToGitHub()" id="btn-publish" class="flex-[2] bg-amber-500 hover:bg-amber-400 text-black py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-amber-500/20">
+      <i class="fab fa-github"></i> Publish Topic
     </button>
   </div>
 
-  <!-- SIDEBAR -->
-  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40" onclick="toggleSidebar()"></div>
-  <aside id="sidebar" class="fixed top-0 left-0 w-[280px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 flex flex-col">
+  <!-- SIDEBAR (FILE EXPLORER) -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onclick="toggleSidebar()"></div>
+  <aside id="sidebar" class="fixed top-0 left-0 w-[300px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 flex flex-col">
     <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
-      <h2 class="font-extrabold text-sm">Library</h2>
-      <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-[#1e2740] flex items-center justify-center"><i class="fas fa-times"></i></button>
+      <h2 class="font-extrabold text-sm"><i class="fas fa-folder-tree text-amber-500 mr-1"></i> Workspace</h2>
+      <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-3 border-b border-[#1e2740] flex gap-2">
-      <button onclick="addNewSubject()" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold"><i class="fas fa-plus"></i> Subject</button>
-      <button onclick="addNewTopic()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold"><i class="fas fa-plus"></i> Topic</button>
+      <button onclick="addNewSubject()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-plus"></i> Subject</button>
+      <button onclick="addNewTopic()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors"><i class="fas fa-plus"></i> Topic</button>
     </div>
-    <div class="flex-grow overflow-y-auto p-3 space-y-2" id="sidebar-tree"></div>
+    <div class="flex-grow overflow-y-auto p-3 space-y-1" id="sidebar-tree"></div>
   </aside>
 
   <!-- MODALS -->
-  <div id="github-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
-    <div class="bg-[#0B1020] border border-[#1e2740] rounded-2xl w-full max-w-sm">
-      <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0c1222]">
-        <h3 class="font-bold text-sm"><i class="fab fa-github mr-1"></i> GitHub Settings</h3>
-        <button onclick="closeModal('github-modal')" class="text-gray-400"><i class="fas fa-times"></i></button>
+  <div id="github-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+    <div class="bg-[#0B1020] border border-[#1e2740] rounded-2xl w-full max-w-sm shadow-2xl">
+      <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0c1222] rounded-t-2xl">
+        <h3 class="font-bold text-sm"><i class="fab fa-github mr-1"></i> GitHub Configuration</h3>
+        <button onclick="closeModal('github-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
       </div>
-      <div class="p-4 space-y-3">
+      <div class="p-5 space-y-4">
         <div>
           <label class="text-[10px] font-bold text-[#8598AC] uppercase mb-1 block">Owner / Repo</label>
           <div class="flex gap-2">
@@ -189,10 +202,10 @@ window.MathJax = {
           </div>
         </div>
         <div>
-          <label class="text-[10px] font-bold text-[#8598AC] uppercase mb-1 block">Token</label>
+          <label class="text-[10px] font-bold text-[#8598AC] uppercase mb-1 block">Personal Access Token</label>
           <input type="password" id="gh-token" class="input-dark" placeholder="ghp_...">
         </div>
-        <button onclick="saveGithubSettings()" class="w-full bg-[#4f46e5] text-white py-2.5 rounded-lg text-sm font-bold mt-2">Save</button>
+        <button onclick="saveGithubSettings()" class="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white py-3 rounded-xl text-sm font-bold mt-2 transition-colors shadow-lg">Save Settings</button>
       </div>
     </div>
   </div>
@@ -200,53 +213,60 @@ window.MathJax = {
   <div id="toast-layer" class="fixed top-16 right-4 z-[999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
   <script>
+    /* =========================================================
+       STATE MANAGEMENT
+       ========================================================= */
     let state = {
       activeSubject: '',
       activeTopic: '',
       activeSvgIndex: -1,
-      data: {}, 
+      data: {}, // Structure: { "Subject": { "Topic": { notes: "", svgs: [{filename, code}] } } }
       github: { owner: '', repo: '', token: '' }
     };
 
-    const saved = localStorage.getItem('cbt_studio_v2');
+    const saved = localStorage.getItem('cbt_studio_codex');
     if (saved) {
       state = JSON.parse(saved);
     } else {
-      state.data = { "Untitled Subject": { "Untitled Topic": { notes: "", svgs: [] } } };
-      state.activeSubject = "Untitled Subject";
-      state.activeTopic = "Untitled Topic";
+      state.data = { "Physics": { "Thermodynamics": { notes: "", svgs: [] } } };
+      state.activeSubject = "Physics";
+      state.activeTopic = "Thermodynamics";
     }
 
-    function saveState() { localStorage.setItem('cbt_studio_v2', JSON.stringify(state)); }
+    function saveState() { localStorage.setItem('cbt_studio_codex', JSON.stringify(state)); }
+    function getSlug(str) { return str.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
 
     /* =========================================================
-       NAVIGATION & SIDEBAR
+       NAVIGATION & UI
        ========================================================= */
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
       const ov = document.getElementById('sidebar-overlay');
       if (sb.classList.contains('open')) {
-        sb.classList.remove('open');
-        ov.classList.remove('open');
+        sb.classList.remove('open'); ov.classList.remove('open');
       } else {
-        sb.classList.add('open');
-        ov.classList.add('open');
+        sb.classList.add('open'); ov.classList.add('open');
       }
     }
 
     function renderSidebar() {
       let html = '';
       for (const [subj, topics] of Object.entries(state.data)) {
-        html += `<div class="mb-3"><h4 class="text-xs font-extrabold text-indigo-400 mb-1 flex justify-between items-center">
-          <span><i class="fas fa-book mr-1"></i>${subj}</span>
-          <button onclick="deleteSubject('${subj}')" class="text-gray-500 hover:text-rose-500 px-1"><i class="fas fa-trash text-[10px]"></i></button>
-        </h4><div class="space-y-1 ml-2 border-l border-[#1e2740] pl-2">`;
+        const subjSlug = getSlug(subj);
+        html += `<div class="mb-2">
+          <div class="flex items-center justify-between px-2 py-1.5 group">
+            <span class="text-xs font-extrabold text-indigo-400 flex items-center gap-2"><i class="fas fa-folder"></i> ${subj}</span>
+            <button onclick="deleteSubject('${subj}')" class="text-gray-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-trash text-[10px]"></i></button>
+          </div>
+          <div class="ml-4 pl-2 border-l border-[#1e2740] space-y-0.5">`;
         
         for (const topic of Object.keys(topics)) {
           const isActive = state.activeSubject === subj && state.activeTopic === topic;
           html += `<div class="flex items-center justify-between group">
-            <button onclick="selectTopic('${subj}', '${topic}')" class="flex-grow text-left px-2 py-1.5 rounded-lg text-sm ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830]'}">${topic}</button>
-            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-600 hover:text-rose-500 px-2 opacity-50 group-hover:opacity-100 transition-opacity"><i class="fas fa-times text-[10px]"></i></button>
+            <button onclick="selectTopic('${subj}', '${topic}')" class="flex-grow text-left px-2 py-1.5 rounded-lg text-[13px] ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830] hover:text-gray-200'} transition-colors flex items-center gap-2">
+              <i class="fas fa-file-code ${isActive ? 'text-indigo-400' : 'text-gray-600'}"></i> ${topic}
+            </button>
+            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-600 hover:text-rose-500 px-2 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-times text-[10px]"></i></button>
           </div>`;
         }
         html += `</div></div>`;
@@ -319,11 +339,13 @@ window.MathJax = {
 
     function loadTopicIntoEditor() {
       if (!state.activeSubject || !state.activeTopic) {
-        document.getElementById('current-subject-label').textContent = "No topic selected";
+        document.getElementById('current-path-label').textContent = "No topic selected";
         return;
       }
       
-      document.getElementById('current-subject-label').textContent = `${state.activeSubject} > ${state.activeTopic}`;
+      const subjSlug = getSlug(state.activeSubject);
+      const topicSlug = getSlug(state.activeTopic);
+      document.getElementById('current-path-label').textContent = `question-banks / ${subjSlug} / ${topicSlug}`;
       document.getElementById('topic-name-input').value = state.activeTopic;
       
       const draft = state.data[state.activeSubject][state.activeTopic];
@@ -343,23 +365,19 @@ window.MathJax = {
       delete state.data[state.activeSubject][oldName];
       
       state.activeTopic = newName;
-      document.getElementById('current-subject-label').textContent = `${state.activeSubject} > ${state.activeTopic}`;
+      loadTopicIntoEditor();
       renderSidebar();
       saveState();
     }
 
     function saveDraft() {
       if (!state.activeSubject || !state.activeTopic) return;
-      
       state.data[state.activeSubject][state.activeTopic].notes = document.getElementById('note-editor').value;
-      
       if (state.activeSvgIndex > -1) {
         const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
         svgs[state.activeSvgIndex].code = document.getElementById('svg-editor').value.trim();
       }
-      
       saveState();
-      updatePreview();
     }
 
     /* =========================================================
@@ -371,24 +389,24 @@ window.MathJax = {
       const svgs = state.data[state.activeSubject][state.activeTopic].svgs || [];
       
       if (svgs.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-500 italic py-2">No SVGs yet. Click "New SVG" to add one.</p>';
+        container.innerHTML = '<p class="text-xs text-gray-500 italic py-4 w-full text-center border border-dashed border-[#1e2740] rounded-lg">No SVGs attached. Click "+ New SVG" to add.</p>';
         return;
       }
 
       container.innerHTML = svgs.map((svg, i) => {
         const isActive = state.activeSvgIndex === i;
-        
         let previewUrl = '';
+        
         if (svg.code && svg.code.trim().startsWith('<svg')) {
           const blob = new Blob([svg.code], {type: 'image/svg+xml'});
           previewUrl = URL.createObjectURL(blob);
         } else {
-          previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/${svg.filename}`;
+          previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/svg/${svg.filename}`;
         }
 
-        return `<button onclick="selectSVG(${i})" class="svg-item-btn flex-none w-20 h-16 rounded-lg border border-[#1e2740] bg-[#101830] p-1 overflow-hidden flex flex-col items-center justify-center ${isActive ? 'active' : ''}">
-          <img src="${previewUrl}" class="w-full h-8 object-contain mb-1" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Code%3C/text%3E%3C/svg%3E'">
-          <span class="text-[8px] truncate w-full text-center text-gray-400">${svg.filename || 'image.svg'}</span>
+        return `<button onclick="selectSVG(${i})" class="svg-item-btn flex-none w-24 h-20 rounded-xl border border-[#1e2740] bg-[#101830] p-2 overflow-hidden flex flex-col items-center justify-center ${isActive ? 'active' : ''}">
+          <img src="${previewUrl}" class="w-full h-10 object-contain mb-1" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Code%3C/text%3E%3C/svg%3E'">
+          <span class="text-[9px] truncate w-full text-center text-gray-400 font-mono">${svg.filename || 'image.svg'}</span>
         </button>`;
       }).join('');
     }
@@ -396,9 +414,8 @@ window.MathJax = {
     function createNewSVG() {
       if (!state.activeSubject || !state.activeTopic) return toast('Select a topic first', 'error');
       const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
-      const newIndex = svgs.length;
-      svgs.push({ filename: `image-${newIndex + 1}.svg`, code: '' });
-      selectSVG(newIndex);
+      svgs.push({ filename: `image-${svgs.length + 1}.svg`, code: '' });
+      selectSVG(svgs.length - 1);
     }
 
     function selectSVG(index) {
@@ -409,7 +426,6 @@ window.MathJax = {
       document.getElementById('svg-editor-area').classList.add('flex');
       document.getElementById('svg-editor').value = svg.code || '';
       document.getElementById('svg-filename').value = svg.filename || '';
-      
       renderSVGList();
     }
 
@@ -423,9 +439,7 @@ window.MathJax = {
     function deleteActiveSVG() {
       if (state.activeSvgIndex === -1) return;
       if (!confirm('Delete this SVG?')) return;
-      
-      const svgs = state.data[state.activeSubject][state.activeTopic].svgs;
-      svgs.splice(state.activeSvgIndex, 1);
+      state.data[state.activeSubject][state.activeTopic].svgs.splice(state.activeSvgIndex, 1);
       closeSVGEditor();
       saveState();
     }
@@ -439,7 +453,7 @@ window.MathJax = {
     }
 
     function generateSVG() {
-      if (state.activeSvgIndex === -1) return toast('Click "New SVG" first', 'error');
+      if (state.activeSvgIndex === -1) return toast('Click "+ New SVG" first', 'error');
       
       const title = document.getElementById('svg-title').value || 'Title';
       const type = document.getElementById('svg-type').value;
@@ -458,9 +472,9 @@ window.MathJax = {
     }
 
     /* =========================================================
-       PREVIEW & FULLSCREEN IMAGE
+       PREVIEW & MARKDOWN LOGIC
        ========================================================= */
-    // HELPER: Protect LaTeX from Markdown parser
+    // Protect MathJax from Markdown parser
     function parseMarkdownWithMath(rawText) {
       if (!rawText) return '';
       if (!window.marked) return rawText;
@@ -468,28 +482,12 @@ window.MathJax = {
       const mathBlocks = [];
       let text = rawText;
 
-      // Hide Display Math \[ ... \]
-      text = text.replace(/\\\[([\s\S]*?)\\\]/g, function(match) {
-        mathBlocks.push(match);
-        return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
-      });
-      
-      // Hide Display Math $$ ... $$
-      text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match) {
-        mathBlocks.push(match);
-        return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
-      });
+      text = text.replace(/\\\[([\s\S]*?)\\\]/g, function(match) { mathBlocks.push(match); return `@@MATHBLOCK${mathBlocks.length - 1}@@`; });
+      text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match) { mathBlocks.push(match); return `@@MATHBLOCK${mathBlocks.length - 1}@@`; });
+      text = text.replace(/\\\((.*?)\\\)/g, function(match) { mathBlocks.push(match); return `@@MATHBLOCK${mathBlocks.length - 1}@@`; });
 
-      // Hide Inline Math \( ... \)
-      text = text.replace(/\\\((.*?)\\\)/g, function(match) {
-        mathBlocks.push(match);
-        return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
-      });
-
-      // Parse Markdown
       let html = window.marked.parse(text);
 
-      // Restore Math Blocks
       html = html.replace(/@@MATHBLOCK(\d+)@@/g, function(match, index) {
         return mathBlocks[index];
       });
@@ -502,29 +500,21 @@ window.MathJax = {
       const draft = state.data[state.activeSubject][state.activeTopic];
       
       document.getElementById('preview-topic-title').textContent = state.activeTopic;
-      
-      const rawMarkdown = draft.notes || '';
-      const htmlContent = parseMarkdownWithMath(rawMarkdown);
-      
-      document.getElementById('preview-notes-content').innerHTML = htmlContent || '<p class="text-gray-500 italic">No notes yet...</p>';
+      document.getElementById('preview-notes-content').innerHTML = parseMarkdownWithMath(draft.notes || '') || '<p class="text-gray-500 italic">No notes written yet...</p>';
       
       const gallery = document.getElementById('preview-svg-gallery');
       if (draft.svgs && draft.svgs.length > 0) {
         gallery.innerHTML = draft.svgs.map(svg => {
-          let imgUrl = '';
-          if (svg.code && svg.code.trim().startsWith('<svg')) {
-            const blob = new Blob([svg.code], {type: 'image/svg+xml'});
-            imgUrl = URL.createObjectURL(blob);
-          } else {
-            imgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/${svg.filename}`;
-          }
-
-          return `<div onclick="viewImageFullscreen('${imgUrl}')" class="bg-[#101830] border border-[#1e2740] rounded-lg p-2 cursor-pointer transition-transform active:scale-95">
-            <img src="${imgUrl}" class="w-full h-32 object-contain rounded" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+          let imgUrl = svg.code && svg.code.trim().startsWith('<svg') 
+            ? URL.createObjectURL(new Blob([svg.code], {type: 'image/svg+xml'})) 
+            : `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${getSlug(state.activeSubject)}/svg/${svg.filename}`;
+            
+          return `<div onclick="viewImageFullscreen('${imgUrl}')" class="bg-[#101830] border border-[#1e2740] rounded-lg p-2 cursor-pointer transition-transform active:scale-95 hover:border-amber-500/50">
+            <img src="${imgUrl}" class="w-full h-32 object-contain rounded" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'10\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Img%3C/text%3E%3C/svg%3E'">
           </div>`;
         }).join('');
       } else {
-        gallery.innerHTML = '<p class="text-xs text-gray-500 italic">No images attached.</p>';
+        gallery.innerHTML = '<p class="text-xs text-gray-500 italic col-span-2">No images attached.</p>';
       }
       
       if (window.MathJax) MathJax.typesetPromise([document.getElementById('pane-preview')]).catch(()=>{});
@@ -532,14 +522,14 @@ window.MathJax = {
 
     function viewImageFullscreen(url) {
       const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn';
+      overlay.className = 'fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn';
       overlay.onclick = () => overlay.remove();
       overlay.innerHTML = `<img src="${url}" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl bg-[#0B1020] border border-[#1e2740]">`;
       document.body.appendChild(overlay);
     }
 
     /* =========================================================
-       GITHUB FETCH & PUBLISH
+       GITHUB FETCH & PUBLISH (NESTED FOLDERS)
        ========================================================= */
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -551,12 +541,12 @@ window.MathJax = {
       saveState(); closeModal('github-modal'); toast('Settings saved', 'success');
     }
 
-    function getSlug(str) { return str.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
-
     async function loadFromGitHub() {
       if (!state.github.owner || !state.github.repo) return toast('Set GitHub settings first', 'error');
+      
       const subjSlug = getSlug(state.activeSubject);
-      const path = `question-banks/${subjSlug}/notes.js`;
+      const topicSlug = getSlug(state.activeTopic);
+      const path = `question-banks/${subjSlug}/${topicSlug}/${topicSlug}.js`;
       toast('Fetching ' + path + '...', 'info');
       
       try {
@@ -568,36 +558,27 @@ window.MathJax = {
         const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
         new Function('window', text)(dummyWindow);
         
-        const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
-        const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
+        const noteContent = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject]?.[state.activeTopic] || '';
+        const imgArray = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject]?.[state.activeTopic] || [];
 
-        state.data[state.activeSubject] = {}; 
+        state.data[state.activeSubject][state.activeTopic].notes = noteContent;
+        
+        // Fetch actual SVG codes from the filenames in the /svg/ folder
+        state.data[state.activeSubject][state.activeTopic].svgs = await Promise.all(imgArray.map(async img => {
+          let svgCode = '';
+          // Extract filename from path (e.g. 'question-banks/physics/svg/pv-diagram.svg' -> 'pv-diagram.svg')
+          const filename = img.filename || img.data.split('/').pop();
+          
+          try {
+            const svgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${filename}`;
+            const svgRes = await fetch(svgUrl);
+            if (svgRes.ok) svgCode = await svgRes.text();
+          } catch (e) { console.warn('Could not fetch SVG file', filename); }
+          
+          return { filename: filename, code: svgCode };
+        }));
 
-        for (const [topic, noteContent] of Object.entries(notesObj)) {
-          if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
-          state.data[state.activeSubject][topic].notes = noteContent;
-        }
-
-        for (const [topic, imgArray] of Object.entries(imagesObj)) {
-           if (!state.data[state.activeSubject][topic]) state.data[state.activeSubject][topic] = { notes: "", svgs: [] };
-           
-           state.data[state.activeSubject][topic].svgs = await Promise.all(imgArray.map(async img => {
-             let svgCode = '';
-             if (img.data && !img.data.startsWith('data:') && !img.data.startsWith('<svg')) {
-               try {
-                 const svgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/${img.data}`;
-                 const svgRes = await fetch(svgUrl);
-                 if (svgRes.ok) svgCode = await svgRes.text();
-               } catch (e) { console.warn('Could not fetch SVG file', e); }
-             } else if (img.data.startsWith('<svg')) {
-               svgCode = img.data; 
-             }
-             return { filename: img.filename, code: svgCode };
-           }));
-        }
-
-        const firstTopic = Object.keys(state.data[state.activeSubject])[0];
-        selectTopic(state.activeSubject, firstTopic || 'General');
+        loadTopicIntoEditor(); 
         saveState(); 
         toast('Loaded from GitHub!', 'success');
       } catch (err) {
@@ -610,52 +591,62 @@ window.MathJax = {
       
       const subj = state.activeSubject;
       const subjSlug = getSlug(subj);
-      toast('Publishing to GitHub...', 'info');
-      
-      let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = {\n`;
-      let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = {\n`;
+      const topic = state.activeTopic;
+      const topicSlug = getSlug(topic);
+      const draft = state.data[subj][topic];
 
-      for (const [topic, draft] of Object.entries(state.data[subj])) {
-        if (draft.notes) notesContent += `  '${topic}': \`${draft.notes.replace(/`/g, '\\`')}\`,\n`;
+      const btn = document.getElementById('btn-publish');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Publishing...';
+      btn.disabled = true;
+
+      try {
+        // 1. Generate the JS file content
+        let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = window.CBT_SUBJECT_NOTES['${subj}'] || {};\nwindow.CBT_SUBJECT_NOTES['${subj}']['${topic}'] = \`${(draft.notes || '').replace(/`/g, '\\`')}\`;\n`;
+        
+        let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [\n`;
         
         if (draft.svgs && draft.svgs.length > 0) {
-          imagesContent += `  '${topic}': [\n`;
           for (const svg of draft.svgs) {
-            imagesContent += `    { data: 'question-banks/${subjSlug}/${svg.filename}', filename: '${svg.filename}' },\n`;
+            // Point to the new shared SVG folder
+            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${svg.filename}', filename: '${svg.filename}' },\n`;
             
+            // Push SVG file to GitHub
             if (svg.code && svg.code.trim().length > 0) {
                await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjSlug}/${svg.filename}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjSlug}/svg/${svg.filename}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
             }
           }
-          imagesContent += `  ],\n`;
         }
-      }
-      
-      notesContent += `};\n\n`;
-      imagesContent += `};\n`;
-      const finalCode = notesContent + imagesContent;
+        imagesContent += `];\n`;
 
-      try {
+        const finalCode = notesContent + '\n' + imagesContent;
+        
+        // 2. Publish the JS file to `subject/topic/topic.js`
+        const filename = `${subjSlug}/${topicSlug}/${topicSlug}.js`; 
+
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: `${subjSlug}/notes.js`, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+          body: JSON.stringify({ filename: filename, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
         });
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
         
-        toast('Subject published successfully!', 'success');
+        toast('Published ' + topicSlug + '.js successfully!', 'success');
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
+      } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
       }
     }
 
     function toast(msg, type) {
       const el = document.createElement('div');
-      el.className = `text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl mb-2 ${type==='error'?'bg-rose-600':(type==='success'?'bg-emerald-600':'bg-indigo-600')}`;
+      el.className = `text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl mb-2 animate-[fadeIn_0.2s_ease] ${type==='error'?'bg-rose-600':(type==='success'?'bg-emerald-600':'bg-indigo-600')}`;
       el.textContent = msg;
       document.getElementById('toast-layer').appendChild(el);
       setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
