@@ -471,7 +471,7 @@
     },
 
      
-        viewTopicNote: function (subjectId, topicId, topicName) {
+      viewTopicNote: function (subjectId, topicId, topicName) {
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.notes) return;
       var note = subject.notes[topicId];
@@ -485,9 +485,21 @@
         if (foundTopic) resolvedName = foundTopic.name;
       }
       
+      // SAVE FOR "CONTINUE READING"
+      try {
+        localStorage.setItem('cbt_last_read', JSON.stringify({
+          subjectId: subjectId,
+          topicId: topicId,
+          subjectName: subject.name,
+          topicName: resolvedName || 'Topic',
+          timestamp: Date.now()
+        }));
+      } catch(e) {}
+
       var titleEl = document.getElementById('note-viewer-title');
       if (titleEl) titleEl.textContent = (resolvedName || 'Topic') + ' · Notes';
       
+      // ... REST OF THE VIEW NOTE LOGIC ...
       var bodyEl = document.getElementById('note-viewer-content');
       if (bodyEl) {
         if (window.marked && typeof this.parseMarkdownWithMath === 'function') {
@@ -500,24 +512,23 @@
       var modal = document.getElementById('note-viewer-modal');
       if (modal) modal.classList.remove('hidden');
       
-      // Reset UI state
       document.getElementById('note-search-bar').classList.add('hidden');
       document.getElementById('note-search-input').value = '';
       document.getElementById('note-search-count').textContent = '';
       document.getElementById('note-toc-drawer').classList.add('hidden');
       
-      // Initialize Scholar View features
       this.loadNoteSettings();
       this.applyNoteSettings();
       this.generateNoteTOC();
       
-      // Reset progress bar and scroll
       document.getElementById('note-progress-bar').style.width = '0%';
       bodyEl.scrollTop = 0;
       
       this.typeset('#note-viewer-content');
       this.triggerMathJax();
     },
+
+     
     
    viewTopicImages: function (subjectId, topicId) {
        
@@ -583,9 +594,76 @@
           '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">🗂️</div><p class="text-gray-500">No subjects loaded. Add a question bank to get started.</p></div>');
     },
 
+    // --- STUDY HUB HELPERS ---
+    getSubjectIcon: function(subjectName) {
+      var name = subjectName.toLowerCase();
+      if (name.includes('physic')) return 'fa-atom';
+      if (name.includes('probab') || name.includes('math')) return 'fa-dice';
+      if (name.includes('bible') || name.includes('studi')) return 'fa-cross';
+      if (name.includes('linear') || name.includes('algebra')) return 'fa-calculator';
+      if (name.includes('fluid') || name.includes('mechanic')) return 'fa-water';
+      if (name.includes('chem')) return 'fa-flask';
+      return 'fa-book';
+    },
 
+    getNoteSnippet: function(noteText) {
+      if (!noteText) return 'No text available.';
+      // Strip HTML tags using a temporary DOM element
+      var tempDiv = document.createElement('div');
+      tempDiv.innerHTML = noteText;
+      var text = tempDiv.textContent || tempDiv.innerText || "";
+      text = text.replace(/\s+/g, ' ').trim();
+      if (text.length === 0) return 'No text available.';
+      return text.substring(0, 80) + (text.length > 80 ? '...' : '');
+    },
 
-   showAllNotes: function () {
+    toggleHubAccordion: function(index) {
+      var content = document.getElementById('accordion-content-' + index);
+      var icon = document.getElementById('accordion-icon-' + index);
+      var isOpen = content.classList.contains('open');
+      
+      if (isOpen) {
+        content.classList.remove('open');
+        icon.classList.remove('open');
+      } else {
+        content.classList.add('open');
+        icon.classList.add('open');
+      }
+    },
+
+    handleHubFilter: function(query, type) {
+      var cards = document.querySelectorAll('.hub-topic-card');
+      var accordions = document.querySelectorAll('.accordion-item');
+      var q = query.toLowerCase().trim();
+      
+      // Reset visibility
+      cards.forEach(function(card) {
+        var text = card.innerText.toLowerCase();
+        var hasNotes = card.getAttribute('data-has-notes') === 'true';
+        var hasImages = card.getAttribute('data-has-images') === 'true';
+        
+        var matchesSearch = q === '' || text.includes(q);
+        var matchesType = type === 'all' || (type === 'notes' && hasNotes) || (type === 'images' && hasImages);
+        
+        if (matchesSearch && matchesType) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Check which accordions should be visible
+      accordions.forEach(function(acc) {
+        var visibleCards = acc.querySelectorAll('.hub-topic-card[style="display: flex;"]');
+        if (visibleCards.length > 0) {
+          acc.style.display = 'block';
+        } else {
+          acc.style.display = 'none';
+        }
+      });
+    },
+
+       showAllNotes: function () {
       this.data.mode = 'all-notes';
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
@@ -594,48 +672,81 @@
       var container = document.getElementById('app-container');
       if (!container) return;
 
-      var allMaterials = [];
-      Object.values(this.data.subjects).forEach(function (s) {
-        // This gets topics that have notes OR images
-        var topics = self.studyMaterialTopics(s); 
-        if (topics.length > 0) {
-          allMaterials.push({ subjectName: s.name, subjectId: s.id, topics: topics });
-        }
-      });
-
-      var contentHTML = '';
-      if (allMaterials.length === 0) {
-        contentHTML = '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">📭</div><p class="text-gray-500">No notes or images available.</p></div>';
-      } else {
-        contentHTML = '<div class="space-y-4">' + allMaterials.map(function (group) {
-          var topicCards = group.topics.map(function (t) {
-            return '<div class="w-full rounded-xl border border-gray-200 bg-gray-50 p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">' +
-              '<div class="flex items-center gap-3 min-w-0">' +
-              '<div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0"><i class="fas fa-file-lines text-sm"></i></div>' +
-              '<span class="font-semibold text-gray-700 truncate min-w-0">' + self.esc(t.name) + '</span>' +
-              '</div>' +
-              
-              // Actions: Read Notes & View Images
-              '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
-              (t.hasNotes ? '<button onclick="app.viewTopicNote(\'' + group.subjectId + '\',\'' + t.id + '\',\'' + self.esc(t.name) + '\')" class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-bold hover:bg-blue-200 transition-colors"><i class="fas fa-book-open mr-1"></i> Read Notes</button>' : '') +
-              (t.images > 0 ? '<button onclick="app.viewTopicImages(\'' + group.subjectId + '\',\'' + t.id + '\')" class="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200 transition-colors"><i class="fas fa-images mr-1"></i> View Images (' + t.images + ')</button>' : '') +
-              '</div>' +
-              '</div>';
-          }).join('');
-          
-          return '<div class="rounded-2xl bg-white border border-gray-200 p-5 shadow-lg">' +
-            '<h3 class="font-extrabold text-lg text-gray-800 mb-3 border-b border-gray-100 pb-2"><i class="fas fa-book text-purple-600 mr-2"></i>' + self.esc(group.subjectName) + '</h3>' +
-            '<div class="space-y-2">' + topicCards + '</div>' +
-            '</div>';
-        }).join('') + '</div>';
+      // Check for Continue Reading data
+      var lastRead = null;
+      try { lastRead = JSON.parse(localStorage.getItem('cbt_last_read')); } catch(e) {}
+      
+      var continueHTML = '';
+      if (lastRead && this.data.subjects[lastRead.subjectId]) {
+        continueHTML = '<div class="continue-card" onclick="app.viewTopicNote(\'' + lastRead.subjectId + '\',\'' + lastRead.topicId + '\',\'' + self.esc(lastRead.topicName) + '\')">' +
+          '<div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0"><i class="fas fa-book-reader text-lg"></i></div>' +
+          '<div class="min-w-0 flex-grow">' +
+          '<div class="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-0.5">Continue Reading</div>' +
+          '<div class="text-sm font-bold text-white truncate">' + self.esc(lastRead.topicName) + '</div>' +
+          '<div class="text-xs text-gray-400 truncate">' + self.esc(lastRead.subjectName) + '</div>' +
+          '</div><i class="fas fa-chevron-right text-amber-500"></i></div>';
       }
 
-      container.innerHTML = '<div class="max-w-4xl mx-auto">' +
-        '<button onclick="app.showLanding()" class="text-xs font-bold text-gray-500 hover:text-green-600 mb-3 inline-flex items-center gap-1.5"><i class="fas fa-arrow-left"></i> Back to home</button>' +
-        '<div class="mb-5">' +
-        '<h2 class="text-2xl font-extrabold text-gray-800">Study Notes & Images Library</h2>' +
-        '<p class="text-sm text-gray-500 mt-1">Browse materials across all available subjects.</p>' +
-        '</div>' + contentHTML + '</div>';
+      var subjects = Object.values(this.data.subjects);
+      var accordionsHTML = '';
+      var validSubjectsCount = 0;
+
+      subjects.forEach(function (s, idx) {
+        var topics = self.studyMaterialTopics(s);
+        if (topics.length === 0) return; // Skip subjects with no materials
+        validSubjectsCount++;
+
+        var icon = self.getSubjectIcon(s.name);
+        var totalNotes = topics.filter(function(t){ return t.hasNotes; }).length;
+        var totalImages = topics.reduce(function(acc, t){ return acc + t.images; }, 0);
+
+        var topicsHTML = topics.map(function (t) {
+          var noteText = s.notes && s.notes[t.id] ? s.notes[t.id] : '';
+          var snippet = t.hasNotes ? self.getNoteSnippet(noteText) : '';
+          
+          return '<div class="hub-topic-card" data-has-notes="' + (t.hasNotes ? 'true' : 'false') + '" data-has-images="' + (t.images > 0 ? 'true' : 'false') + '">' +
+            '<div class="flex items-start justify-between gap-3">' +
+            '<div class="min-w-0 flex-grow">' +
+            '<h4 class="font-bold text-sm text-gray-200">' + self.esc(t.name) + '</h4>' +
+            (t.hasNotes ? '<p class="hub-snippet mt-1">' + self.esc(snippet) + '</p>' : '') +
+            '</div>' +
+            '<div class="flex flex-col gap-2 shrink-0">' +
+            (t.hasNotes ? '<button onclick="app.viewTopicNote(\'' + s.id + '\',\'' + t.id + '\',\'' + self.esc(t.name) + '\')" class="hub-action-btn hub-btn-notes"><i class="fas fa-book-open"></i> Read Notes</button>' : '') +
+            (t.images > 0 ? '<button onclick="app.viewTopicImages(\'' + s.id + '\',\'' + t.id + '\')" class="hub-action-btn hub-btn-images"><i class="fas fa-images"></i> Images (' + t.images + ')</button>' : '') +
+            '</div></div></div>';
+        }).join('');
+
+        accordionsHTML += '<div class="accordion-item">' +
+          '<button class="accordion-header" onclick="app.toggleHubAccordion(' + idx + ')">' +
+          '<div class="flex items-center gap-3">' +
+          '<div class="w-8 h-8 rounded-lg bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300"><i class="fas ' + icon + '"></i></div>' +
+          '<div class="text-left"><div class="font-bold text-sm text-gray-100">' + self.esc(s.name) + '</div>' +
+          '<div class="text-[10px] text-gray-500 font-semibold">' + totalNotes + ' notes · ' + totalImages + ' images</div></div>' +
+          '</div>' +
+          '<i class="fas fa-chevron-down accordion-icon text-gray-500" id="accordion-icon-' + idx + '"></i>' +
+          '</button>' +
+          '<div class="accordion-content" id="accordion-content-' + idx + '">' + topicsHTML + '</div></div>';
+      });
+
+      var mainHTML = '<div class="hub-header">' +
+        '<button onclick="app.showLanding()" class="text-xs font-bold text-gray-400 hover:text-white mb-3 inline-flex items-center gap-1.5"><i class="fas fa-arrow-left"></i> Back to home</button>' +
+        '<h2 class="text-2xl font-extrabold text-white mb-1">Study Hub</h2>' +
+        '<p class="text-xs text-gray-400 mb-4">Browse notes, images, and diagrams across all subjects.</p>' +
+        '<div class="relative">' +
+        '<i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"></i>' +
+        '<input type="text" id="hub-search" class="hub-search-input" placeholder="Search topics or keywords..." oninput="app.handleHubFilter(this.value, document.querySelector(\'.hub-filter-btn.active\').getAttribute(\'data-type\'))">' +
+        '</div>' +
+        '<div class="hub-filter-tabs">' +
+        '<button class="hub-filter-btn active" data-type="all" onclick="app.handleHubFilter(document.getElementById(\'hub-search\').value, \'all\'); document.querySelectorAll(\'.hub-filter-btn\').forEach(b=>b.classList.remove(\'active\')); this.classList.add(\'active\')">All Materials</button>' +
+        '<button class="hub-filter-btn" data-type="notes" onclick="app.handleHubFilter(document.getElementById(\'hub-search\').value, \'notes\'); document.querySelectorAll(\'.hub-filter-btn\').forEach(b=>b.classList.remove(\'active\')); this.classList.add(\'active\')">Notes Only</button>' +
+        '<button class="hub-filter-btn" data-type="images" onclick="app.handleHubFilter(document.getElementById(\'hub-search\').value, \'images\'); document.querySelectorAll(\'.hub-filter-btn\').forEach(b=>b.classList.remove(\'active\')); this.classList.add(\'active\')">Images Only</button>' +
+        '</div></div>' +
+        '<div class="p-4 max-w-4xl mx-auto">' +
+        continueHTML +
+        (validSubjectsCount > 0 ? accordionsHTML : '<div class="text-center py-12"><div class="text-4xl mb-3">📭</div><p class="text-gray-500">No study materials available yet.</p></div>') +
+        '</div>';
+
+      container.innerHTML = mainHTML;
     },
      
      
