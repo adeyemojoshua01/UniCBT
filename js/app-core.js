@@ -628,7 +628,7 @@
         var tCount = s.topics ? s.topics.length : 0;
         var duration = s.duration || 30;
 
-        return '<div class="subject-card-container w-full" data-subject-name="' + self.esc(s.name) + '">' +
+         return '<div class="subject-card-container w-full" data-subject-name="' + self.esc(s.name) + '">' +
           '<div class="subject-card" onclick="app.showModeSelection(\'' + s.id + '\')">' +
           '<div class="subject-accent-line" style="background:' + theme.color + '"></div>' +
           
@@ -643,7 +643,15 @@
           '<i class="fas fa-arrow-right text-gray-500 text-lg mt-1"></i>' +
           '</div>' +
 
-          
+          // RESTORED: The tags for questions, time, and topics
+          '<div class="flex flex-wrap items-center gap-2 mt-4">' +
+          '<span class="dash-tag"><i class="fas fa-list-check" style="color:' + theme.color + '"></i> ' + qCount + ' questions</span>' +
+          '<span class="dash-tag"><i class="fas fa-clock" style="color:' + theme.color + '"></i> ' + duration + ' min</span>' +
+          '<span class="dash-tag"><i class="fas fa-layer-group" style="color:' + theme.color + '"></i> ' + tCount + ' topics</span>' +
+          '</div>' +
+
+          // RESTORED: The closing divs for the cards
+          '</div></div>'; 
       }).join('');
 
       var mainHTML = '<div class="dash-header">' +
