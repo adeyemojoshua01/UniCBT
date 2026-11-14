@@ -3,16 +3,16 @@ window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
 window.CBT_SUBJECT_BANKS.push(`Subject: Physics
 Duration: 45
 
-Topic: mechanics
+Topic: Mechanics
 
 SubTopic: Newton's Laws
 Type: MCQ
 Q001: A 5 kg mass is accelerated at 3 m/s^2. What net force acts on it?
 Option: A: 8 N
-Option: B: 45 N
-Option: C: 15 N
-Option: D: 1.67 N
-Answer: C
+Option: B: 15 N
+Option: C: 1.67 N
+Option: D: 45 N
+Answer: B
 Explanation: Newton's second law gives \\(F = ma = 5 \\times 3 = 15\\) N.
 
 SubTopic: Newton's Laws
