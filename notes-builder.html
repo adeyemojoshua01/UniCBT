@@ -613,12 +613,16 @@ window.MathJax = {
     async function publishToGitHub() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
-      const subj = state.activeSubject || 'Physics';
+      const subj = state.activeSubject || 'Untitled';
       const topic = state.activeTopic || document.getElementById('topic-name-input').value.trim() || 'Untitled';
       
       const subjSlug = getSlug(subj);
       const topicSlug = getSlug(topic);
       const draft = state.data[subj][topic] || { notes: '', svgs: [] };
+
+      if (!draft.notes && (!draft.svgs || draft.svgs.length === 0)) {
+        return toast('Cannot publish an empty topic. Write some notes or add an SVG first.', 'error');
+      }
 
       const btn = document.getElementById('btn-publish');
       const originalHTML = btn.innerHTML;
@@ -634,22 +638,16 @@ window.MathJax = {
           for (let i = 0; i < draft.svgs.length; i++) {
             const svg = draft.svgs[i];
             
-            // 1. Fix bad filenames automatically
+            // 1. Sanitize filenames heavily to prevent GitHub API rejection
             let rawName = (svg.filename || '').trim();
-            if (!rawName) {
-              rawName = `${topicSlug}-image-${i + 1}.svg`; // Auto-generate name
-            }
-            if (!rawName.toLowerCase().endsWith('.svg')) {
-              rawName += '.svg'; // Auto-append extension
-            }
+            if (!rawName) rawName = `${topicSlug}-image-${i + 1}.svg`;
+            if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
+            const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            // 2. Sanitize the filename for safe GitHub paths
-            const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-');
-            
-            // 3. Save reference to the .js file
+            // 2. Reference in the .js file
             imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
-            // 4. Upload the actual .svg file (only if there's code to upload)
+            // 3. Upload the actual .svg file
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -666,9 +664,10 @@ window.MathJax = {
         imagesContent += `];\n`;
 
         const finalCode = notesContent + '\n' + imagesContent;
+        
+        // 4. Upload the .js file
         const filename = `${subjSlug}/${topicSlug}/${topicSlug}.js`; 
 
-        // 5. Upload the notes .js file
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: filename, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
@@ -677,7 +676,7 @@ window.MathJax = {
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
         
-        toast('Published ' + topicSlug + '.js successfully!', 'success');
+        toast('Published successfully!', 'success');
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
