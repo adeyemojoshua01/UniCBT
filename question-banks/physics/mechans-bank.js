@@ -66,5 +66,4 @@ Type: Theory
 Q008: Explain entropy in terms of both heat transfer and microscopic arrangements, and why the second law forbids a perfect heat engine.
 Marks: 10
 Explanation: Macroscopically, for a reversible process \\(\\Delta S = \\frac{Q_{rev}}{T}\\). Microscopically, entropy counts the number of microstates consistent with a macrostate, \\(S = k_B \\ln \\Omega\\), so systems evolve toward more probable arrangements. The second law requires the total entropy of the universe to increase, meaning heat cannot be completely converted to work in a cycle. A perfect engine with 100% efficiency would need to reject no heat, requiring the cold reservoir at absolute zero, which is unattainable.
-
 '); 
