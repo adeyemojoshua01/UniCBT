@@ -19,5 +19,5 @@ For constant acceleration, the equations of motion are:
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Physics'] = window.CBT_SUBJECT_IMAGES['Physics'] || {};
 window.CBT_SUBJECT_IMAGES['Physics']['Mechanics'] = [
-  { data: 'question-banks/physics/carnot-cycle.svg', filename: 'carnot-cycle.svg' }
+  { data: 'question-banks/physics/svg/carnot-cycle.svg', filename: 'carnot-cycle.svg' }
 ];
