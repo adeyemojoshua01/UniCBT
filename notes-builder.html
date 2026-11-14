@@ -631,15 +631,31 @@ window.MathJax = {
         let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [\n`;
         
         if (draft.svgs && draft.svgs.length > 0) {
-          for (const svg of draft.svgs) {
-            const safeSvgName = (svg.filename || `image-${Date.now()}.svg`).replace(/[^a-zA-Z0-9.\-_]/g, '-');
+          for (let i = 0; i < draft.svgs.length; i++) {
+            const svg = draft.svgs[i];
+            
+            // 1. Fix bad filenames automatically
+            let rawName = (svg.filename || '').trim();
+            if (!rawName) {
+              rawName = `${topicSlug}-image-${i + 1}.svg`; // Auto-generate name
+            }
+            if (!rawName.toLowerCase().endsWith('.svg')) {
+              rawName += '.svg'; // Auto-append extension
+            }
+            
+            // 2. Sanitize the filename for safe GitHub paths
+            const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-');
+            
+            // 3. Save reference to the .js file
             imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
+            // 4. Upload the actual .svg file (only if there's code to upload)
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ filename: `${subjSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
+               
                if (!svgRes.ok) {
                  const err = await svgRes.json().catch(()=>({}));
                  throw new Error('SVG Error: ' + (err.error || 'Failed to upload ' + safeSvgName));
@@ -652,6 +668,7 @@ window.MathJax = {
         const finalCode = notesContent + '\n' + imagesContent;
         const filename = `${subjSlug}/${topicSlug}/${topicSlug}.js`; 
 
+        // 5. Upload the notes .js file
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: filename, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
