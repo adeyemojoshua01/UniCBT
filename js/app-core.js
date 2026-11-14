@@ -589,47 +589,7 @@
         }
       });
     },
-
-    startQuickPractice: function(subjectId) {
-      var subject = this.data.subjects[subjectId];
-      if (!subject || !subject.questions || subject.questions.length === 0) {
-        return this.toast('No questions available to start a quick practice.', 'error');
-      }
-      
-      var name = this.data.candidateName;
-      if (!name) {
-        name = prompt("Enter your name to start Quick Practice:");
-        if (!name) return;
-        this.data.candidateName = name.trim();
-      }
-
-      // Grab up to 10 random questions
-      var questionsToUse = subject.questions.slice();
-      this.shuffle(questionsToUse);
-      questionsToUse = questionsToUse.slice(0, 10);
-
-      this.data.questions = questionsToUse;
-      this.data.examMode = 'practice';
-      this.data.currentQuestionIndex = 0;
-      this.data.userAnswers = {};
-      this.data.answerRevealed = {};
-      this.data._theoryDrafts = {};
-      this._lastImageRequest = {};
-      this.clearExamState();
-      
-      var examDuration = subject.duration || 30;
-      this.data.examDuration = examDuration;
-      this.data.timeLeft = examDuration * 60;
-      this.data.endTime = null;
-      
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-      
-      this.startTimer();
-      this.showTestInterface();
-      this.saveExamState();
-      this.toast('Quick Practice Started!', 'success');
-    },
+    
      
      
          showCandidateOptions: function () {
@@ -683,16 +643,7 @@
           '<i class="fas fa-arrow-right text-gray-500 text-lg mt-1"></i>' +
           '</div>' +
 
-          '<div class="flex flex-wrap items-center gap-2 mt-4">' +
-          '<span class="dash-tag"><i class="fas fa-list-check" style="color:' + theme.color + '"></i> ' + qCount + ' questions</span>' +
-          '<span class="dash-tag"><i class="fas fa-clock" style="color:' + theme.color + '"></i> ' + duration + ' min</span>' +
-          '<span class="dash-tag"><i class="fas fa-layer-group" style="color:' + theme.color + '"></i> ' + tCount + ' topics</span>' +
-          '</div>' +
-
-          (qCount > 0 ? 
-            '<button onclick="event.stopPropagation(); app.startQuickPractice(\'' + s.id + '\')" class="quick-play-btn" style="background:' + theme.bg + '; color:' + theme.color + '; border: 1px solid ' + theme.color + '">' +
-            '<i class="fas fa-play"></i> Quick Practice (10 Qs)</button>' : '') +
-          '</div></div>';
+          
       }).join('');
 
       var mainHTML = '<div class="dash-header">' +
