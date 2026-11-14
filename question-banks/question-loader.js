@@ -16,8 +16,15 @@
     var currentSubTopic = 'General', explanationMode = false;
 
     function ensureSubject(name) {
+      var sname = String(name || 'Untitled').trim();
+      // Check if subject already exists and MERGE it
+      var existingId = Object.keys(subjects).find(function(id) {
+        return subjects[id].name.toLowerCase() === sname.toLowerCase();
+      });
+      if (existingId) return subjects[existingId];
+      
       var id = uniqueSubjectId();
-      var s = { id: id, name: String(name || 'Untitled').trim(), duration: 30, questions: [], topics: [], notes: {}, topicImages: {} };
+      var s = { id: id, name: sname, duration: 30, questions: [], topics: [], notes: {}, topicImages: {} };
       subjects[id] = s;
       return s;
     }
@@ -117,14 +124,12 @@
       var subNotes  = EXT_NOTES[ns.name]  || {};
       var subImages = EXT_IMAGES[ns.name] || {};
 
-      // DYNAMIC TOPIC CREATION FOR NOTES
       Object.keys(subNotes).forEach(function(topicName) {
         var existingTopic = ns.topics.find(function(t) { return t.name.toLowerCase() === topicName.toLowerCase(); });
         if (!existingTopic) { existingTopic = { id: topicId(topicName), name: topicName }; ns.topics.push(existingTopic); }
         ns.notes[existingTopic.id] = subNotes[topicName];
       });
 
-      // DYNAMIC TOPIC CREATION FOR IMAGES
       Object.keys(subImages).forEach(function(topicName) {
         var existingTopic = ns.topics.find(function(t) { return t.name.toLowerCase() === topicName.toLowerCase(); });
         if (!existingTopic) { existingTopic = { id: topicId(topicName), name: topicName }; ns.topics.push(existingTopic); }
