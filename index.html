@@ -45,14 +45,51 @@ window.MathJax = {
 
 <div id="app-container" class="mathjax max-w-7xl mx-auto p-4 md:p-6"></div>
 
-<!-- ============ NOTE VIEWER MODAL ============ -->
-<div id="note-viewer-modal" class="hidden fixed inset-0 z-[900] bg-black/60 backdrop-blur-sm p-3 md:p-8 overflow-y-auto">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-4xl mx-auto overflow-hidden">
-    <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-200 bg-gray-50">
-      <h2 id="note-viewer-title" class="font-bold text-lg text-gray-800 min-w-0 truncate">Notes</h2>
-      <button onclick="document.getElementById('note-viewer-modal').classList.add('hidden')" class="w-9 h-9 rounded-lg bg-red-500 text-white hover:bg-red-600 shrink-0" aria-label="Close notes"><i class="fas fa-times"></i></button>
+<!-- ============ SCHOLAR VIEW NOTE MODAL ============ -->
+<div id="note-viewer-modal" class="hidden fixed inset-0 z-[900] bg-black/70 backdrop-blur-md p-0 md:p-8 overflow-hidden transition-opacity">
+  <div id="note-viewer-shell" class="note-theme-dark bg-[#0B1020] w-full h-full md:h-[90vh] md:max-w-4xl md:rounded-2xl shadow-2xl flex flex-col mx-auto overflow-hidden border border-[#1e2740]">
+    
+    <!-- Header -->
+    <div class="flex-none flex items-center justify-between gap-3 p-4 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
+      <div class="flex items-center gap-2 min-w-0">
+        <i class="fas fa-book-open text-amber-500"></i>
+        <h2 id="note-viewer-title" class="font-bold text-lg truncate">Notes</h2>
+      </div>
+      <button onclick="document.getElementById('note-viewer-modal').classList.add('hidden')" class="w-9 h-9 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors shrink-0" aria-label="Close notes"><i class="fas fa-times"></i></button>
     </div>
-    <div id="note-viewer-content" class="mathjax note-content p-5 md:p-7 text-gray-800 leading-relaxed max-h-[75vh] overflow-y-auto"></div>
+
+    <!-- Reading Progress Bar -->
+    <div class="flex-none h-1 w-full bg-gray-200 dark:bg-gray-800 relative">
+      <div id="note-progress-bar" class="absolute top-0 left-0 h-full bg-amber-500 w-0 transition-all duration-150"></div>
+    </div>
+
+    <!-- Search Bar Overlay (Hidden by default) -->
+    <div id="note-search-bar" class="hidden flex-none p-3 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
+      <div class="relative">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text" id="note-search-input" placeholder="Search notes..." class="w-full pl-9 pr-10 py-2 rounded-lg bg-white/50 dark:bg-black/20 border border-black/10 dark:border-white/10 focus:outline-none focus:border-amber-500" oninput="app.performNoteSearch(this.value)">
+        <span id="note-search-count" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"></span>
+      </div>
+    </div>
+
+    <!-- Table of Contents Drawer (Hidden by default) -->
+    <div id="note-toc-drawer" class="hidden flex-none max-h-48 overflow-y-auto p-4 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Table of Contents</h4>
+      <ul id="note-toc-list" class="space-y-1 text-sm"></ul>
+    </div>
+
+    <!-- Scrollable Content Area -->
+    <div id="note-viewer-content" class="mathjax note-content flex-grow p-5 md:p-8 overflow-y-auto leading-relaxed" onscroll="app.updateNoteProgress(this)"></div>
+
+    <!-- Floating Toolbar (Mobile-Friendly) -->
+    <div class="flex-none p-3 bg-black/5 dark:bg-white/5 border-t border-black/10 dark:border-white/10 flex items-center justify-center gap-2 md:gap-4">
+      <button onclick="app.adjustNoteFontSize(-1)" class="toolbar-btn" title="Decrease Font Size"><i class="fas fa-font"></i><span class="text-xs ml-1">-</span></button>
+      <button onclick="app.adjustNoteFontSize(1)" class="toolbar-btn" title="Increase Font Size"><i class="fas fa-font"></i><span class="text-xs ml-1">+</span></button>
+      <div class="w-px h-6 bg-gray-400/30 mx-1"></div>
+      <button onclick="app.toggleNoteTOC()" class="toolbar-btn" title="Table of Contents"><i class="fas fa-list-ul"></i></button>
+      <button onclick="app.toggleNoteSearch()" class="toolbar-btn" title="Search Notes"><i class="fas fa-search"></i></button>
+      <button onclick="app.toggleNoteTheme()" class="toolbar-btn" title="Change Theme"><i class="fas fa-adjust"></i></button>
+    </div>
   </div>
 </div>
 
