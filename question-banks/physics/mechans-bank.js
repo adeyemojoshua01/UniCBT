@@ -1,7 +1,7 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
 window.CBT_SUBJECT_BANKS.push(`Subject: Physics
 Duration: 45
-Topic: Mechanics
+Topic: Mechans
 
 SubTopic: Newton's Laws
 Type: MCQ
