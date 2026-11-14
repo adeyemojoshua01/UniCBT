@@ -127,13 +127,13 @@ window.MathJax = {
       <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-3">
-      <p class="text-[11.5px] text-slate-400">Commits to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>. Update the filename below to include the nested folder structure.</p>
+      <p class="text-[11.5px] text-slate-400">Commits to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>. The path is automatically generated based on the selected Subject and Topic.</p>
       <div class="grid sm:grid-cols-2 gap-3">
         <div><label class="lbl">GitHub owner</label><input id="pub-owner" class="field" placeholder="octocat"></div>
         <div><label class="lbl">Repository</label><input id="pub-repo" class="field" placeholder="my-question-banks"></div>
       </div>
       <div><label class="lbl">Fine-grained token <span class="text-slate-600 normal-case tracking-normal">(stored locally)</span></label><input id="pub-token" type="password" class="field" placeholder="github_pat_…"></div>
-      <div><label class="lbl">Target File Path</label><input id="pub-filename" class="field font-mono" placeholder="subject/topic/bank.js"></div>
+      <div><label class="lbl">Target File Path (Auto-generated)</label><input id="pub-filename" class="field font-mono bg-[#0a0f1d] text-gray-400 cursor-not-allowed" readonly></div>
       <div class="flex items-center gap-2">
         <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber flex-grow justify-center"><i class="fas fa-cloud-arrow-up"></i> Publish bank</button>
       </div>
@@ -1013,14 +1013,17 @@ window.MathJax = {
     },
 
     /* ------------- export ------------- */
-    defaultFilename: function () {
+defaultFilename: function () {
       var s = currentSubject();
       var t = currentTopic();
+      // Force lowercase and replace spaces with dashes
       var subjSlug = B.slug(s ? s.name : 'subject');
-      var topicSlug = t ? B.slug(t.name) : 'topic';
+      var topicSlug = t ? B.slug(t.name) : 'general';
       return subjSlug + '/' + topicSlug + '/' + topicSlug + '-bank.js';
     },
-    slug: function (s) { return String(s || 'question').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'question'; },
+    slug: function (str) { 
+      return String(str || 'untitled').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); 
+    },
     openExport: function () {
       B.openModal('export-modal');
       var input = document.getElementById('export-filename');
@@ -1110,17 +1113,27 @@ window.MathJax = {
     },
 
     /* ------------- publish ------------- */
+        
     openPublish: function () {
+      // Check if the current context has questions
+      if (!appData.subjects.length) {
+        B.toast('Nothing to publish! Create a subject and add questions first.', 'error');
+        return;
+      }
+      
       B.openModal('publish-modal');
       document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
       document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
       document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
+      // Auto-fill the readonly path
       document.getElementById('pub-filename').value = B.defaultFilename();
+      
       var err = document.getElementById('pub-error');
       if (err) err.classList.add('hidden');
       var st = document.getElementById('pub-status');
       if (st) st.textContent = '';
     },
+    
     submitPublish: async function () {
       var owner = document.getElementById('pub-owner').value.trim();
       var repo = document.getElementById('pub-repo').value.trim();
