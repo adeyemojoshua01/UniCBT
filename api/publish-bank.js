@@ -1,11 +1,4 @@
-// POST /api/publish-bank — commits a generated question-bank .js file to GitHub.
-// Vercel serverless function (CommonJS, no build step).
-// NOTE: the client sends `githubToken`, but it is IGNORED — the server uses
-// process.env.GITHUB_TOKEN so the token never has to live in the browser.
-
-const PERMISSION_MESSAGE =
-  "Permission Denied. Ensure your Fine-Grained token has 'Contents: Read and Write' access to this repository.";
-
+/* api/publish-bank.js — commits a file to GitHub, creating folders if necessary */
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -13,67 +6,75 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { filename, code, repoOwner, repoName } = body;
-    const token = process.env.GITHUB_TOKEN;
-
-    // 2. validate
-    if (!token) return res.status(400).json({ error: 'GITHUB_TOKEN is not configured on the server.' });
-    if (!repoOwner || !repoName || !filename || !code) {
-      return res.status(400).json({ error: 'Missing required fields: repoOwner, repoName, filename and code.' });
+    let body = req.body || {};
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch (e) { body = {}; }
     }
-    if (/[\\/]/.test(filename) || filename.includes('..')) {
-      return res.status(400).json({ error: 'Invalid filename.' });
+    let { filename, code, repoOwner, repoName } = body;
+    const githubToken = process.env.GITHUB_TOKEN;
+
+    if (!githubToken || !repoOwner || !repoName || !filename || !code) {
+      return res.status(400).json({ error: 'Missing required fields.' });
     }
 
-    // 3. target
-    const path = 'question-banks/' + filename;
-    const apiUrl = `https://api.github.com/repos/${encodeURIComponent(repoOwner)}/${encodeURIComponent(repoName)}/contents/${path}`;
+    // Sanitize path (remove leading/trailing slashes, fix double slashes)
+    filename = filename.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+    
+    // GitHub API requires each path segment to be encoded separately
+    const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${encodedPath}`;
+    
     const headers = {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${githubToken}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'educbt-bank-publisher'
+      'User-Agent': 'eduCBT-builder'
     };
 
-    // 4. does the file already exist?  (404 = new file)
-    let sha;
-    const getRes = await fetch(`${apiUrl}?ref=main`, { headers });
-    if (getRes.ok) {
-      const existing = await getRes.json();
-      sha = existing.sha;
-    } else if (getRes.status === 404) {
-      sha = undefined;
-    } else if (getRes.status === 403 || getRes.status === 401) {
-      throw new Error(PERMISSION_MESSAGE);
-    } else {
-      throw new Error(`GitHub lookup failed (HTTP ${getRes.status}).`);
+    // 1. Check if file exists to get SHA (required for updating)
+    let sha = null;
+    const existing = await fetch(apiUrl, { headers });
+    
+    if (existing.ok) {
+      const existingData = await existing.json();
+      sha = existingData.sha || null;
+    } else if (existing.status !== 404) {
+      const errText = await existing.text();
+      throw new Error(`GitHub lookup failed (${existing.status}): ${errText.slice(0, 300)}`);
     }
 
-    // 5. + 6. commit
-    const content = Buffer.from(code).toString('base64');
-    const message = `${sha ? 'Update' : 'Add'} question bank ${filename} via eduCBT builder`;
+    // 2. Prepare and Upload the file
+    // Note: GitHub's /contents API DOES allow creating nested files as long as the final path is encoded right.
+    const encoded = Buffer.from(String(code), 'utf8').toString('base64');
     const putRes = await fetch(apiUrl, {
       method: 'PUT',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, content, sha: sha || undefined, branch: 'main' })
+      body: JSON.stringify({
+        message: `chore: update ${filename}`,
+        content: encoded,
+        sha: sha || undefined,
+        branch: 'main'
+      })
     });
 
     if (!putRes.ok) {
-      if (putRes.status === 403 || putRes.status === 404) throw new Error(PERMISSION_MESSAGE);
-      let detail = '';
-      try { detail = (await putRes.json()).message; } catch (e) { /* ignore */ }
-      throw new Error(`GitHub commit failed (HTTP ${putRes.status})${detail ? ': ' + detail : ''}`);
+      const errText = await putRes.text();
+      
+      // If it fails because folder doesn't exist, we give a clearer error
+      if (putRes.status === 404 || putRes.status === 422) {
+        throw new Error(`GitHub rejected the path. Ensure the repository has the base folder 'question-banks/' created. Raw error: ${errText.slice(0, 100)}`);
+      }
+      
+      throw new Error(`GitHub commit failed (${putRes.status}): ${errText.slice(0, 300)}`);
     }
 
-    // 7. success
     const commitData = await putRes.json();
     return res.status(200).json({
       success: true,
-      message: `Published ${filename} successfully.`,
-      commitUrl: commitData.commit && commitData.commit.html_url
+      message: 'Published successfully.',
+      commitUrl: commitData.commit ? commitData.commit.html_url : null
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message || 'Failed to publish the question bank.' });
+    return res.status(500).json({ error: error.message || 'Publishing failed.' });
   }
 };
