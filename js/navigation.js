@@ -152,9 +152,14 @@
       nav.handlePop(e.state);
     });
 
-    try { history.replaceState({ screen: 'landing' }, '', '#landing'); } catch (e) {}
+    var initialScreen = (app.data.mode === 'resume-prompt') ? 'resume-prompt' : 'landing';
+    try { history.replaceState({ screen: initialScreen }, '', '#' + initialScreen); } catch (e) {}
+    
     nav._suppress = true;
-    app.showLanding();
+    // Only force landing if we aren't already showing a resume prompt or an active test
+    if (app.data.mode !== 'resume-prompt' && app.data.mode !== 'test') {
+      app.showLanding();
+    }
     setTimeout(function () { nav._suppress = false; }, 0);
   }
 })();
