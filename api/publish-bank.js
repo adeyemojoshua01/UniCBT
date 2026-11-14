@@ -18,7 +18,15 @@ module.exports = async function handler(req, res) {
     }
 
     // Sanitize path (remove leading/trailing slashes, fix double slashes)
+        // 1. Remove any accidental "question-banks/" prefix sent by the frontend
+    filename = filename.replace(/^question-banks\//i, '');
+    
+    // 2. Sanitize path (remove leading/trailing slashes, fix double slashes)
     filename = filename.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+    
+    // 3. Force it into the question-banks folder
+    const path = 'question-banks/' + filename;
+
     
     // GitHub API requires each path segment to be encoded separately
     const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
