@@ -360,7 +360,118 @@
           '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">📭</div><p class="text-gray-500">No study material has been uploaded for this subject yet.</p></div>');
     },
 
-    viewTopicNote: function (subjectId, topicId, topicName) {
+
+         // --- SCHOLAR VIEW FUNCTIONS ---
+    noteSettings: { theme: 'dark', fontSize: 16 },
+    
+    loadNoteSettings: function() {
+      try {
+        var saved = JSON.parse(localStorage.getItem('cbt_note_settings'));
+        if (saved) this.noteSettings = saved;
+      } catch(e) {}
+    },
+
+    applyNoteSettings: function() {
+      var shell = document.getElementById('note-viewer-shell');
+      var content = document.getElementById('note-viewer-content');
+      if (!shell || !content) return;
+      
+      shell.className = shell.className.replace(/note-theme-\w+/g, '').trim();
+      shell.classList.add('note-theme-' + this.noteSettings.theme);
+      content.style.fontSize = this.noteSettings.fontSize + 'px';
+      
+      localStorage.setItem('cbt_note_settings', JSON.stringify(this.noteSettings));
+    },
+
+    toggleNoteTheme: function() {
+      var themes = ['dark', 'light', 'sepia'];
+      var idx = themes.indexOf(this.noteSettings.theme);
+      this.noteSettings.theme = themes[(idx + 1) % themes.length];
+      this.applyNoteSettings();
+    },
+
+    adjustNoteFontSize: function(dir) {
+      this.noteSettings.fontSize = Math.max(12, Math.min(24, this.noteSettings.fontSize + dir));
+      this.applyNoteSettings();
+    },
+
+    toggleNoteSearch: function() {
+      var bar = document.getElementById('note-search-bar');
+      var input = document.getElementById('note-search-input');
+      bar.classList.toggle('hidden');
+      if (!bar.classList.contains('hidden')) { input.focus(); } 
+      else { input.value = ''; this.performNoteSearch(''); }
+    },
+
+    toggleNoteTOC: function() {
+      document.getElementById('note-toc-drawer').classList.toggle('hidden');
+    },
+
+    updateNoteProgress: function(el) {
+      var progress = document.getElementById('note-progress-bar');
+      if (!progress) return;
+      var scrollTop = el.scrollTop;
+      var scrollHeight = el.scrollHeight - el.clientHeight;
+      var scrolled = (scrollTop / scrollHeight) * 100;
+      progress.style.width = scrolled + '%';
+    },
+
+    generateNoteTOC: function() {
+      var content = document.getElementById('note-viewer-content');
+      var tocList = document.getElementById('note-toc-list');
+      if (!content || !tocList) return;
+      
+      var headings = content.querySelectorAll('h1, h2, h3');
+      if (headings.length === 0) {
+        document.getElementById('note-toc-drawer').classList.add('hidden');
+        return;
+      }
+      
+      var html = '';
+      headings.forEach(function(h, i) {
+        var id = 'note-heading-' + i;
+        h.id = id;
+        html += '<li><button onclick="document.getElementById(\'' + id + '\').scrollIntoView({behavior:\'smooth\'})"><i class="fas fa-hashtag text-gray-500 mr-2 text-xs"></i>' + h.innerText + '</button></li>';
+      });
+      tocList.innerHTML = html;
+    },
+
+    performNoteSearch: function(query) {
+      var content = document.getElementById('note-viewer-content');
+      var countEl = document.getElementById('note-search-count');
+      if (!content) return;
+      
+      // Reset highlights
+      content.innerHTML = content.innerHTML.replace(/<mark class="note-search-hit[^>]*>(.*?)<\/mark>/gi, '$1');
+      
+      if (!query || query.trim().length < 2) {
+        if (countEl) countEl.textContent = '';
+        return;
+      }
+      
+      // Simple text search using regex (ignores HTML tags to prevent breaking them)
+      var regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?![^<]*>)', 'gi');
+      var matches = 0;
+      
+      // We use a TreeWalker to safely highlight text without breaking MathJax SVGs
+      var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, null, false);
+      var nodes = [];
+      while (walker.nextNode()) { nodes.push(walker.currentNode); }
+      
+      nodes.forEach(function(node) {
+        if (regex.test(node.nodeValue)) {
+          matches += (node.nodeValue.match(regex) || []).length;
+          var span = document.createElement('span');
+          span.innerHTML = node.nodeValue.replace(regex, '<mark class="note-search-hit">$1</mark>');
+          node.parentNode.replaceChild(span, node);
+        }
+      });
+      
+      if (countEl) countEl.textContent = matches + ' found';
+    },
+
+     
+        viewTopicNote: function (subjectId, topicId, topicName) {
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.notes) return;
       var note = subject.notes[topicId];
@@ -379,7 +490,6 @@
       
       var bodyEl = document.getElementById('note-viewer-content');
       if (bodyEl) {
-        // Use the Markdown parser + Math protector here
         if (window.marked && typeof this.parseMarkdownWithMath === 'function') {
           bodyEl.innerHTML = this.parseMarkdownWithMath(note);
         } else {
@@ -389,6 +499,22 @@
       
       var modal = document.getElementById('note-viewer-modal');
       if (modal) modal.classList.remove('hidden');
+      
+      // Reset UI state
+      document.getElementById('note-search-bar').classList.add('hidden');
+      document.getElementById('note-search-input').value = '';
+      document.getElementById('note-search-count').textContent = '';
+      document.getElementById('note-toc-drawer').classList.add('hidden');
+      
+      // Initialize Scholar View features
+      this.loadNoteSettings();
+      this.applyNoteSettings();
+      this.generateNoteTOC();
+      
+      // Reset progress bar and scroll
+      document.getElementById('note-progress-bar').style.width = '0%';
+      bodyEl.scrollTop = 0;
+      
       this.typeset('#note-viewer-content');
       this.triggerMathJax();
     },
