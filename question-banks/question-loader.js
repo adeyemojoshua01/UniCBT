@@ -1,26 +1,16 @@
 /* ============================================================
    question-loader.js — parses the CBT_SUBJECT_BANKS text DSL
    into window.app.data.subjects (object keyed by subjectId)
-
-   Study notes and study images are supplied externally by the
-   per-subject notes.js files, which set:
-     window.CBT_SUBJECT_NOTES            [subjectName][topicName] → html
-     window.CBT_SUBJECT_IMAGES           [subjectName][topicName] → [{data, filename}]
-     window.CBT_SUBJECT_REFERENCE_IMAGES [subjectName]            → [{data, filename}]
-
-   Those files must load BEFORE this script.
    ============================================================ */
 (function () {
   'use strict';
 
-  /* ---------- stable topic id (so saved notes keep matching) ---------- */
   function slug(str) {
     return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'topic';
   }
   function topicId(name) { return 'topic_' + slug(name); }
   function uniqueSubjectId() { return 'subj_' + Date.now() + '_' + Math.floor(Math.random() * 100000); }
 
-  /* ---------- parser ---------- */
   function parseQuestions(text) {
     var subjects = {};
     var subject = null;
@@ -49,15 +39,9 @@
       if (!topic) topic = ensureTopic('General');
       if (!question) {
         question = {
-          id: Date.now() + Math.random(),
-          text: '',
-          type: 'objective',
-          correct: '',
-          explanation: '',
-          options: {},
-          topicId: topic.id,
-          subTopic: currentSubTopic || 'General',
-          maxMarks: 10
+          id: Date.now() + Math.random(), text: '', type: 'objective',
+          correct: '', explanation: '', options: {}, topicId: topic.id,
+          subTopic: currentSubTopic || 'General', maxMarks: 10
         };
         subject.questions.push(question);
       }
@@ -97,15 +81,9 @@
         if (/theory/i.test(typeRaw)) mapped = 'theory';
         else if (/fill/i.test(typeRaw)) mapped = 'fill';
         question = {
-          id: Date.now() + Math.random(),
-          text: '',
-          type: mapped,
-          correct: '',
-          explanation: '',
-          options: mapped === 'objective' ? {} : null,
-          topicId: topic.id,
-          subTopic: currentSubTopic || 'General',
-          maxMarks: 10
+          id: Date.now() + Math.random(), text: '', type: mapped,
+          correct: '', explanation: '', options: mapped === 'objective' ? {} : null,
+          topicId: topic.id, subTopic: currentSubTopic || 'General', maxMarks: 10
         };
         subject.questions.push(question);
         explanationMode = false;
@@ -128,9 +106,8 @@
         if (!qo.options) qo.options = {};
         var rest = line.replace(/^Option\s*:/i, '').trim();
         var mm = rest.match(/^([A-Da-d])\s*:\s*([\s\S]*)$/);
-        if (mm) {
-          qo.options[mm[1].toUpperCase()] = mm[2].trim();
-        } else if (rest) {
+        if (mm) qo.options[mm[1].toUpperCase()] = mm[2].trim();
+        else if (rest) {
           var letters = ['A', 'B', 'C', 'D'];
           var next = letters.filter(function (l) { return qo.options[l] === undefined; })[0];
           if (next) qo.options[next] = rest;
@@ -148,20 +125,17 @@
         explanationMode = true;
         return;
       }
-      /* bare A: option lines */
       var bare = line.match(/^([A-D])\s*:\s*(.+)$/);
       if (!explanationMode && bare && question && question.type === 'objective') {
         if (!question.options) question.options = {};
         question.options[bare[1]] = bare[2].trim();
         return;
       }
-      /* explanation continuation */
       if (explanationMode && question) {
         question.explanation = (question.explanation ? question.explanation + ' ' : '') + line;
       }
     });
 
-    /* acceptance rules */
     Object.keys(subjects).forEach(function (sid) {
       var s = subjects[sid];
       s.questions = s.questions.filter(function (q) {
@@ -170,7 +144,6 @@
         if (q.type === 'fill') return !!q.correct;
         return !!q.text;
       });
-      /* drop questions whose topic vanished */
       var validTopics = {};
       s.topics.forEach(function (t) { validTopics[t.id] = true; });
       s.questions.forEach(function (q) {
@@ -186,7 +159,6 @@
     return subjects;
   }
 
-  /* ---------- boot ---------- */
   function boot() {
     var tries = 0;
     var interval = setInterval(function () {
@@ -203,28 +175,23 @@
     }, 100);
   }
 
-  /* ---------- merge saved notes/images + external per-subject files ---------- */
   function mergeSaved(newSubjects) {
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem('cbt_subjects') || '{}') || {}; } catch (e) { saved = {}; }
     var savedList = Object.values(saved);
-
     var savedImages = {};
     try { savedImages = JSON.parse(localStorage.getItem('cbt_images') || '{}') || {}; } catch (e) { savedImages = {}; }
-
     var remappedImages = {};
     var imagesChanged = false;
 
+    // Read from the global objects created by your separate topic .js files
     var EXT_NOTES  = window.CBT_SUBJECT_NOTES  || {};
     var EXT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 
     Object.values(newSubjects).forEach(function (ns) {
       var savedSub = savedList.find(function (s) { return s && s.name === ns.name; });
-
       if (savedSub) {
-        /* reuse persisted subject id so saved exams, images and notes keep resolving */
         if (savedSub.id) ns.id = savedSub.id;
-
         if (savedSub.notes && typeof savedSub.notes === 'object') {
           Object.keys(savedSub.notes).forEach(function (k) {
             if (savedSub.notes[k] && String(savedSub.notes[k]).trim() !== '') ns.notes[k] = savedSub.notes[k];
@@ -241,16 +208,14 @@
         }
       }
 
-      /* fall back to the external per-subject notes.js payloads */
       var subNotes  = EXT_NOTES[ns.name]  || {};
       var subImages = EXT_IMAGES[ns.name] || {};
 
-            ns.topics.forEach(function (t) {
-        // Force the new external notes to overwrite old cached notes
+      // Force external files to take precedence over local storage cache
+      ns.topics.forEach(function (t) {
         if (subNotes[t.name]) {
           ns.notes[t.id] = subNotes[t.name];
         }
-        // Force the new external images to overwrite old cached images
         if (subImages[t.name]) {
           ns.topicImages[t.id] = subImages[t.name].slice();
         }
@@ -263,7 +228,6 @@
     }
   }
 
-  /* ---------- load ---------- */
   function load() {
     var text = window.CBT_SUBJECT_BANKS.join('\n');
     var parsed = parseQuestions(text);
@@ -275,7 +239,6 @@
     }
     mergeSaved(parsed);
 
-    /* rebuild the keyed object because mergeSaved may reuse persisted subject ids */
     var rebuilt = {};
     Object.values(parsed).forEach(function (s) { rebuilt[s.id] = s; });
     parsed = rebuilt;
@@ -288,13 +251,10 @@
       window.app.data.currentSubjectId = ids[0];
     }
 
-    /* merge any persisted subject-level reference images */
     window.app.data.images = window.app.data.images || {};
     var savedImages = {};
     try { savedImages = JSON.parse(localStorage.getItem('cbt_images') || '{}') || {}; } catch (e) { savedImages = {}; }
     Object.keys(savedImages).forEach(function (k) { window.app.data.images[k] = savedImages[k]; });
-
-    
 
     if (typeof window.app.saveImages === 'function') window.app.saveImages();
     window.app.data.refreshLocked = false;
@@ -306,10 +266,6 @@
     }
   }
 
-  /* ---------- public API (kept for backwards compatibility) ---------- */
   window.parseCBTBankQuestions = parseQuestions;
-  /* kept as empty objects so any external code referencing them does not crash */
-  window.CBT_DEFAULT_STUDY_NOTES = window.CBT_DEFAULT_STUDY_NOTES || {};
-
   boot();
 })();
