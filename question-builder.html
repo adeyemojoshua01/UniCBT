@@ -103,7 +103,7 @@ window.MathJax = {
     </div>
     <div class="p-5 space-y-4">
       <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
-        <div><label class="lbl">Filename</label><input id="export-filename" class="field font-mono" onchange="B.updateExportPreview()"></div>
+        <div><label class="lbl">Filename (Path)</label><input id="export-filename" class="field font-mono" onchange="B.updateExportPreview()"></div>
         <label class="flex items-center gap-2 text-xs font-semibold text-slate-300 pb-2"><input type="checkbox" id="export-shuffle" class="accent-amber-500" onchange="B.updateExportPreview()"> Shuffle options</label>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -127,13 +127,13 @@ window.MathJax = {
       <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-3">
-      <p class="text-[11.5px] text-slate-400">Commits <code class="text-amber-300">question-banks/&lt;filename&gt;</code> to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>. The endpoint ignores the token field and uses the deployment&rsquo;s own <code>GITHUB_TOKEN</code>; credentials are saved locally for convenience.</p>
+      <p class="text-[11.5px] text-slate-400">Commits to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>. Update the filename below to include the nested folder structure.</p>
       <div class="grid sm:grid-cols-2 gap-3">
         <div><label class="lbl">GitHub owner</label><input id="pub-owner" class="field" placeholder="octocat"></div>
         <div><label class="lbl">Repository</label><input id="pub-repo" class="field" placeholder="my-question-banks"></div>
       </div>
       <div><label class="lbl">Fine-grained token <span class="text-slate-600 normal-case tracking-normal">(stored locally)</span></label><input id="pub-token" type="password" class="field" placeholder="github_pat_…"></div>
-      <div><label class="lbl">Filename</label><input id="pub-filename" class="field font-mono"></div>
+      <div><label class="lbl">Target File Path</label><input id="pub-filename" class="field font-mono" placeholder="subject/topic/bank.js"></div>
       <div class="flex items-center gap-2">
         <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber flex-grow justify-center"><i class="fas fa-cloud-arrow-up"></i> Publish bank</button>
       </div>
@@ -808,12 +808,14 @@ window.MathJax = {
       var repo = localStorage.getItem('gh_repo');
       if (!owner) { owner = prompt('GitHub owner (username or organisation):'); if (!owner) return; localStorage.setItem('gh_owner', owner.trim()); }
       if (!repo) { repo = prompt('GitHub repository name:'); if (!repo) return; localStorage.setItem('gh_repo', repo.trim()); }
-      var filename = prompt('Filename inside question-banks/ (e.g. physics-bank.js):');
+      
+      var filename = prompt('Full file path inside question-banks/ (e.g. physics/thermodynamics/thermodynamics-bank.js):');
       if (!filename) return;
+      
       var status = document.getElementById('import-status');
       if (status) status.textContent = 'Fetching raw.githubusercontent.com…';
       try {
-        var url = 'https://raw.githubusercontent.com/' + encodeURIComponent(owner.trim()) + '/' + encodeURIComponent(repo.trim()) + '/main/question-banks/' + encodeURIComponent(filename.trim());
+        var url = 'https://raw.githubusercontent.com/' + encodeURIComponent(owner.trim()) + '/' + encodeURIComponent(repo.trim()) + '/main/question-banks/' + filename;
         var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var text = await res.text();
@@ -1012,8 +1014,11 @@ window.MathJax = {
 
     /* ------------- export ------------- */
     defaultFilename: function () {
-      var base = (appData.subjects[0] && appData.subjects[0].name) || 'question';
-      return B.slug(base) + '-bank.js';
+      var s = currentSubject();
+      var t = currentTopic();
+      var subjSlug = B.slug(s ? s.name : 'subject');
+      var topicSlug = t ? B.slug(t.name) : 'topic';
+      return subjSlug + '/' + topicSlug + '/' + topicSlug + '-bank.js';
     },
     slug: function (s) { return String(s || 'question').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'question'; },
     openExport: function () {
@@ -1146,7 +1151,7 @@ window.MathJax = {
         if (errBox) { errBox.textContent = err.message; errBox.classList.remove('hidden'); }
         if (status) status.textContent = '';
       } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish bank'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-upload"></i> Publish bank'; }
       }
     }
   };
