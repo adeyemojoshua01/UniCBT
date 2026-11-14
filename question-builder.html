@@ -1138,7 +1138,8 @@ defaultFilename: function () {
       var owner = document.getElementById('pub-owner').value.trim();
       var repo = document.getElementById('pub-repo').value.trim();
       var token = document.getElementById('pub-token').value.trim();
-      var filename = document.getElementById('pub-filename').value.trim();
+      var filename = document.getElementById('pub-filename').value.trim();       
+      filename = filename.replace(/^question-banks\//i, ''); // Strip prefix if present
       var status = document.getElementById('pub-status');
       var errBox = document.getElementById('pub-error');
       var btn = document.getElementById('pub-submit');
