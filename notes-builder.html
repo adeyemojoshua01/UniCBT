@@ -558,15 +558,27 @@ window.MathJax = {
         const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
         new Function('window', text)(dummyWindow);
         
-        const noteContent = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject]?.[state.activeTopic] || '';
-        const imgArray = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject]?.[state.activeTopic] || [];
+        // SMART MATCHING: Find the exact key in the file (ignoring case)
+        const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
+        const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
+        
+        let actualTopicKey = Object.keys(notesObj).find(function(k) { return k.toLowerCase() === state.activeTopic.toLowerCase(); });
+        if (!actualTopicKey) {
+            actualTopicKey = Object.keys(imagesObj).find(function(k) { return k.toLowerCase() === state.activeTopic.toLowerCase(); });
+        }
+        const topicKeyToUse = actualTopicKey || state.activeTopic;
+
+        const noteContent = notesObj[topicKeyToUse] || '';
+        const imgArray = imagesObj[topicKeyToUse] || [];
+
+        if (!noteContent && imgArray.length === 0) {
+           toast('File found, but it is completely empty on GitHub.', 'info');
+        }
 
         state.data[state.activeSubject][state.activeTopic].notes = noteContent;
         
-        // Fetch actual SVG codes from the filenames in the /svg/ folder
-        state.data[state.activeSubject][state.activeTopic].svgs = await Promise.all(imgArray.map(async img => {
+        state.data[state.activeSubject][state.activeTopic].svgs = await Promise.all(imgArray.map(async function(img) {
           let svgCode = '';
-          // Extract filename from path (e.g. 'question-banks/physics/svg/pv-diagram.svg' -> 'pv-diagram.svg')
           const filename = img.filename || img.data.split('/').pop();
           
           try {
