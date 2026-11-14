@@ -15,4 +15,6 @@ Kinetic energy is given by:
 
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Physics'] = window.CBT_SUBJECT_IMAGES['Physics'] || {};
-window.CBT_SUBJECT_IMAGES['Physics']['Mechans'] = [];
+window.CBT_SUBJECT_IMAGES['Physics']['Mechans'] = [
+  { data: 'question-banks/physics/carnot-cycle.svg', filename: 'carnot-cycle.svg' }
+];
