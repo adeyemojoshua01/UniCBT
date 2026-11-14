@@ -228,6 +228,7 @@ window.MathJax = {
     const saved = localStorage.getItem('cbt_studio_codex');
     if (saved) {
       state = JSON.parse(saved);
+      if (!state.github) state.github = { owner: '', repo: '', token: '' };
     } else {
       state.data = { "Physics": { "Thermodynamics": { notes: "", svgs: [] } } };
       state.activeSubject = "Physics";
@@ -235,10 +236,13 @@ window.MathJax = {
     }
 
     function saveState() { localStorage.setItem('cbt_studio_codex', JSON.stringify(state)); }
-    function getSlug(str) { return str.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+    function getSlug(str) { 
+      const s = String(str || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); 
+      return s || 'untitled';
+    }
 
     /* =========================================================
-       NAVIGATION & UI
+       NAVIGATION & SIDEBAR
        ========================================================= */
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
@@ -257,7 +261,6 @@ window.MathJax = {
         html += `<div class="mb-2">
           <div class="flex items-center justify-between px-2 py-1.5 group">
             <span class="text-xs font-extrabold text-indigo-400 flex items-center gap-2"><i class="fas fa-folder"></i> ${subj}</span>
-            <!-- Changed: Removed opacity-0 so it's visible on mobile, keeps desktop hover effect -->
             <button onclick="deleteSubject('${subj}')" class="text-gray-500 hover:text-rose-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1"><i class="fas fa-trash text-[12px]"></i></button>
           </div>
           <div class="ml-4 pl-2 border-l border-[#1e2740] space-y-0.5">`;
@@ -268,7 +271,6 @@ window.MathJax = {
             <button onclick="selectTopic('${subj}', '${topic}')" class="flex-grow text-left px-2 py-1.5 rounded-lg text-[13px] ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830] hover:text-gray-200'} transition-colors flex items-center gap-2">
               <i class="fas fa-file-code ${isActive ? 'text-indigo-400' : 'text-gray-600'}"></i> ${topic}
             </button>
-            <!-- Changed: Also made the topic delete button visible on mobile -->
             <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-500 hover:text-rose-500 px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1"><i class="fas fa-times text-[12px]"></i></button>
           </div>`;
         }
@@ -308,10 +310,7 @@ window.MathJax = {
     function deleteSubject(subj) {
       if (!confirm(`Delete subject "${subj}" and ALL its topics?`)) return;
       delete state.data[subj];
-      
-      // SAVE FIRST so the browser doesn't reload old data!
       saveState(); 
-      
       const firstSubj = Object.keys(state.data)[0];
       if (firstSubj) {
         selectTopic(firstSubj, Object.keys(state.data[firstSubj])[0]);
@@ -323,10 +322,7 @@ window.MathJax = {
     function deleteTopic(subj, topic) {
       if (!confirm(`Delete topic "${topic}"?`)) return;
       delete state.data[subj][topic];
-      
-      // SAVE FIRST
       saveState(); 
-      
       const firstTopic = Object.keys(state.data[subj])[0];
       if (firstTopic) {
         selectTopic(subj, firstTopic);
@@ -334,6 +330,7 @@ window.MathJax = {
         selectTopic(subj, ""); 
       }
     }
+
     /* =========================================================
        EDITOR LOGIC
        ========================================================= */
@@ -488,7 +485,6 @@ window.MathJax = {
     /* =========================================================
        PREVIEW & MARKDOWN LOGIC
        ========================================================= */
-    // Protect MathJax from Markdown parser
     function parseMarkdownWithMath(rawText) {
       if (!rawText) return '';
       if (!window.marked) return rawText;
@@ -545,10 +541,8 @@ window.MathJax = {
     /* =========================================================
        GITHUB FETCH & PUBLISH (NESTED FOLDERS)
        ========================================================= */
-  function openModal(id) { 
-      // Safety check: If state.github is missing, recreate it
+    function openModal(id) { 
       if (!state.github) state.github = { owner: '', repo: '', token: '' };
-      
       if (id === 'github-modal') {
         document.getElementById('gh-owner').value = state.github.owner || '';
         document.getElementById('gh-repo').value = state.github.repo || '';
@@ -556,7 +550,6 @@ window.MathJax = {
       }
       document.getElementById(id).classList.remove('hidden'); 
     }
-    
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     function saveGithubSettings() {
@@ -583,7 +576,6 @@ window.MathJax = {
         const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
         new Function('window', text)(dummyWindow);
         
-        // SMART MATCHING: Find the exact key in the file (ignoring case)
         const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
         const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
         
@@ -596,22 +588,17 @@ window.MathJax = {
         const noteContent = notesObj[topicKeyToUse] || '';
         const imgArray = imagesObj[topicKeyToUse] || [];
 
-        if (!noteContent && imgArray.length === 0) {
-           toast('File found, but it is completely empty on GitHub.', 'info');
-        }
-
+        if (!noteContent && imgArray.length === 0) toast('File found, but it is completely empty on GitHub.', 'info');
         state.data[state.activeSubject][state.activeTopic].notes = noteContent;
         
         state.data[state.activeSubject][state.activeTopic].svgs = await Promise.all(imgArray.map(async function(img) {
           let svgCode = '';
           const filename = img.filename || img.data.split('/').pop();
-          
           try {
             const svgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${filename}`;
             const svgRes = await fetch(svgUrl);
             if (svgRes.ok) svgCode = await svgRes.text();
           } catch (e) { console.warn('Could not fetch SVG file', filename); }
-          
           return { filename: filename, code: svgCode };
         }));
 
@@ -626,11 +613,12 @@ window.MathJax = {
     async function publishToGitHub() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
-      const subj = state.activeSubject;
+      const subj = state.activeSubject || 'Physics';
+      const topic = state.activeTopic || document.getElementById('topic-name-input').value.trim() || 'Untitled';
+      
       const subjSlug = getSlug(subj);
-      const topic = state.activeTopic;
       const topicSlug = getSlug(topic);
-      const draft = state.data[subj][topic];
+      const draft = state.data[subj][topic] || { notes: '', svgs: [] };
 
       const btn = document.getElementById('btn-publish');
       const originalHTML = btn.innerHTML;
@@ -638,30 +626,30 @@ window.MathJax = {
       btn.disabled = true;
 
       try {
-        // 1. Generate the JS file content
         let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = window.CBT_SUBJECT_NOTES['${subj}'] || {};\nwindow.CBT_SUBJECT_NOTES['${subj}']['${topic}'] = \`${(draft.notes || '').replace(/`/g, '\\`')}\`;\n`;
         
         let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [\n`;
         
         if (draft.svgs && draft.svgs.length > 0) {
           for (const svg of draft.svgs) {
-            // Point to the new shared SVG folder
-            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${svg.filename}', filename: '${svg.filename}' },\n`;
+            const safeSvgName = (svg.filename || `image-${Date.now()}.svg`).replace(/[^a-zA-Z0-9.\-_]/g, '-');
+            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
-            // Push SVG file to GitHub
             if (svg.code && svg.code.trim().length > 0) {
-               await fetch('/api/publish-bank', {
+               const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjSlug}/svg/${svg.filename}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
+               if (!svgRes.ok) {
+                 const err = await svgRes.json().catch(()=>({}));
+                 throw new Error('SVG Error: ' + (err.error || 'Failed to upload ' + safeSvgName));
+               }
             }
           }
         }
         imagesContent += `];\n`;
 
         const finalCode = notesContent + '\n' + imagesContent;
-        
-        // 2. Publish the JS file to `subject/topic/topic.js`
         const filename = `${subjSlug}/${topicSlug}/${topicSlug}.js`; 
 
         const res = await fetch('/api/publish-bank', {
