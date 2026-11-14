@@ -566,32 +566,151 @@
     },
 
     /* ---------------- candidate flow ---------------- */
-    showCandidateOptions: function () {
+   getSubjectTheme: function(name) {
+      var n = name.toLowerCase();
+      if (n.includes('physic')) return { icon: 'fa-atom', color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.15)' };
+      if (n.includes('probab') || n.includes('math')) return { icon: 'fa-dice', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.15)' };
+      if (n.includes('bible') || n.includes('studi')) return { icon: 'fa-book-bible', color: '#10B981', bg: 'rgba(16, 185, 129, 0.15)' };
+      if (n.includes('linear') || n.includes('algebra')) return { icon: 'fa-calculator', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)' };
+      if (n.includes('fluid') || n.includes('mechanic')) return { icon: 'fa-water', color: '#06B6D4', bg: 'rgba(6, 182, 212, 0.15)' };
+      if (n.includes('chem')) return { icon: 'fa-flask', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)' };
+      return { icon: 'fa-book', color: '#6366f1', bg: 'rgba(99, 102, 241, 0.15)' };
+    },
+
+    filterCandidateSubjects: function(query) {
+      var q = query.toLowerCase().trim();
+      var cards = document.querySelectorAll('.subject-card-container');
+      cards.forEach(function(card) {
+        var name = card.getAttribute('data-subject-name').toLowerCase();
+        if (name.includes(q)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    },
+
+    startQuickPractice: function(subjectId) {
+      var subject = this.data.subjects[subjectId];
+      if (!subject || !subject.questions || subject.questions.length === 0) {
+        return this.toast('No questions available to start a quick practice.', 'error');
+      }
+      
+      var name = this.data.candidateName;
+      if (!name) {
+        name = prompt("Enter your name to start Quick Practice:");
+        if (!name) return;
+        this.data.candidateName = name.trim();
+      }
+
+      // Grab up to 10 random questions
+      var questionsToUse = subject.questions.slice();
+      this.shuffle(questionsToUse);
+      questionsToUse = questionsToUse.slice(0, 10);
+
+      this.data.questions = questionsToUse;
+      this.data.examMode = 'practice';
+      this.data.currentQuestionIndex = 0;
+      this.data.userAnswers = {};
+      this.data.answerRevealed = {};
+      this.data._theoryDrafts = {};
+      this._lastImageRequest = {};
+      this.clearExamState();
+      
+      var examDuration = subject.duration || 30;
+      this.data.examDuration = examDuration;
+      this.data.timeLeft = examDuration * 60;
+      this.data.endTime = null;
+      
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      
+      this.startTimer();
+      this.showTestInterface();
+      this.saveExamState();
+      this.toast('Quick Practice Started!', 'success');
+    },
+     
+     
+         showCandidateOptions: function () {
       this.data.mode = 'candidate-options';
       this.updateHeader();
       var self = this;
       var container = document.getElementById('app-container');
       if (!container) return;
+      
       var subjects = Object.values(this.data.subjects);
-      var cards = subjects.map(function (s) {
-        return '<button onclick="app.showModeSelection(\'' + s.id + '\')" class="text-left rounded-2xl bg-white border border-gray-200 p-5 shadow-lg hover:border-green-500 hover:-translate-y-0.5 transition-all group">' +
+      
+      // Sort subjects: those with the most recent results come first
+      subjects.sort(function(a, b) {
+        var lastA = self.data.results.filter(function(r){ return r.subjectName === a.name; }).pop();
+        var lastB = self.data.results.filter(function(r){ return r.subjectName === b.name; }).pop();
+        if (!lastA && !lastB) return 0;
+        if (!lastA) return 1;
+        if (!lastB) return -1;
+        return new Date(lastB.date) - new Date(lastA.date);
+      });
+
+      var cardsHTML = subjects.map(function (s) {
+        var theme = self.getSubjectTheme(s.name);
+        
+        // Get Last Score
+        var subjectResults = self.data.results.filter(function(r){ return r.subjectName === s.name; });
+        var lastResult = subjectResults.length ? subjectResults[subjectResults.length - 1] : null;
+        var scoreBadge = '';
+        if (lastResult) {
+          var isPass = lastResult.percentage >= 50;
+          var color = isPass ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
+          scoreBadge = '<span class="score-badge ' + color + '"><i class="fas fa-chart-line"></i> Last: ' + lastResult.percentage + '%</span>';
+        }
+
+        var qCount = s.questions ? s.questions.length : 0;
+        var tCount = s.topics ? s.topics.length : 0;
+        var duration = s.duration || 30;
+
+        return '<div class="subject-card-container w-full" data-subject-name="' + self.esc(s.name) + '">' +
+          '<div class="subject-card" onclick="app.showModeSelection(\'' + s.id + '\')">' +
+          '<div class="subject-accent-line" style="background:' + theme.color + '"></div>' +
+          
           '<div class="flex items-start justify-between gap-3">' +
-          '<div class="w-11 h-11 rounded-xl bg-green-50 text-green-700 flex items-center justify-center shrink-0"><i class="fas fa-book"></i></div>' +
-          '<i class="fas fa-arrow-right text-gray-300 group-hover:text-green-600 transition-colors"></i></div>' +
-          '<h3 class="mt-4 font-bold text-lg text-gray-800">' + self.esc(s.name) + '</h3>' +
-          '<div class="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-500">' +
-          '<span class="px-2 py-1 rounded bg-gray-50 border border-gray-200 font-semibold"><i class="fas fa-list-check mr-1"></i>' + (s.questions ? s.questions.length : 0) + ' questions</span>' +
-          '<span class="px-2 py-1 rounded bg-gray-50 border border-gray-200 font-semibold"><i class="fas fa-clock mr-1"></i>' + (s.duration || 30) + ' min</span>' +
-          '<span class="px-2 py-1 rounded bg-gray-50 border border-gray-200 font-semibold"><i class="fas fa-layer-group mr-1"></i>' + (s.topics ? s.topics.length : 0) + ' topics</span>' +
-          '</div></button>';
+          '<div class="flex items-center gap-3">' +
+          '<div class="subject-icon-wrapper" style="background:' + theme.bg + '; color:' + theme.color + '"><i class="fas ' + theme.icon + '"></i></div>' +
+          '<div>' +
+          '<h3 class="font-extrabold text-lg text-gray-100 leading-tight">' + self.esc(s.name) + '</h3>' +
+          (scoreBadge ? '<div class="mt-1">' + scoreBadge + '</div>' : '') +
+          '</div>' +
+          '</div>' +
+          '<i class="fas fa-arrow-right text-gray-500 text-lg mt-1"></i>' +
+          '</div>' +
+
+          '<div class="flex flex-wrap items-center gap-2 mt-4">' +
+          '<span class="dash-tag"><i class="fas fa-list-check" style="color:' + theme.color + '"></i> ' + qCount + ' questions</span>' +
+          '<span class="dash-tag"><i class="fas fa-clock" style="color:' + theme.color + '"></i> ' + duration + ' min</span>' +
+          '<span class="dash-tag"><i class="fas fa-layer-group" style="color:' + theme.color + '"></i> ' + tCount + ' topics</span>' +
+          '</div>' +
+
+          (qCount > 0 ? 
+            '<button onclick="event.stopPropagation(); app.startQuickPractice(\'' + s.id + '\')" class="quick-play-btn" style="background:' + theme.bg + '; color:' + theme.color + '; border: 1px solid ' + theme.color + '">' +
+            '<i class="fas fa-play"></i> Quick Practice (10 Qs)</button>' : '') +
+          '</div></div>';
       }).join('');
 
-      container.innerHTML = '<div class="mb-5">' +
-        '<button onclick="app.showLanding()" class="text-xs font-bold text-gray-500 hover:text-green-600 mb-2 inline-flex items-center gap-1.5"><i class="fas fa-arrow-left"></i> Back to home</button>' +
-        '<h2 class="text-2xl md:text-3xl font-extrabold text-gray-800">Choose your subject</h2>' +
-        '<p class="text-sm text-gray-500 mt-1">Select a paper to configure your attempt.</p></div>' +
-        (subjects.length ? '<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">' + cards + '</div>' :
-          '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">🗂️</div><p class="text-gray-500">No subjects loaded. Add a question bank to get started.</p></div>');
+      var mainHTML = '<div class="dash-header">' +
+        '<button onclick="app.showLanding()" class="text-xs font-bold text-gray-400 hover:text-white mb-3 inline-flex items-center gap-1.5"><i class="fas fa-arrow-left"></i> Back to home</button>' +
+        '<h2 class="text-2xl md:text-3xl font-extrabold text-white mb-1">Choose your subject</h2>' +
+        '<p class="text-sm text-gray-400 mb-4">Select a paper to configure your attempt.</p>' +
+        '<div class="relative max-w-md">' +
+        '<i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"></i>' +
+        '<input type="text" class="dash-search-input" placeholder="Search subjects..." oninput="app.filterCandidateSubjects(this.value)">' +
+        '</div></div>' +
+        
+        '<div class="p-4 md:p-6 max-w-5xl mx-auto">' +
+        (subjects.length ? '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' + cardsHTML + '</div>' :
+          '<div class="rounded-2xl bg-white border border-gray-200 p-10 text-center"><div class="text-4xl mb-3">🗂️</div><p class="text-gray-500">No subjects loaded. Add a question bank to get started.</p></div>') +
+        '</div>';
+
+      container.innerHTML = mainHTML;
+      container.scrollTop = 0;
     },
 
     // --- STUDY HUB HELPERS ---
