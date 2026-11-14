@@ -256,7 +256,8 @@ window.MathJax = {
         html += `<div class="mb-2">
           <div class="flex items-center justify-between px-2 py-1.5 group">
             <span class="text-xs font-extrabold text-indigo-400 flex items-center gap-2"><i class="fas fa-folder"></i> ${subj}</span>
-            <button onclick="deleteSubject('${subj}')" class="text-gray-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-trash text-[10px]"></i></button>
+            <!-- Changed: Removed opacity-0 so it's visible on mobile, keeps desktop hover effect -->
+            <button onclick="deleteSubject('${subj}')" class="text-gray-500 hover:text-rose-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1"><i class="fas fa-trash text-[12px]"></i></button>
           </div>
           <div class="ml-4 pl-2 border-l border-[#1e2740] space-y-0.5">`;
         
@@ -266,7 +267,8 @@ window.MathJax = {
             <button onclick="selectTopic('${subj}', '${topic}')" class="flex-grow text-left px-2 py-1.5 rounded-lg text-[13px] ${isActive ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-gray-400 hover:bg-[#101830] hover:text-gray-200'} transition-colors flex items-center gap-2">
               <i class="fas fa-file-code ${isActive ? 'text-indigo-400' : 'text-gray-600'}"></i> ${topic}
             </button>
-            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-600 hover:text-rose-500 px-2 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-times text-[10px]"></i></button>
+            <!-- Changed: Also made the topic delete button visible on mobile -->
+            <button onclick="deleteTopic('${subj}', '${topic}')" class="text-gray-500 hover:text-rose-500 px-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all p-1"><i class="fas fa-times text-[12px]"></i></button>
           </div>`;
         }
         html += `</div></div>`;
@@ -305,21 +307,32 @@ window.MathJax = {
     function deleteSubject(subj) {
       if (!confirm(`Delete subject "${subj}" and ALL its topics?`)) return;
       delete state.data[subj];
+      
+      // SAVE FIRST so the browser doesn't reload old data!
+      saveState(); 
+      
       const firstSubj = Object.keys(state.data)[0];
-      if (firstSubj) selectTopic(firstSubj, Object.keys(state.data[firstSubj])[0]);
-      else location.reload();
-      saveState();
+      if (firstSubj) {
+        selectTopic(firstSubj, Object.keys(state.data[firstSubj])[0]);
+      } else {
+        location.reload(); 
+      }
     }
 
     function deleteTopic(subj, topic) {
       if (!confirm(`Delete topic "${topic}"?`)) return;
       delete state.data[subj][topic];
+      
+      // SAVE FIRST
+      saveState(); 
+      
       const firstTopic = Object.keys(state.data[subj])[0];
-      if (firstTopic) selectTopic(subj, firstTopic);
-      else selectTopic(subj, ""); 
-      saveState();
+      if (firstTopic) {
+        selectTopic(subj, firstTopic);
+      } else {
+        selectTopic(subj, ""); 
+      }
     }
-
     /* =========================================================
        EDITOR LOGIC
        ========================================================= */
