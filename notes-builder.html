@@ -573,25 +573,28 @@ window.MathJax = {
         if (!res.ok) throw new Error('File not found on GitHub');
         const text = await res.text();
 
-        const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
-        new Function('window', text)(dummyWindow);
-        
-        const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
-        const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
-        
-        let actualTopicKey = Object.keys(notesObj).find(function(k) { return k.toLowerCase() === state.activeTopic.toLowerCase(); });
-        if (!actualTopicKey) {
-            actualTopicKey = Object.keys(imagesObj).find(function(k) { return k.toLowerCase() === state.activeTopic.toLowerCase(); });
+        // 1. Extract the raw notes string using Regex (Preserves backslashes perfectly)
+        let noteContent = '';
+        const noteMatch = text.match(/window\.CBT_SUBJECT_NOTES\s*=\s*window\.CBT_SUBJECT_NOTES\s*\|\|\s*\{\};[\s\S]*?window\.CBT_SUBJECT_NOTES\['[^']+'\]\['[^']+'\]\s*=\s*`([\s\S]*?)`;/);
+        if (noteMatch && noteMatch[1]) {
+          noteContent = noteMatch[1];
+          // Unescape the backticks and backslashes for the editor
+          noteContent = noteContent.replace(/\\`/g, '`').replace(/\\\\/g, '\\');
         }
-        const topicKeyToUse = actualTopicKey || state.activeTopic;
 
-let noteContent = notesObj[topicKeyToUse] || '';
-// Unescape backslashes so they render correctly in the editor
-noteContent = noteContent.replace(/\\\\/g, '\\'); 
-        
-        const imgArray = imagesObj[topicKeyToUse] || [];
+        // 2. Extract the SVG array using a safe window evaluation
+        let imgArray = [];
+        try {
+          const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
+          new Function('window', text)(dummyWindow);
+          const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
+          
+          let actualTopicKey = Object.keys(imagesObj).find(function(k) { return k.toLowerCase() === state.activeTopic.toLowerCase(); });
+          imgArray = imagesObj[actualTopicKey] || [];
+        } catch (e) { console.warn('Could not parse images', e); }
 
         if (!noteContent && imgArray.length === 0) toast('File found, but it is completely empty on GitHub.', 'info');
+        
         state.data[state.activeSubject][state.activeTopic].notes = noteContent;
         
         state.data[state.activeSubject][state.activeTopic].svgs = await Promise.all(imgArray.map(async function(img) {
