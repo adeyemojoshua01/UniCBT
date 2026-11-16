@@ -1030,8 +1030,7 @@ defaultFilename: function () {
       if (input && !input.value) input.value = B.defaultFilename();
       B.updateExportPreview();
     },
-    fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },
-    sanitize: function (s) { return String(s === undefined || s === null ? '' : s).replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\r?\n/g, ' ').trim(); },
+    fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },    sanitize: function (s) { return String(s === undefined || s === null ? '' : s).replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\r?\n/g, ' ').trim(); },
     generateExportJSCode: function (shuffleOptions) {
       var data = clone(appData);
       if (shuffleOptions) {
