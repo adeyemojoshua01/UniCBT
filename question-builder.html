@@ -655,6 +655,7 @@ window.MathJax = {
         reader.readAsText(file);
     },
 
+    // FIXED: Extracts SubTopic and maps to the question object
     parseMarkdownToCBT: function(raw) {
         var blocks = raw.split(/\n\s*---\s*\n/);
         var questions = [];
@@ -663,12 +664,18 @@ window.MathJax = {
             if (lines.length === 0) return;
             var q = newQuestion('MCQ');
             q.question = '';
+            q.subTopicName = null; // Temporary storage
             var inOptions = false;
             
             lines.forEach(line => {
                 if (/^Type:\s*/i.test(line)) {
                     var t = line.replace(/^Type:\s*/i, '').trim().toUpperCase();
                     q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
+                    return;
+                }
+                // FIXED: Detect SubTopic in markdown
+                if (/^(SubTopic|Sub-Topic|Subtopic):\s*/i.test(line)) {
+                    q.subTopicName = line.replace(/^(SubTopic|Sub-Topic|Subtopic):\s*/i, '').trim();
                     return;
                 }
                 var optMatch = line.match(/^([A-Da-d])[\.\)]\s*(.+)$/);
@@ -704,8 +711,11 @@ window.MathJax = {
             else if (/^Topic\s*:/i.test(line) && subject) { topic = { name: line.replace(/^Topic\s*:/i, ''), questions: [] }; subject.topics.push(topic); }
             else if (/^Type\s*:/i.test(line) && topic) {
                 var type = line.replace(/^Type\s*:/i, '').trim();
-                q = { type: type, options: ['','','',''], correct: '', explanation: '' };
+                q = { type: type, options: ['','','',''], correct: '', explanation: '', subTopicName: null };
                 topic.questions.push(q);
+            }
+            else if (/^SubTopic\s*:/i.test(line) && q) {
+                q.subTopicName = line.replace(/^SubTopic\s*:/i, '').trim();
             }
             else if (/^Q\d+\s*:/i.test(line) && q) q.question = line.replace(/^Q\d+\s*:/i, '');
             else if (/^Option\s*:/i.test(line) && q) {
@@ -713,6 +723,7 @@ window.MathJax = {
                 if (m) q.options['ABCD'.indexOf(m[1].toUpperCase())] = m[2];
             }
             else if (/^Answer\s*:/i.test(line) && q) q.correct = line.replace(/^Answer\s*:/i, '').trim();
+            else if (/^Explanation\s*:/i.test(line) && q) q.explanation = line.replace(/^Explanation\s*:/i, '').trim();
         });
         return { subjects: subjects };
     },
@@ -725,7 +736,11 @@ window.MathJax = {
         var t = currentTopic();
         var sel = document.getElementById('import-target-subtopic');
         if (t) {
-            sel.innerHTML = t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
+            // Add an option to auto-detect from file
+            var html = `<option value="auto">Auto-detect from file</option>`;
+            html += t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
+            sel.innerHTML = html;
+            sel.value = 'auto'; // Default to auto-detect
         }
         B.openModal('import-modal');
     },
@@ -739,14 +754,28 @@ window.MathJax = {
         if (!pendingImport || pendingImport.length === 0) return;
 
         var targetSt = document.getElementById('import-target-subtopic').value;
-        if (!targetSt && t.subTopics.length > 0) targetSt = t.subTopics[0].id;
         
         B.pushUndoState();
         
         var importedCount = 0;
         pendingImport.forEach(q => {
             q.id = uid('q');
-            q.subTopicId = targetSt;
+            
+            if (targetSt === 'auto') {
+                // Use the sub-topic name from the file, or "General" if missing
+                var stName = q.subTopicName || 'General';
+                var existingSt = t.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
+                if (!existingSt) {
+                    existingSt = newSubTopic(stName);
+                    t.subTopics.push(existingSt);
+                }
+                q.subTopicId = existingSt.id;
+            } else {
+                // Use the manually selected sub-topic
+                q.subTopicId = targetSt;
+            }
+            
+            delete q.subTopicName; // Cleanup
             t.questions.push(q);
             importedCount++;
         });
