@@ -8,4 +8,5 @@ Start writing your notes here...
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Test'] = window.CBT_SUBJECT_IMAGES['Test'] || {};
 window.CBT_SUBJECT_IMAGES['Test']['Type'] = [
+  { data: 'question-banks/general/svg/test-1.svg', filename: 'test-1.svg' },
 ];
