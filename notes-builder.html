@@ -861,6 +861,7 @@ window.MathJax = {
         imagesContent += `];\n`;
         const finalCode = notesContent + '\n' + imagesContent;
 
+        // 1. Publish the note itself
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: state.activePath, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
@@ -868,30 +869,33 @@ window.MathJax = {
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
-        
-        // --- NEW: Trigger index.html update ---
+        toast('Published ' + filename + ' successfully!', 'success');
+
+        // 2. Update index.html
         toast('Updating index.html...', 'info');
         try {
-            const indexRes = await fetch('/api/update-index', {
+            const indexRes = await fetch('/api/publish-bank', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
+                filename: 'update-index', 
                 githubToken: state.github.token, 
                 repoOwner: state.github.owner, 
                 repoName: state.github.repo 
               })
             });
+            const indexData = await indexRes.json();
+            
             if (!indexRes.ok) {
-              const indexData = await indexRes.json().catch(()=>({}));
+              // Show the exact error from the backend
               throw new Error(indexData.error || 'Failed to update index.html');
             }
             toast('Index updated successfully!', 'success');
         } catch (indexErr) {
             console.warn('Index update failed:', indexErr);
-            toast('Note published, but failed to update index.html.', 'error');
+            toast(indexErr.message, 'error'); // THIS will show the exact error
         }
-        
-        toast('Published ' + filename + ' successfully!', 'success');
+
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
@@ -899,6 +903,9 @@ window.MathJax = {
         btn.disabled = false;
       }
     }
+
+
+
 
     /* =========================================================
        MODALS & TOASTS
