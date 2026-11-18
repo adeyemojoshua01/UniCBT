@@ -1,5 +1,7 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
+
 window.CBT_SUBJECT_BANKS.push(`Subject: New Subject
+
 Topic: New Topic
 
 SubTopic: General
