@@ -28,12 +28,12 @@ module.exports = async function handler(req, res) {
     // ACTION 1: UPDATE INDEX.HTML SCRIPT TAGS
     // ==========================================
     if (filename === 'update-index') {
-      // 1. Fetch the current tree to get all .js files in question-banks/
+      // 1. Fetch the tree
       const treeRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`, { headers });
       if (!treeRes.ok) throw new Error('Failed to fetch repository tree.');
       const treeData = await treeRes.json();
 
-      // Strictly filter out question-loader.js and any *-bank.js files
+      // Strictly get ONLY the notes files
       const noteFiles = treeData.tree
         .filter(item => 
           item.type === 'blob' && 
@@ -47,32 +47,35 @@ module.exports = async function handler(req, res) {
 
       // 2. Fetch index.html
       const indexRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/index.html`, { headers });
-      if (!indexRes.ok) throw new Error('Failed to fetch index.html. Does it exist?');
+      if (!indexRes.ok) throw new Error('Failed to fetch index.html.');
       const indexData = await indexRes.json();
       const indexSha = indexData.sha;
       const indexContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
-      // 3. Generate the script tags
+      // 3. Generate new script tags
       const scriptTags = noteFiles.map(path => `  <script src="${path}"></script>`).join('\n');
 
-      // 4. Inject into index.html
+      // 4. Safely replace the content between markers
       const startMarker = '<!-- NOTES_SCRIPTS_START -->';
       const endMarker = '<!-- NOTES_SCRIPTS_END -->';
       
-      let updatedContent = indexContent;
-      if (indexContent.includes(startMarker) && indexContent.includes(endMarker)) {
-        const regex = new RegExp(`${startMarker}[\\s\\S]*?${endMarker}`);
-        updatedContent = indexContent.replace(regex, `${startMarker}\n${scriptTags}\n${endMarker}`);
-      } else {
-        return res.status(400).json({ error: 'Could not find the start/end markers in index.html. Please add them manually.' });
+      const startIndex = indexContent.indexOf(startMarker);
+      const endIndex = indexContent.indexOf(endMarker);
+
+      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        return res.status(400).json({ error: 'Could not find valid start/end markers in index.html.' });
       }
 
-      // 5. Check if content actually changed to avoid empty commits
+      const before = indexContent.substring(0, startIndex + startMarker.length);
+      const after = indexContent.substring(endIndex);
+      
+      const updatedContent = `${before}\n${scriptTags}\n${after}`;
+
+      // 5. Commit if changed
       if (updatedContent === indexContent) {
-        return res.status(200).json({ success: true, message: 'No changes needed to index.html.' });
+        return res.status(200).json({ success: true, message: 'No changes needed.' });
       }
 
-      // 6. Commit the updated index.html
       const updatedBase64 = Buffer.from(updatedContent, 'utf8').toString('base64');
       const putRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/index.html`, {
         method: 'PUT',
@@ -87,7 +90,7 @@ module.exports = async function handler(req, res) {
 
       if (!putRes.ok) {
         const errText = await putRes.text();
-        throw new Error(`Failed to update index.html: ${errText.slice(0, 200)}`);
+        throw new Error(`GitHub commit failed (${putRes.status}): ${errText.slice(0, 100)}`);
       }
 
       return res.status(200).json({ success: true, message: 'index.html updated successfully.' });
@@ -96,32 +99,23 @@ module.exports = async function handler(req, res) {
     // ==========================================
     // ACTION 2: PUBLISH NORMAL FILES (NOTES/SVGS)
     // ==========================================
-    // Allow empty code if it's a .gitkeep file (used for folder creation)
     const isGitkeep = filename && filename.endsWith('.gitkeep');
     if (!code && !isGitkeep) {
       return res.status(400).json({ error: 'Missing code content.' });
     }
 
-    // 1. Remove any duplicate 'question-banks/' or leading slashes
     let cleanName = filename.replace(/^question-banks\//i, '').replace(/^\/+/, '');
-    
-    // 2. Force the path to ALWAYS start with question-banks/
     const path = `question-banks/${cleanName}`;
-    
-    // 3. Encode the path properly for GitHub
     const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${encodedPath}`;
 
-    // Check if file exists to get SHA
     let sha = null;
     const existing = await fetch(apiUrl, { headers });
-    
     if (existing.ok) {
       const existingData = await existing.json();
       sha = existingData.sha || null;
     }
 
-    // Upload
     const encoded = Buffer.from(String(code || ''), 'utf8').toString('base64');
     const putRes = await fetch(apiUrl, {
       method: 'PUT',
