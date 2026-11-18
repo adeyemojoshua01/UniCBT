@@ -33,43 +33,53 @@ module.exports = async function handler(req, res) {
       if (!treeRes.ok) throw new Error('Failed to fetch repository tree.');
       const treeData = await treeRes.json();
 
-      // Strictly get ONLY the notes files
-      const noteFiles = treeData.tree
-        .filter(item => 
-          item.type === 'blob' && 
-          item.path.startsWith('question-banks/') && 
-          item.path.endsWith('.js') && 
-          !item.path.endsWith('-bank.js') && 
-          !item.path.endsWith('question-loader.js') &&
-          item.path !== 'question-banks/question-loader.js'
-        )
-        .map(item => item.path);
+      // Separate into notes and banks
+      const noteFiles = [];
+      const bankFiles = [];
+
+      treeData.tree.forEach(item => {
+        if (item.type !== 'blob' || !item.path.startsWith('question-banks/') || !item.path.endsWith('.js')) return;
+        if (item.path === 'question-banks/question-loader.js') return;
+
+        if (item.path.endsWith('-bank.js')) {
+          bankFiles.push(item.path);
+        } else {
+          noteFiles.push(item.path);
+        }
+      });
 
       // 2. Fetch index.html
       const indexRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/index.html`, { headers });
       if (!indexRes.ok) throw new Error('Failed to fetch index.html.');
       const indexData = await indexRes.json();
       const indexSha = indexData.sha;
-      const indexContent = Buffer.from(indexData.content, 'base64').toString('utf8');
+      let indexContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
-      // 3. Generate new script tags
-      // 3. Generate new script tags (FIX: Added defer)
-      const scriptTags = noteFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
-      // 4. Safely replace the content between markers
-      const startMarker = '<!-- NOTES_SCRIPTS_START -->';
-      const endMarker = '<!-- NOTES_SCRIPTS_END -->';
-      
-      const startIndex = indexContent.indexOf(startMarker);
-      const endIndex = indexContent.indexOf(endMarker);
+      // 3. Generate script tags with defer
+      const noteTags = noteFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
+      const bankTags = bankFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
 
-      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-        return res.status(400).json({ error: 'Could not find valid start/end markers in index.html.' });
+      // 4. Safely replace content between markers
+      function replaceBlock(content, startMarker, endMarker, newTags) {
+        const startIndex = content.indexOf(startMarker);
+        const endIndex = content.indexOf(endMarker);
+        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) return content;
+        const before = content.substring(0, startIndex + startMarker.length);
+        const after = content.substring(endIndex);
+        return `${before}\n${newTags}\n${after}`;
       }
 
-      const before = indexContent.substring(0, startIndex + startMarker.length);
-      const after = indexContent.substring(endIndex);
-      
-      const updatedContent = `${before}\n${scriptTags}\n${after}`;
+      const updatedContent = replaceBlock(
+        replaceBlock(
+          indexContent, 
+          '<!-- NOTES_SCRIPTS_START -->', 
+          '<!-- NOTES_SCRIPTS_END -->', 
+          noteTags
+        ),
+        '<!-- BANKS_SCRIPTS_START -->',
+        '<!-- BANKS_SCRIPTS_END -->',
+        bankTags
+      );
 
       // 5. Commit if changed
       if (updatedContent === indexContent) {
@@ -81,7 +91,7 @@ module.exports = async function handler(req, res) {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: `chore: auto-update notes scripts in index.html`,
+          message: `chore: auto-update scripts in index.html`,
           content: updatedBase64,
           sha: indexSha,
           branch: 'main'
@@ -97,7 +107,7 @@ module.exports = async function handler(req, res) {
     }
 
     // ==========================================
-    // ACTION 2: PUBLISH NORMAL FILES (NOTES/SVGS)
+    // ACTION 2: PUBLISH NORMAL FILES (NOTES/BANKS/SVGS)
     // ==========================================
     const isGitkeep = filename && filename.endsWith('.gitkeep');
     if (!code && !isGitkeep) {
