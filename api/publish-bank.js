@@ -53,8 +53,8 @@ module.exports = async function handler(req, res) {
       const indexContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
       // 3. Generate new script tags
-      const scriptTags = noteFiles.map(path => `  <script src="${path}"></script>`).join('\n');
-
+      // 3. Generate new script tags (FIX: Added defer)
+      const scriptTags = noteFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
       // 4. Safely replace the content between markers
       const startMarker = '<!-- NOTES_SCRIPTS_START -->';
       const endMarker = '<!-- NOTES_SCRIPTS_END -->';
