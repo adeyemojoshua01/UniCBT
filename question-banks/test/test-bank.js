@@ -1,8 +1,8 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
 
-window.CBT_SUBJECT_BANKS.push(`Subject: New Subject
+window.CBT_SUBJECT_BANKS.push(`Subject: Test
 
-Topic: New Topic
+Topic: Test
 
 SubTopic: General
 Type: MCQ
