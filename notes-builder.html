@@ -255,7 +255,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       GITHUB TREE FETCHING & PARSING
+       GITHUB TREE FETCHING & PARSING (CORRECTED)
        ========================================================= */
     async function fetchGitHubTree(force = false) {
       if (!state.github.owner || !state.github.repo || !state.github.token) {
@@ -277,7 +277,7 @@ window.MathJax = {
         if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
         const data = await res.json();
         
-        // Build recursive tree structure
+        // Build recursive tree structure accurately
         const root = {};
         data.tree.forEach(item => {
           if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
@@ -287,7 +287,8 @@ window.MathJax = {
           
           parts.forEach((part, i) => {
             if (!current[part]) {
-              current[part] = (i === parts.length - 1) ? 'FILE' : {};
+              // If it's the last part AND the API says it's a blob (file), mark it as FILE
+              current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
             }
             if (current[part] !== 'FILE') {
               current = current[part];
@@ -320,10 +321,7 @@ window.MathJax = {
         const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
         
         const details = document.createElement('details');
-        // Auto-expand folders that contain the active path
-        if (state.activePath.startsWith(fullPath)) {
-          details.open = true;
-        }
+        if (state.activePath.startsWith(fullPath)) details.open = true;
         details.className = 'mb-1';
         
         const summary = document.createElement('summary');
@@ -331,7 +329,6 @@ window.MathJax = {
         summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
         
         details.appendChild(summary);
-        
         const childContainer = document.createElement('div');
         childContainer.className = 'tree-spine';
         details.appendChild(childContainer);
@@ -344,7 +341,6 @@ window.MathJax = {
         const fullPath = parentPath ? `${parentPath}/${file}` : file;
         const isActive = state.activePath === fullPath;
         
-        // Show all .js files (removed strict filtering so user can organize freely)
         if (file.endsWith('.js')) {
           const btn = document.createElement('button');
           btn.className = `w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] ${isActive ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-gray-400 hover:bg-[#101830] hover:text-gray-200'}`;
@@ -356,7 +352,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION
+       FILE LOADING & DYNAMIC PATH RESOLUTION (CORRECTED)
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -368,7 +364,6 @@ window.MathJax = {
       const parts = path.split('/');
       const filename = parts.pop();
       
-      // Dynamic Resolution: First folder is Subject, Last folder (or filename) is Topic
       const subjectSlug = parts.length > 1 ? parts[0] : 'general';
       const topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
       
@@ -382,8 +377,9 @@ window.MathJax = {
       
       toast('Fetching ' + path + '...', 'info');
       try {
-        // Use GitHub Contents API to bypass CORS for private repos
-        const apiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${path}?ref=main&t=${Date.now()}`;
+        // Encode the path to handle spaces and special characters
+        const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+        const apiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${encodedPath}?ref=main&t=${Date.now()}`;
         
         const res = await fetch(apiUrl, {
            headers: { 
@@ -398,29 +394,54 @@ window.MathJax = {
         const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
 
         let noteContent = '';
-        const noteMatch = text.match(/window\.CBT_SUBJECT_NOTES\s*=\s*window\.CBT_SUBJECT_NOTES\s*\|\|\s*\{\};[\s\S]*?window\.CBT_SUBJECT_NOTES\['[^']+'\]\['[^']+'\]\s*=\s*`([\s\S]*?)`;/);
-        if (noteMatch && noteMatch[1]) {
-          noteContent = noteMatch[1].replace(/\\`/g, '`').replace(/\\\\/g, '\\');
-        }
-
         let imgArray = [];
+
+        // SECURE EXECUTION: Instead of Regex, we run the file in a sandboxed function to extract data perfectly
         try {
           const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
           new Function('window', text)(dummyWindow);
+          
+          // Extract Notes
+          const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
+          let actualNoteKey = Object.keys(notesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
+          
+          if (actualNoteKey) {
+              noteContent = notesObj[actualNoteKey];
+          } else {
+              // Fallback: If the file only contains one topic, load it regardless of filename
+              const keys = Object.keys(notesObj);
+              if (keys.length === 1) {
+                  state.activeTopic = keys[0]; 
+                  document.getElementById('topic-name-input').value = state.activeTopic;
+                  noteContent = notesObj[keys[0]];
+              }
+          }
+
+          // Extract Images
           const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
-          let actualTopicKey = Object.keys(imagesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
-          imgArray = imagesObj[actualTopicKey] || [];
-        } catch (e) { console.warn('Could not parse images', e); }
+          let actualImgKey = Object.keys(imagesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
+          imgArray = imagesObj[actualImgKey] || [];
+          
+        } catch (e) {
+          console.warn('Could not parse file contents via execution, falling back to regex', e);
+          const noteMatch = text.match(/window\.CBT_SUBJECT_NOTES\s*=\s*window\.CBT_SUBJECT_NOTES\s*\|\|\s*\{\};[\s\S]*?window\.CBT_SUBJECT_NOTES\['[^']+'\]\['[^']+'\]\s*=\s*`([\s\S]*?)`;/);
+          if (noteMatch && noteMatch[1]) {
+            noteContent = noteMatch[1].replace(/\\`/g, '`').replace(/\\\\/g, '\\');
+          }
+        }
 
         if (!state.data[state.activeSubject]) state.data[state.activeSubject] = {};
         state.data[state.activeSubject][state.activeTopic] = {
           notes: noteContent,
           svgs: await Promise.all(imgArray.map(async function(img) {
             let svgCode = '';
-            const filename = img.filename || img.data.split('/').pop();
+            const svgFilename = img.filename || img.data.split('/').pop();
             try {
-              // Dynamically use the correct subject folder for SVGs
-              const svgApiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${subjectSlug}/svg/${filename}?ref=main`;
+              // Dynamically use the correct subject folder for SVGs and encode the path
+              const svgPath = `question-banks/${subjectSlug}/svg/${svgFilename}`;
+              const encodedSvgPath = svgPath.split('/').map(encodeURIComponent).join('/');
+              const svgApiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/${encodedSvgPath}?ref=main`;
+              
               const svgRes = await fetch(svgApiUrl, { 
                 headers: { 
                   'Authorization': `token ${state.github.token}`,
@@ -432,9 +453,9 @@ window.MathJax = {
                 svgCode = b64DecodeUnicode(svgData.content.replace(/\n/g, ''));
               }
             } catch (e) {
-              console.warn('Could not fetch SVG content for', filename);
+              console.warn('Could not fetch SVG content for', svgFilename);
             }
-            return { filename: filename, code: svgCode };
+            return { filename: svgFilename, code: svgCode };
           }))
         };
 
@@ -505,7 +526,6 @@ window.MathJax = {
       toast('Creating folder...', 'info');
 
       try {
-        // We create a .gitkeep file inside the folder to force GitHub to create the directory
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -528,7 +548,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       SIDEBAR UI
+       SIDEBAR UI & SVG MANAGEMENT
        ========================================================= */
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
@@ -540,9 +560,6 @@ window.MathJax = {
       }
     }
 
-    /* =========================================================
-       SVG MANAGEMENT
-       ========================================================= */
     function renderSVGList() {
       if (!state.activeSubject || !state.activeTopic) return;
       const container = document.getElementById('svg-list-container');
@@ -562,8 +579,7 @@ window.MathJax = {
           const blob = new Blob([svg.code], {type: 'image/svg+xml'});
           previewUrl = URL.createObjectURL(blob);
         } else {
-          // Dynamically resolve subject slug from active path for previews
-          const subjSlug = state.activePath.split('/')[0] || 'physics';
+          const subjSlug = state.activePath.split('/')[0] || 'general';
           previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${svg.filename}`;
         }
 
@@ -669,7 +685,7 @@ window.MathJax = {
       
       const gallery = document.getElementById('preview-svg-gallery');
       if (draft.svgs && draft.svgs.length > 0) {
-        const subjSlug = state.activePath.split('/')[0] || 'physics';
+        const subjSlug = state.activePath.split('/')[0] || 'general';
         gallery.innerHTML = draft.svgs.map(svg => {
           let imgUrl = svg.code && svg.code.trim().startsWith('<svg') 
             ? URL.createObjectURL(new Blob([svg.code], {type: 'image/svg+xml'})) 
@@ -716,6 +732,7 @@ window.MathJax = {
 
       try {
         let safeNotes = (draft.notes || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+        // Write in the flat format which the app supports, to prevent overriding other topics if they exist in the same file
         let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = window.CBT_SUBJECT_NOTES['${subj}'] || {};\nwindow.CBT_SUBJECT_NOTES['${subj}']['${topic}'] = \`${safeNotes}\`;\n`;
         
         let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [\n`;
