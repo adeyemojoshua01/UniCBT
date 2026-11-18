@@ -259,6 +259,42 @@ window.MathJax = {
         }).join(''));
     }
 
+    // Helper to convert raw HTML into Markdown
+    function convertHTMLToMarkdown(html) {
+        if (!html) return '';
+        let md = html;
+        
+        // 1. Replace MathJax block math `\[ ... \]` temporarily to avoid alteration
+        const mathBlocks = [];
+        md = md.replace(/\\\[([\s\S]*?)\\\]/g, (match) => {
+            mathBlocks.push(match);
+            return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
+        });
+
+        // 2. Convert common HTML tags to Markdown
+        md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '# $1\n\n');
+        md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '## $1\n\n');
+        md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '### $1\n\n');
+        md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, '#### $1\n\n');
+        md = md.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n');
+        md = md.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n');
+        md = md.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, '$1\n');
+        md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n');
+        md = md.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '**$1**');
+        md = md.replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '**$1**');
+        md = md.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '*$1*');
+        md = md.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '*$1*');
+        md = md.replace(/<br\s*\/?>/gi, '\n');
+        
+        // 3. Restore MathJax blocks
+        md = md.replace(/@@MATHBLOCK(\d+)@@/g, (match, index) => mathBlocks[index]);
+
+        // 4. Clean up excessive newlines
+        md = md.replace(/\n{3,}/g, '\n\n').trim();
+
+        return md;
+    }
+
     /* =========================================================
        GITHUB TREE FETCHING & PARSING
        ========================================================= */
@@ -355,7 +391,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION (WITH FUZZY FALLBACK)
+       FILE LOADING & DYNAMIC PATH RESOLUTION (WITH HTML TO MARKDOWN)
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -445,6 +481,11 @@ window.MathJax = {
           if (noteMatch && noteMatch[1]) {
             noteContent = noteMatch[1].replace(/\\`/g, '`').replace(/\\\\/g, '\\');
           }
+        }
+
+        // Convert HTML to Markdown if necessary
+        if (noteContent && /<[a-z][\s\S]*>/i.test(noteContent)) {
+            noteContent = convertHTMLToMarkdown(noteContent);
         }
 
         if (!state.data[state.activeSubject]) state.data[state.activeSubject] = {};
