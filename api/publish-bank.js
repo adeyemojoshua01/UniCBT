@@ -13,7 +13,9 @@ module.exports = async function handler(req, res) {
     let { filename, code, repoOwner, repoName } = body;
     const githubToken = process.env.GITHUB_TOKEN;
 
-    if (!githubToken || !repoOwner || !repoName || !filename || !code) {
+    // Allow empty code if it's a .gitkeep file (used for folder creation)
+    const isGitkeep = filename && filename.endsWith('.gitkeep');
+    if (!githubToken || !repoOwner || !repoName || !filename || (!code && !isGitkeep)) {
       return res.status(400).json({ error: 'Missing required fields.' });
     }
 
@@ -44,7 +46,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Upload
-    const encoded = Buffer.from(String(code), 'utf8').toString('base64');
+    const encoded = Buffer.from(String(code || ''), 'utf8').toString('base64');
     const putRes = await fetch(apiUrl, {
       method: 'PUT',
       headers: { ...headers, 'Content-Type': 'application/json' },
