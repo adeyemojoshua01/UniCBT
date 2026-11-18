@@ -245,6 +245,13 @@ window.MathJax = {
     function saveState() { localStorage.setItem('cbt_studio_codex', JSON.stringify(state)); }
     function getSlug(str) { return String(str || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
+    // Helper to decode Base64 strings safely (handles UTF-8 characters like emojis)
+    function b64DecodeUnicode(str) {
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    }
+
     /* =========================================================
        GITHUB TREE FETCHING
        ========================================================= */
@@ -259,7 +266,10 @@ window.MathJax = {
 
       try {
         const res = await fetch(`https://api.github.com/repos/${state.github.owner}/${state.github.repo}/git/trees/main?recursive=1`, {
-          headers: { Authorization: `Bearer ${state.github.token}` }
+          headers: { 
+            'Authorization': `token ${state.github.token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
         });
         
         if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
@@ -340,7 +350,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING
+       FILE LOADING (FIXED: Uses GitHub Contents API)
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -364,15 +374,21 @@ window.MathJax = {
       
       toast('Fetching ' + path + '...', 'info');
       try {
-        const url = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${path}`;
+        // FIX: Use GitHub Contents API instead of raw.githubusercontent.com
+        const apiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${path}?ref=main&t=${Date.now()}`;
         
-        // Pass token to fetch private files!
-        const res = await fetch(url + '?t=' + Date.now(), {
-           headers: { Authorization: `Bearer ${state.github.token}` }
+        const res = await fetch(apiUrl, {
+           headers: { 
+             'Authorization': `token ${state.github.token}`,
+             'Accept': 'application/vnd.github.v3+json'
+           }
         });
         
-        if (!res.ok) throw new Error('File not found on GitHub (404)');
-        const text = await res.text();
+        if (!res.ok) throw new Error('File not found on GitHub (Check token or path)');
+        
+        const fileData = await res.json();
+        // Decode Base64 content
+        const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
 
         let noteContent = '';
         const noteMatch = text.match(/window\.CBT_SUBJECT_NOTES\s*=\s*window\.CBT_SUBJECT_NOTES\s*\|\|\s*\{\};[\s\S]*?window\.CBT_SUBJECT_NOTES\['[^']+'\]\['[^']+'\]\s*=\s*`([\s\S]*?)`;/);
@@ -396,10 +412,21 @@ window.MathJax = {
             let svgCode = '';
             const filename = img.filename || img.data.split('/').pop();
             try {
-              const svgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjectSlug}/svg/${filename}`;
-              const svgRes = await fetch(svgUrl, { headers: { Authorization: `Bearer ${state.github.token}` } });
-              if (svgRes.ok) svgCode = await svgRes.text();
-            } catch (e) {}
+              // FIX: Use API for SVGs as well
+              const svgApiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${subjectSlug}/svg/${filename}?ref=main`;
+              const svgRes = await fetch(svgApiUrl, { 
+                headers: { 
+                  'Authorization': `token ${state.github.token}`,
+                  'Accept': 'application/vnd.github.v3+json'
+                } 
+              });
+              if (svgRes.ok) {
+                const svgData = await svgRes.json();
+                svgCode = b64DecodeUnicode(svgData.content.replace(/\n/g, ''));
+              }
+            } catch (e) {
+              console.warn('Could not fetch SVG content for', filename);
+            }
             return { filename: filename, code: svgCode };
           }))
         };
@@ -528,6 +555,7 @@ window.MathJax = {
           const blob = new Blob([svg.code], {type: 'image/svg+xml'});
           previewUrl = URL.createObjectURL(blob);
         } else {
+          // Fallback for previewing if code isn't loaded (Note: Private repos may block this)
           const subjSlug = state.activePath.split('/')[0] || 'physics';
           previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${svg.filename}`;
         }
