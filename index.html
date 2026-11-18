@@ -161,48 +161,34 @@ window.MathJax = {
 <div id="toast-layer" class="fixed top-20 right-4 z-[999999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
 <!-- ============ SCRIPTS (exact deferred load order) ============ -->
+<!-- ============ SCRIPTS (exact deferred load order) ============ -->
 <script defer src="js/image-viewer.js"></script>
 <script defer src="js/app-core.js"></script>
 <script defer src="js/app-exam.js"></script>
 <script defer src="js/app-ai.js"></script>
 <script defer src="js/app-results.js"></script>
 
-
-<!-- 1. Question Banks (each in its own folder) -->
-
+<!-- 1. Question Banks -->
+<!-- BANKS_SCRIPTS_START -->
 <script defer src="question-banks/physics/thermodynamics/thermodynamics-bank.js"></script>
 <script defer src="question-banks/physics/mechanics/mechanics-bank.js"></script>
-<script defer src="question-banks/physics/mechans/mechans-bank.js"></script>
 <script defer src="question-banks/probability/probability-bank.js"></script>
-<script defer src="question-banks/bible-studies/bible-bank.js"></script>
-<script defer src="question-banks/linear-algebra/linear-algebra-bank.js"></script>
-<script defer src="question-banks/fluid-mechanics/fluid-mechanics-bank.js"></script>
-  
-  
+<!-- BANKS_SCRIPTS_END -->
 
-<!-- 2. Topic Notes (each in its own folder) -->
-
+<!-- 2. Topic Notes -->
 <!-- NOTES_SCRIPTS_START -->
-  <script defer src="question-banks/bible-studies/notes.js"></script>
-  <script defer src="question-banks/fluid-mechanics/fluid-mechanics.js"></script>
-  <script defer src="question-banks/linear-algebra/notes.js"></script>
-  <script defer src="question-banks/physics/mechanics/mechanics.js"></script>
-  <script defer src="question-banks/physics/mechans/mechans.js"></script>
-  <script defer src="question-banks/physics/thermodynamics/thermodynamics.js"></script>
-  <script defer src="question-banks/probability/notes.js"></script>
-  <script defer src="question-banks/test/type.js"></script>
-  <script defer src="question-banks/you/new-topic.js"></script>
+<script defer src="question-banks/physics/thermodynamics/thermodynamics.js"></script>
+<script defer src="question-banks/probability/notes.js"></script>
 <!-- NOTES_SCRIPTS_END -->
 
 <!-- 3. Loader -->
 <script defer src="question-banks/question-loader.js"></script>
 
-  
-  
 <script defer src="js/explanation-viewer.js"></script>
 <script defer src="js/navigation.js"></script>
 <script defer src="js/verse-popup.js"></script>
 <script defer src="js/math-formatter.js"></script>
 <script defer src="js/init.js"></script>
+
 </body>
 </html>
