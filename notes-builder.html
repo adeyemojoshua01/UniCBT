@@ -189,7 +189,6 @@ window.MathJax = {
       <button onclick="fetchGitHubTree(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
         <i class="fas fa-sync-alt"></i> Refresh Tree
       </button>
-      <!-- NEW: Action Grid for creating folders/files -->
       <div class="grid grid-cols-2 gap-2 mt-1">
         <button onclick="createNewFolder()" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
           <i class="fas fa-folder-plus"></i> Folder
@@ -356,7 +355,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION
+       FILE LOADING & DYNAMIC PATH RESOLUTION (WITH FUZZY FALLBACK)
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -368,8 +367,8 @@ window.MathJax = {
       const parts = path.split('/');
       const filename = parts.pop();
       
-      const subjectSlug = parts.length > 1 ? parts[0] : 'general';
-      const topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
+      let subjectSlug = parts.length > 0 ? parts[0] : 'general';
+      let topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
       
       const formatName = (str) => str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' ');
 
@@ -403,22 +402,41 @@ window.MathJax = {
           const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
           new Function('window', text)(dummyWindow);
           
-          const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
+          // 1. Try to find the exact subject match
+          let notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject];
+          
+          // 2. Fuzzy Fallback: If subject doesn't match, just grab the first subject found in the file
+          if (!notesObj) {
+              const availableSubjects = Object.keys(dummyWindow.CBT_SUBJECT_NOTES);
+              if (availableSubjects.length > 0) {
+                  notesObj = dummyWindow.CBT_SUBJECT_NOTES[availableSubjects[0]];
+                  state.activeSubject = availableSubjects[0]; // Update state to match reality
+              } else {
+                  notesObj = {};
+              }
+          }
+
           let actualNoteKey = Object.keys(notesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
           
           if (actualNoteKey) {
               noteContent = notesObj[actualNoteKey];
           } else {
+              // 3. Fuzzy Fallback: If topic doesn't match, grab the first topic found in this subject
               const keys = Object.keys(notesObj);
-              if (keys.length === 1) {
+              if (keys.length > 0) {
                   state.activeTopic = keys[0]; 
                   document.getElementById('topic-name-input').value = state.activeTopic;
                   noteContent = notesObj[keys[0]];
               }
           }
 
-          const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
+          // Do the same for images
+          let imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
           let actualImgKey = Object.keys(imagesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
+          
+          if (!actualImgKey && Object.keys(imagesObj).length > 0) {
+              actualImgKey = Object.keys(imagesObj)[0];
+          }
           imgArray = imagesObj[actualImgKey] || [];
           
         } catch (e) {
@@ -549,7 +567,7 @@ window.MathJax = {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
       // Auto-suggest path based on current context
-      let defaultPath = 'new-subject/new-topic/new-topic.js';
+      let defaultPath = 'new-subject/new-topic.js';
       if (state.activePath) {
           const parts = state.activePath.split('/');
           parts.pop(); // remove filename
@@ -559,8 +577,8 @@ window.MathJax = {
       const path = prompt("Enter new file path (must end in .js):\nDo not include 'question-banks/'.", defaultPath);
       if (!path) return;
       
-      const cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
-      if (!cleanPath.endsWith('.js')) return toast('File path must end in .js', 'error');
+      let cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
+      if (!cleanPath.endsWith('.js')) cleanPath += '.js';
       
       toast('Creating file...', 'info');
 
