@@ -165,6 +165,13 @@ window.MathJax = {
   var saveTimer = null;
   var exportCode = '';
 
+  // Helper to decode Base64 strings safely
+  function b64DecodeUnicode(str) {
+      return decodeURIComponent(atob(str).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+  }
+
   function newQuestion(type) {
     type = type || 'MCQ';
     return {
@@ -803,22 +810,36 @@ window.MathJax = {
       };
       reader.readAsText(f);
     },
+    
     importFromGitHub: async function () {
       var owner = localStorage.getItem('gh_owner');
       var repo = localStorage.getItem('gh_repo');
+      var token = localStorage.getItem('gh_token');
+      
       if (!owner) { owner = prompt('GitHub owner (username or organisation):'); if (!owner) return; localStorage.setItem('gh_owner', owner.trim()); }
       if (!repo) { repo = prompt('GitHub repository name:'); if (!repo) return; localStorage.setItem('gh_repo', repo.trim()); }
+      if (!token) { token = prompt('GitHub Personal Access Token:'); if (!token) return; localStorage.setItem('gh_token', token.trim()); }
       
       var filename = prompt('Full file path inside question-banks/ (e.g. physics/thermodynamics/thermodynamics-bank.js):');
       if (!filename) return;
       
       var status = document.getElementById('import-status');
-      if (status) status.textContent = 'Fetching raw.githubusercontent.com…';
+      if (status) status.textContent = 'Fetching from GitHub API...';
       try {
-        var url = 'https://raw.githubusercontent.com/' + encodeURIComponent(owner.trim()) + '/' + encodeURIComponent(repo.trim()) + '/main/question-banks/' + filename;
-        var res = await fetch(url);
+        const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
+        const apiUrl = `https://api.github.com/repos/${owner.trim()}/${repo.trim()}/contents/question-banks/${encodedPath}?ref=main`;
+        
+        const res = await fetch(apiUrl, {
+           headers: { 
+             'Authorization': `token ${token.trim()}`,
+             'Accept': 'application/vnd.github.v3+json'
+           }
+        });
+        
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        var text = await res.text();
+        const fileData = await res.json();
+        const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
+        
         var ta = document.getElementById('import-text');
         if (ta) ta.value = text;
         if (status) status.textContent = 'Fetched ' + filename + ' from GitHub.';
@@ -1013,10 +1034,9 @@ window.MathJax = {
     },
 
     /* ------------- export ------------- */
-defaultFilename: function () {
+    defaultFilename: function () {
       var s = currentSubject();
       var t = currentTopic();
-      // Force lowercase and replace spaces with dashes
       var subjSlug = B.slug(s ? s.name : 'subject');
       var topicSlug = t ? B.slug(t.name) : 'general';
       return subjSlug + '/' + topicSlug + '/' + topicSlug + '-bank.js';
@@ -1030,7 +1050,8 @@ defaultFilename: function () {
       if (input && !input.value) input.value = B.defaultFilename();
       B.updateExportPreview();
     },
-    fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },    sanitize: function (s) { return String(s === undefined || s === null ? '' : s).replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\r?\n/g, ' ').trim(); },
+    fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },
+    sanitize: function (s) { return String(s === undefined || s === null ? '' : s).replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\r?\n/g, ' ').trim(); },
     generateExportJSCode: function (shuffleOptions) {
       var data = clone(appData);
       if (shuffleOptions) {
@@ -1112,9 +1133,7 @@ defaultFilename: function () {
     },
 
     /* ------------- publish ------------- */
-        
     openPublish: function () {
-      // Check if the current context has questions
       if (!appData.subjects.length) {
         B.toast('Nothing to publish! Create a subject and add questions first.', 'error');
         return;
@@ -1124,7 +1143,6 @@ defaultFilename: function () {
       document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
       document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
       document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
-      // Auto-fill the readonly path
       document.getElementById('pub-filename').value = B.defaultFilename();
       
       var err = document.getElementById('pub-error');
@@ -1138,28 +1156,60 @@ defaultFilename: function () {
       var repo = document.getElementById('pub-repo').value.trim();
       var token = document.getElementById('pub-token').value.trim();
       var filename = document.getElementById('pub-filename').value.trim();       
-      filename = filename.replace(/^question-banks\//i, ''); // Strip prefix if present
+      filename = filename.replace(/^question-banks\//i, ''); 
+      
       var status = document.getElementById('pub-status');
       var errBox = document.getElementById('pub-error');
       var btn = document.getElementById('pub-submit');
+      
       if (!owner || !repo || !token || !filename) {
         if (errBox) { errBox.textContent = 'Owner, repository, token and filename are all required.'; errBox.classList.remove('hidden'); }
         return;
       }
+      
       localStorage.setItem('gh_owner', owner); localStorage.setItem('gh_repo', repo); localStorage.setItem('gh_token', token);
       var code = B.generateExportJSCode(false);
+      
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing…'; }
       if (errBox) errBox.classList.add('hidden');
       if (status) status.textContent = 'Committing to question-banks/' + filename + ' on main…';
+      
       try {
+        // 1. Publish the bank file
         var res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: filename, code: code, githubToken: token, repoOwner: owner, repoName: repo })
         });
         var data = await res.json().catch(function () { return {}; });
         if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
-        if (status) status.innerHTML = '<span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>' + esc(data.message || 'Published successfully.') + '</span>' + (data.commitUrl ? ' <a href="' + esc(data.commitUrl) + '" target="_blank" rel="noopener" class="text-indigo-400 underline">View commit</a>' : '');
+        
+        if (status) status.innerHTML = '<span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>' + esc(data.message || 'Published successfully.') + '</span>';
         B.toast('Published to GitHub', 'success');
+
+        // 2. Update index.html
+        if (status) status.textContent = 'Updating index.html…';
+        try {
+            const indexRes = await fetch('/api/publish-bank', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                filename: 'update-index', 
+                githubToken: token, 
+                repoOwner: owner, 
+                repoName: repo 
+              })
+            });
+            const indexData = await indexRes.json();
+            if (!indexRes.ok) throw new Error(indexData.error || 'Failed to update index.html');
+            
+            B.toast('Index updated successfully!', 'success');
+            if (status) status.innerHTML += ' <br><span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>Index updated.</span>';
+        } catch (indexErr) {
+            console.warn('Index update failed:', indexErr);
+            B.toast(indexErr.message, 'error');
+            if (status) status.innerHTML += ' <br><span class="text-rose-400"><i class="fas fa-circle-xmark mr-1"></i>Failed to update index.</span>';
+        }
+
       } catch (err) {
         if (errBox) { errBox.textContent = err.message; errBox.classList.remove('hidden'); }
         if (status) status.textContent = '';
