@@ -732,19 +732,28 @@ window.MathJax = {
 
     applyImport: function() {
         var t = currentTopic();
-        if (!t || !pendingImport) return;
+        if (!t) {
+            B.toast('Please select a Topic first in the Structure tab.', 'error');
+            return;
+        }
+        if (!pendingImport || pendingImport.length === 0) return;
+
         var targetSt = document.getElementById('import-target-subtopic').value;
+        if (!targetSt && t.subTopics.length > 0) targetSt = t.subTopics[0].id;
+        
         B.pushUndoState();
         
+        var importedCount = 0;
         pendingImport.forEach(q => {
             q.id = uid('q');
             q.subTopicId = targetSt;
             t.questions.push(q);
+            importedCount++;
         });
         
         B.closeModal('import-modal');
         B.renderAll();
-        B.toast(`Imported ${pendingImport.length} questions!`, 'success');
+        B.toast(`Imported ${importedCount} questions!`, 'success');
         pendingImport = null;
     },
 
