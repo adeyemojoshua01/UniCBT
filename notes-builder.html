@@ -189,9 +189,15 @@ window.MathJax = {
       <button onclick="fetchGitHubTree(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
         <i class="fas fa-sync-alt"></i> Refresh Tree
       </button>
-      <button onclick="createNewFolder()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
-        <i class="fas fa-folder-plus"></i> New Folder
-      </button>
+      <!-- NEW: Action Grid for creating folders/files -->
+      <div class="grid grid-cols-2 gap-2 mt-1">
+        <button onclick="createNewFolder()" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+          <i class="fas fa-folder-plus"></i> Folder
+        </button>
+        <button onclick="createNewFile()" class="bg-sky-600 hover:bg-sky-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+          <i class="fas fa-file-circle-plus"></i> File
+        </button>
+      </div>
     </div>
     <div class="flex-grow overflow-y-auto p-3 space-y-1 text-sm text-gray-300" id="sidebar-tree">
       <div class="text-center text-xs text-gray-500 mt-4">Connect GitHub to view files.</div>
@@ -255,7 +261,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       GITHUB TREE FETCHING & PARSING (CORRECTED)
+       GITHUB TREE FETCHING & PARSING
        ========================================================= */
     async function fetchGitHubTree(force = false) {
       if (!state.github.owner || !state.github.repo || !state.github.token) {
@@ -277,7 +283,6 @@ window.MathJax = {
         if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
         const data = await res.json();
         
-        // Build recursive tree structure accurately
         const root = {};
         data.tree.forEach(item => {
           if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
@@ -287,7 +292,6 @@ window.MathJax = {
           
           parts.forEach((part, i) => {
             if (!current[part]) {
-              // If it's the last part AND the API says it's a blob (file), mark it as FILE
               current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
             }
             if (current[part] !== 'FILE') {
@@ -352,7 +356,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION (CORRECTED)
+       FILE LOADING & DYNAMIC PATH RESOLUTION
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -377,7 +381,6 @@ window.MathJax = {
       
       toast('Fetching ' + path + '...', 'info');
       try {
-        // Encode the path to handle spaces and special characters
         const encodedPath = path.split('/').map(encodeURIComponent).join('/');
         const apiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${encodedPath}?ref=main&t=${Date.now()}`;
         
@@ -396,19 +399,16 @@ window.MathJax = {
         let noteContent = '';
         let imgArray = [];
 
-        // SECURE EXECUTION: Instead of Regex, we run the file in a sandboxed function to extract data perfectly
         try {
           const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
           new Function('window', text)(dummyWindow);
           
-          // Extract Notes
           const notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject] || {};
           let actualNoteKey = Object.keys(notesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
           
           if (actualNoteKey) {
               noteContent = notesObj[actualNoteKey];
           } else {
-              // Fallback: If the file only contains one topic, load it regardless of filename
               const keys = Object.keys(notesObj);
               if (keys.length === 1) {
                   state.activeTopic = keys[0]; 
@@ -417,7 +417,6 @@ window.MathJax = {
               }
           }
 
-          // Extract Images
           const imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
           let actualImgKey = Object.keys(imagesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
           imgArray = imagesObj[actualImgKey] || [];
@@ -437,7 +436,6 @@ window.MathJax = {
             let svgCode = '';
             const svgFilename = img.filename || img.data.split('/').pop();
             try {
-              // Dynamically use the correct subject folder for SVGs and encode the path
               const svgPath = `question-banks/${subjectSlug}/svg/${svgFilename}`;
               const encodedSvgPath = svgPath.split('/').map(encodeURIComponent).join('/');
               const svgApiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/${encodedSvgPath}?ref=main`;
@@ -514,7 +512,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       DEEP FOLDER CREATION (Via .gitkeep)
+       DEEP FOLDER & FILE CREATION
        ========================================================= */
     async function createNewFolder() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
@@ -542,6 +540,62 @@ window.MathJax = {
         
         toast('Folder created!', 'success');
         fetchGitHubTree(true); 
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    }
+
+    async function createNewFile() {
+      if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
+      
+      // Auto-suggest path based on current context
+      let defaultPath = 'new-subject/new-topic/new-topic.js';
+      if (state.activePath) {
+          const parts = state.activePath.split('/');
+          parts.pop(); // remove filename
+          defaultPath = parts.join('/') + '/new-topic.js';
+      }
+
+      const path = prompt("Enter new file path (must end in .js):\nDo not include 'question-banks/'.", defaultPath);
+      if (!path) return;
+      
+      const cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
+      if (!cleanPath.endsWith('.js')) return toast('File path must end in .js', 'error');
+      
+      toast('Creating file...', 'info');
+
+      try {
+        const parts = cleanPath.split('/');
+        const filename = parts.pop().replace('.js', '');
+        const subjectSlug = parts.length > 0 ? parts[0] : 'general';
+        const formatName = (str) => str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' ');
+        
+        const subj = formatName(subjectSlug);
+        const topic = formatName(filename);
+
+        // Generate a starter template for the new file
+        const templateCode = `/* ${subj} — ${topic} notes */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = window.CBT_SUBJECT_NOTES['${subj}'] || {};\nwindow.CBT_SUBJECT_NOTES['${subj}']['${topic}'] = \`## ${topic}\nStart writing your notes here...\n\`;\n\nwindow.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [];\n`;
+
+        const res = await fetch('/api/publish-bank', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            filename: `question-banks/${cleanPath}`, 
+            code: templateCode, 
+            githubToken: state.github.token, 
+            repoOwner: state.github.owner, 
+            repoName: state.github.repo 
+          })
+        });
+        
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create file');
+        
+        toast('File created successfully!', 'success');
+        
+        // Refresh tree and auto-load the new file
+        await fetchGitHubTree(true);
+        loadFileFromPath(cleanPath);
+        
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -732,7 +786,6 @@ window.MathJax = {
 
       try {
         let safeNotes = (draft.notes || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`');
-        // Write in the flat format which the app supports, to prevent overriding other topics if they exist in the same file
         let notesContent = `/* Auto-generated by Admin Studio */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = window.CBT_SUBJECT_NOTES['${subj}'] || {};\nwindow.CBT_SUBJECT_NOTES['${subj}']['${topic}'] = \`${safeNotes}\`;\n`;
         
         let imagesContent = `window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [\n`;
