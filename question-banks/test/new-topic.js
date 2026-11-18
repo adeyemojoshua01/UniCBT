@@ -7,4 +7,5 @@ window.CBT_SUBJECT_NOTES['Test']['New topic'] = `## Byrg
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Test'] = window.CBT_SUBJECT_IMAGES['Test'] || {};
 window.CBT_SUBJECT_IMAGES['Test']['New topic'] = [
+  { data: 'question-banks/general/svg/test1.svg', filename: 'test1.svg' },
 ];
