@@ -54,13 +54,12 @@ window.MathJax = {
   
   details > summary { list-style: none; cursor: pointer; }
   details > summary::-webkit-details-marker { display: none; }
-  details[open] > summary .folder-icon::before { content: "\f07c"; } /* Open folder */
-  summary .folder-icon::before { content: "\f07b"; } /* Closed folder */
+  details[open] > summary .folder-icon::before { content: "\f07c"; }
+  summary .folder-icon::before { content: "\f07b"; }
 
   .svg-item-btn { transition: all 0.2s; }
   .svg-item-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.1); }
   
-  /* Custom Loader */
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
@@ -169,10 +168,10 @@ window.MathJax = {
 
   <!-- STICKY BOTTOM ACTION BAR -->
   <div class="fixed bottom-0 left-0 w-full bg-[#0B1020] border-t border-[#1e2740] p-3 flex gap-3 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
-    <button onclick="loadFromTree()" id="btn-load" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
-      <i class="fas fa-download"></i> Refresh File
+    <button onclick="loadFileFromPath(state.activePath)" id="btn-load" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform" disabled>
+      <i class="fas fa-download"></i> Refresh
     </button>
-    <button onclick="publishToGitHub()" id="btn-publish" class="flex-[2] bg-amber-500 hover:bg-amber-400 text-black py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-amber-500/20">
+    <button onclick="publishToGitHub()" id="btn-publish" class="flex-[2] bg-amber-500 hover:bg-amber-400 text-black py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-amber-500/20" disabled>
       <i class="fab fa-github"></i> Publish Topic
     </button>
   </div>
@@ -225,15 +224,12 @@ window.MathJax = {
   <div id="toast-layer" class="fixed top-16 right-4 z-[999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
   <script>
-    /* =========================================================
-       STATE MANAGEMENT
-       ========================================================= */
     let state = {
       activeSubject: '',
       activeTopic: '',
-      activePath: '', // The full path e.g. physics/mechanics/mechanics.js
+      activePath: '',
       activeSvgIndex: -1,
-      data: {}, // Local drafts: { "Physics": { "Mechanics": { notes: "", svgs: [] } } }
+      data: {}, 
       github: { owner: '', repo: '', token: '' },
       treeData: null
     };
@@ -243,7 +239,7 @@ window.MathJax = {
       state = JSON.parse(saved);
       if (!state.github) state.github = { owner: '', repo: '', token: '' };
     } else {
-      state.data = {}; // Empty initially, rely on tree
+      state.data = {}; 
     }
 
     function saveState() { localStorage.setItem('cbt_studio_codex', JSON.stringify(state)); }
@@ -254,7 +250,7 @@ window.MathJax = {
        ========================================================= */
     async function fetchGitHubTree(force = false) {
       if (!state.github.owner || !state.github.repo || !state.github.token) {
-        document.getElementById('sidebar-tree').innerHTML = '<div class="text-center text-xs text-red-400 mt-4">Please set GitHub settings first.</div>';
+        document.getElementById('sidebar-tree').innerHTML = '<div class="text-center text-xs text-red-400 mt-4">Set GitHub settings first.</div>';
         return;
       }
 
@@ -262,20 +258,17 @@ window.MathJax = {
       treeContainer.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4"><span class="spinner"></span> Fetching tree...</div>';
 
       try {
-        // Fetch recursive tree
         const res = await fetch(`https://api.github.com/repos/${state.github.owner}/${state.github.repo}/git/trees/main?recursive=1`, {
           headers: { Authorization: `Bearer ${state.github.token}` }
         });
         
-        if (!res.ok) throw new Error('Failed to fetch repo tree. Check token permissions.');
+        if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
         const data = await res.json();
         
-        // Filter only paths inside question-banks/
         const paths = data.tree
           .filter(item => item.path.startsWith('question-banks/') && item.path !== 'question-banks/')
           .map(item => item.path.replace('question-banks/', ''));
 
-        // Build nested object
         const root = {};
         paths.forEach(path => {
           const parts = path.split('/');
@@ -301,17 +294,13 @@ window.MathJax = {
 
     function renderSidebarTree(tree, container = document.getElementById('sidebar-tree'), parentPath = '') {
       if (!container) return;
-      
-      // If root call, clear container
       if (parentPath === '') container.innerHTML = '';
 
-      // If empty tree
       if (Object.keys(tree).length === 0) {
-        if (parentPath === '') container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No folders found in question-banks/.</div>';
+        if (parentPath === '') container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No folders found.</div>';
         return;
       }
 
-      // Separate folders and files
       const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
       const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
 
@@ -339,11 +328,11 @@ window.MathJax = {
         const fullPath = parentPath ? `${parentPath}/${file}` : file;
         const isActive = state.activePath === fullPath;
         
-        // Only show .js files for editing
-        if (file.endsWith('.js')) {
+        // ONLY SHOW NOTES FILES (Ignore question-banks and question-loader)
+        if (file.endsWith('.js') && !file.includes('-bank.js') && file !== 'question-loader.js') {
           const btn = document.createElement('button');
           btn.className = `w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] ${isActive ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-gray-400 hover:bg-[#101830] hover:text-gray-200'}`;
-          btn.innerHTML = `<i class="fas fa-file-code w-4 text-center ${isActive ? 'text-amber-400' : 'text-gray-600'}"></i> <span class="truncate">${file}</span>`;
+          btn.innerHTML = `<i class="fas fa-file-lines w-4 text-center ${isActive ? 'text-amber-400' : 'text-gray-600'}"></i> <span class="truncate">${file}</span>`;
           btn.onclick = () => loadFileFromPath(fullPath);
           container.appendChild(btn);
         }
@@ -351,21 +340,20 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & EDITING
+       FILE LOADING
        ========================================================= */
     async function loadFileFromPath(path) {
-      if (!path.endsWith('.js')) return;
+      if (!path) return toast('No file selected.', 'error');
       
       state.activePath = path;
       saveState();
-      renderSidebarTree(state.treeData); // update highlight
+      renderSidebarTree(state.treeData); 
       
       const parts = path.split('/');
       const filename = parts.pop();
       const topicSlug = parts[parts.length - 1] || 'general';
       const subjectSlug = parts.length > 1 ? parts[0] : 'general';
       
-      // Capitalize first letter for display name
       const formatName = (str) => str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' ');
 
       state.activeSubject = formatName(subjectSlug);
@@ -374,12 +362,16 @@ window.MathJax = {
       document.getElementById('current-path-label').textContent = `question-banks / ${path}`;
       document.getElementById('topic-name-input').value = state.activeTopic;
       
-      // Fetch the file content
       toast('Fetching ' + path + '...', 'info');
       try {
         const url = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${path}`;
-        const res = await fetch(url + '?t=' + Date.now());
-        if (!res.ok) throw new Error('File not found on GitHub');
+        
+        // Pass token to fetch private files!
+        const res = await fetch(url + '?t=' + Date.now(), {
+           headers: { Authorization: `Bearer ${state.github.token}` }
+        });
+        
+        if (!res.ok) throw new Error('File not found on GitHub (404)');
         const text = await res.text();
 
         let noteContent = '';
@@ -397,7 +389,6 @@ window.MathJax = {
           imgArray = imagesObj[actualTopicKey] || [];
         } catch (e) { console.warn('Could not parse images', e); }
 
-        // Initialize local draft
         if (!state.data[state.activeSubject]) state.data[state.activeSubject] = {};
         state.data[state.activeSubject][state.activeTopic] = {
           notes: noteContent,
@@ -406,17 +397,21 @@ window.MathJax = {
             const filename = img.filename || img.data.split('/').pop();
             try {
               const svgUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjectSlug}/svg/${filename}`;
-              const svgRes = await fetch(svgUrl);
+              const svgRes = await fetch(svgUrl, { headers: { Authorization: `Bearer ${state.github.token}` } });
               if (svgRes.ok) svgCode = await svgRes.text();
             } catch (e) {}
             return { filename: filename, code: svgCode };
           }))
         };
 
+        // Enable buttons
+        document.getElementById('btn-load').disabled = false;
+        document.getElementById('btn-publish').disabled = false;
+
         loadTopicIntoEditor();
         saveState();
         toast('Loaded!', 'success');
-        toggleSidebar(); // Close sidebar on mobile after selecting
+        toggleSidebar();
       } catch (err) {
         toast('Fetch failed: ' + err.message, 'error');
       }
@@ -424,7 +419,6 @@ window.MathJax = {
 
     function loadTopicIntoEditor() {
       if (!state.activeSubject || !state.activeTopic) return;
-      
       const draft = state.data[state.activeSubject][state.activeTopic];
       if (!draft) return;
       
@@ -436,10 +430,6 @@ window.MathJax = {
 
     function updateTopicName(newName) {
       if (!newName.trim() || newName === state.activeTopic) return;
-      
-      // We only update the local state name. To change the actual GitHub folder, 
-      // the user must create a new folder and delete the old one.
-      // This just handles the display label.
       const oldName = state.activeTopic;
       const draft = state.data[state.activeSubject][oldName];
       
@@ -447,7 +437,6 @@ window.MathJax = {
       delete state.data[state.activeSubject][oldName];
       state.activeTopic = newName;
       
-      // Update path reference locally (doesn't rename folder on GitHub automatically, but allows saving to new path if desired)
       const parts = state.activePath.split('/');
       parts[parts.length - 1] = getSlug(newName) + '.js';
       state.activePath = parts.join('/');
@@ -480,17 +469,14 @@ window.MathJax = {
       if (!path) return;
       
       const cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
-      
-      const btn = document.getElementById('btn-load'); // Just using it as a visual blocker
       toast('Creating folder...', 'info');
 
       try {
-        // Upload a .gitkeep file to force GitHub to create the directory
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             filename: `${cleanPath}/.gitkeep`, 
-            code: '', // Empty file
+            code: '', 
             githubToken: state.github.token, 
             repoOwner: state.github.owner, 
             repoName: state.github.repo 
@@ -501,7 +487,7 @@ window.MathJax = {
         if (!res.ok || data.error) throw new Error(data.error || 'Failed to create folder');
         
         toast('Folder created!', 'success');
-        fetchGitHubTree(true); // Refresh tree
+        fetchGitHubTree(true); 
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -542,7 +528,6 @@ window.MathJax = {
           const blob = new Blob([svg.code], {type: 'image/svg+xml'});
           previewUrl = URL.createObjectURL(blob);
         } else {
-          // Extract subject slug from activePath
           const subjSlug = state.activePath.split('/')[0] || 'physics';
           previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${svg.filename}`;
         }
@@ -617,7 +602,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       PREVIEW & MARKDOWN LOGIC
+       PREVIEW & PUBLISHING
        ========================================================= */
     function parseMarkdownWithMath(rawText) {
       if (!rawText) return '';
@@ -674,9 +659,6 @@ window.MathJax = {
       document.body.appendChild(overlay);
     }
 
-    /* =========================================================
-       PUBLISHING
-       ========================================================= */
     async function publishToGitHub() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       if (!state.activePath) return toast('Select a file from the sidebar first.', 'error');
@@ -685,7 +667,7 @@ window.MathJax = {
       if (!draft) return toast('No data to publish.', 'error');
 
       const parts = state.activePath.split('/');
-      const filename = parts.pop(); // e.g. mechanics.js
+      const filename = parts.pop(); 
       const topicSlug = parts[parts.length - 1] || 'general';
       const subjSlug = parts.length > 1 ? parts[0] : 'general';
       
@@ -764,7 +746,7 @@ window.MathJax = {
       state.github.repo = document.getElementById('gh-repo').value.trim();
       state.github.token = document.getElementById('gh-token').value.trim();
       saveState(); closeModal('github-modal'); toast('Settings saved', 'success');
-      fetchGitHubTree(true); // Immediately refresh tree
+      fetchGitHubTree(true); 
     }
 
     function switchTab(tab) {
