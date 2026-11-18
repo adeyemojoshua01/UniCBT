@@ -820,9 +820,6 @@ window.MathJax = {
       const pathParts = state.activePath.split('/');
       const filename = pathParts.pop(); 
       const topicSlug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : 'general';
-      
-      // THE FIX: Use the exact folder path for the subject folder
-      // If the file is at "test/my-topic.js", we want the SVG saved in "test/svg/"
       const subjectFolderPath = pathParts.length > 0 ? pathParts.join('/') : 'general';
       
       const subj = state.activeSubject;
@@ -847,7 +844,6 @@ window.MathJax = {
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            // Save SVG inside the subjectFolderPath/svg/
             imagesContent += `  { data: 'question-banks/${subjectFolderPath}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
@@ -872,6 +868,28 @@ window.MathJax = {
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
+        
+        // --- NEW: Trigger index.html update ---
+        toast('Updating index.html...', 'info');
+        try {
+            const indexRes = await fetch('/api/update-index', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                githubToken: state.github.token, 
+                repoOwner: state.github.owner, 
+                repoName: state.github.repo 
+              })
+            });
+            if (!indexRes.ok) {
+              const indexData = await indexRes.json().catch(()=>({}));
+              throw new Error(indexData.error || 'Failed to update index.html');
+            }
+            toast('Index updated successfully!', 'success');
+        } catch (indexErr) {
+            console.warn('Index update failed:', indexErr);
+            toast('Note published, but failed to update index.html.', 'error');
+        }
         
         toast('Published ' + filename + ' successfully!', 'success');
       } catch (err) {
