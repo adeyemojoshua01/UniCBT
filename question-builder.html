@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>eduCBT — Question Builder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>eduCBT — Question Builder Pro</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <script>window.tailwind = window.tailwind || {}; window.tailwind.config = { theme: { extend: { colors: { brand: '#6366f1', amber: '#f59e0b', ink: '#0B1020' } } } };</script>
@@ -18,11 +18,11 @@ window.MathJax = {
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <style>
   html { color-scheme: dark; }
-  body { background: radial-gradient(1000px 520px at 10% -5%, rgba(99,102,241,.15), transparent 60%), radial-gradient(900px 500px at 95% 0%, rgba(245,158,11,.08), transparent 60%), #070A12; }
+  body { background: #070A12; color: #E7EEF6; -webkit-tap-highlight-color: transparent; }
   * { scrollbar-width: thin; scrollbar-color: #25304d transparent; }
-  *::-webkit-scrollbar { width: 9px; height: 9px; } *::-webkit-scrollbar-thumb { background:#25304d; border-radius:8px; }
+  *::-webkit-scrollbar { width: 6px; height: 6px; } *::-webkit-scrollbar-thumb { background:#25304d; border-radius:8px; }
   .panel { background: #0B1020; border: 1px solid #1e2740; }
-  .field { background:#101830; border:1px solid #26314f; color:#E7EEF6; border-radius:10px; width:100%; padding:9px 12px; font-size:13px; }
+  .field { background:#101830; border:1px solid #26314f; color:#E7EEF6; border-radius:10px; width:100%; padding:10px 12px; font-size:13px; }
   .field:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
   .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#8598AC; display:block; margin-bottom:5px; }
   .btn { display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; border:1px solid transparent; transition:.15s; white-space:nowrap; }
@@ -30,101 +30,138 @@ window.MathJax = {
   .btn-amber { background:#f59e0b; color:#1f1300; } .btn-amber:hover { background:#fbbf24; }
   .btn-ghost { background:#111a2e; color:#B7C6D4; border-color:#26314f; } .btn-ghost:hover { background:#17223a; color:#fff; }
   .btn-danger { background:rgba(225,29,72,.14); color:#fb7185; border-color:rgba(225,29,72,.35); } .btn-danger:hover { background:rgba(225,29,72,.24); }
-  .chip { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.04em; }
-  .tree-item { display:flex; align-items:center; gap:7px; width:100%; text-align:left; padding:7px 9px; border-radius:8px; font-size:12.5px; color:#B7C6D4; cursor:pointer; transition:.12s; }
+  .chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.04em; cursor:pointer; border:1px solid transparent; }
+  .chip.active { background: rgba(99,102,241,.2); color: #c7d2fe; border-color: rgba(99,102,241,.5); }
+  .chip.inactive { background: #111a2e; color: #8598AC; border-color: #26314f; }
+  .tree-item { display:flex; align-items:center; gap:7px; width:100%; text-align:left; padding:8px 10px; border-radius:8px; font-size:13px; color:#B7C6D4; cursor:pointer; transition:.12s; border: 1px solid transparent; }
   .tree-item:hover { background:#111a2e; color:#fff; }
-  .tree-item.active { background:rgba(99,102,241,.18); color:#c7d2fe; box-shadow:inset 2px 0 0 #6366f1; }
+  .tree-item.active { background:rgba(99,102,241,.15); color:#c7d2fe; border-color: rgba(99,102,241,.4); }
   .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex:none; }
-  .modal-shell { position:fixed; inset:0; z-index:80; background:rgba(2,6,15,.8); backdrop-filter:blur(4px); display:flex; align-items:flex-start; justify-content:center; padding:22px 14px; overflow-y:auto; }
+  .modal-shell { position:fixed; inset:0; z-index:80; background:rgba(2,6,15,.85); backdrop-filter:blur(6px); display:flex; align-items:flex-start; justify-content:center; padding:20px 14px; overflow-y:auto; }
   .modal-card { width:100%; max-width:720px; background:#0B1020; border:1px solid #26314f; border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.6); overflow:hidden; margin:auto; }
   .hidden { display:none !important; }
   .fmt { white-space:pre-wrap; word-break:break-word; }
   .qcard { background:#0B1020; border:1px solid #1e2740; border-radius:14px; }
   mjx-container { max-width:100% !important; overflow-x:auto; overflow-y:hidden; }
   mjx-container[display="true"] { display:block !important; width:100% !important; max-width:100% !important; overflow-x:auto !important; }
-  #builder-root, .min-w-0 { min-width:0; }
-  
-  /* GitHub Tree Sidebar */
-  #gh-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-  #gh-sidebar.open { transform: translateX(0); }
-  #gh-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
-  #gh-overlay.open { opacity: 1; pointer-events: auto; }
-  details > summary { list-style: none; cursor: pointer; }
-  details > summary::-webkit-details-marker { display: none; }
-  .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
-  .folder-icon { transition: transform 0.2s; }
-  details[open] > summary .folder-icon { transform: rotate(90deg); }
-
-  @media (max-width: 767px) {
-    #sidebar { position:fixed; top:62px; bottom:0; left:0; z-index:70; width:280px; transform:translateX(-102%); }
-    #sidebar.open { transform:translateX(0); }
-  }
-  .saved-flash { animation: savedFlash .8s ease; }
-  @keyframes savedFlash { 0% { background:rgba(16,185,129,.35); } 100% { background:rgba(16,185,129,.12); } }
+  .tab-btn { flex: 1; padding: 14px 0; font-size: 13px; font-weight: 700; color: #8598AC; border-bottom: 2px solid transparent; transition: all 0.2s; text-align: center; }
+  .tab-btn.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+  .pane { display: none; }
+  .pane.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
-<body class="text-slate-100">
-<div id="builder-root" class="min-h-screen"></div>
+<body class="h-[100dvh] flex flex-col overflow-hidden">
 
-<!-- ============ GITHUB EXPLORER SIDEBAR ============ -->
-<div id="gh-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[65]" onclick="B.toggleGhSidebar(false)"></div>
-<aside id="gh-sidebar" class="fixed top-0 left-0 w-[320px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-[70] flex flex-col">
-  <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
-    <h2 class="font-extrabold text-sm"><i class="fab fa-github text-indigo-400 mr-1"></i> GitHub Explorer</h2>
-    <button onclick="B.toggleGhSidebar(false)" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+<!-- HEADER -->
+<header class="flex-none h-[62px] border-b border-[#1e2740] bg-[#080d18] flex items-center px-3 justify-between z-50">
+  <div class="flex items-center gap-2.5 min-w-0">
+    <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0"><i class="fas fa-pen-ruler text-white text-sm"></i></div>
+    <div class="min-w-0 hidden sm:block">
+      <div class="font-extrabold text-sm leading-tight">Question Builder Pro</div>
+      <div class="text-[10px] text-slate-500 leading-tight">authoring studio</div>
+    </div>
   </div>
   
-  <div class="p-3 border-b border-[#1e2740] flex flex-col gap-2 space-y-2 bg-[#080d18]">
-    <div><label class="lbl">GitHub Username</label><input type="text" id="gh-user" class="field !text-xs" placeholder="e.g. octocat" onchange="localStorage.setItem('gh_owner', this.value)"></div>
-    <div><label class="lbl">Repository Name</label><input type="text" id="gh-repo" class="field !text-xs" placeholder="e.g. UniCBT" onchange="localStorage.setItem('gh_repo', this.value)"></div>
-    <div><label class="lbl">Personal Access Token</label><input type="password" id="gh-token" class="field !text-xs" placeholder="ghp_..." onchange="localStorage.setItem('gh_token', this.value)"></div>
-    <button onclick="B.loadGitHubTree()" class="btn btn-indigo w-full justify-center mt-2"><i class="fas fa-sync-alt"></i> Load Repository</button>
+  <div class="flex items-center gap-2">
+    <span id="saved-pill" class="chip bg-emerald-500/15 text-emerald-400 hidden sm:inline-flex">Ready</span>
+    <button onclick="B.undo()" class="btn btn-ghost !px-2.5" title="Undo"><i class="fas fa-rotate-left"></i></button>
+    <button onclick="B.toggleGhSidebar(true)" class="btn btn-ghost !text-indigo-300 !border-indigo-500/30"><i class="fab fa-github"></i><span class="hidden sm:inline">Repo</span></button>
+  </div>
+</header>
+
+<!-- MAIN WORKSPACE -->
+<main class="flex-grow flex flex-col overflow-hidden relative">
+  
+  <!-- TABS -->
+  <div class="flex-none flex border-b border-[#1e2740] bg-[#0B1020] z-10">
+    <button onclick="B.switchTab('structure')" id="tab-structure" class="tab-btn active"><i class="fas fa-sitemap mr-1.5"></i> Structure</button>
+    <button onclick="B.switchTab('content')" id="tab-content" class="tab-btn"><i class="fas fa-file-lines mr-1.5"></i> Content</button>
+    <button onclick="B.switchTab('preview')" id="tab-preview" class="tab-btn"><i class="fas fa-eye mr-1.5"></i> Preview</button>
   </div>
 
+  <div class="flex-grow overflow-y-auto p-4 pb-24 relative" id="workspace">
+    
+    <!-- PANE: STRUCTURE -->
+    <div id="pane-structure" class="pane active">
+      <div id="structure-content"></div>
+    </div>
+
+    <!-- PANE: CONTENT -->
+    <div id="pane-content" class="pane">
+      <div id="content-header" class="mb-4"></div>
+      <div id="content-body"></div>
+    </div>
+
+    <!-- PANE: PREVIEW -->
+    <div id="pane-preview" class="pane">
+      <div id="preview-content"></div>
+    </div>
+  </div>
+</main>
+
+<!-- STICKY ACTION BAR -->
+<div class="fixed bottom-0 left-0 w-full bg-[#0B1020]/95 backdrop-blur border-t border-[#1e2740] p-3 flex gap-2 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+  <button onclick="B.addQuestion('MCQ')" class="btn btn-ghost flex-1 justify-center !bg-indigo-600/20 !text-indigo-400 !border-indigo-600/30">
+    <i class="fas fa-plus"></i> New Q
+  </button>
+  <button onclick="B.scheduleSave()" class="btn btn-ghost flex-1 justify-center">
+    <i class="fas fa-save"></i> Save
+  </button>
+  <button onclick="B.openPublish()" class="btn btn-amber flex-[1.5] justify-center">
+    <i class="fab fa-github"></i> Publish
+  </button>
+</div>
+
+<!-- GITHUB SIDEBAR -->
+<div id="gh-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[65]" onclick="B.toggleGhSidebar(false)"></div>
+<aside id="gh-sidebar" class="fixed top-0 left-0 w-[320px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-[70] flex flex-col transition-transform duration-300" style="transform: translateX(-100%);">
+  <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
+    <h2 class="font-extrabold text-sm"><i class="fab fa-github text-indigo-400 mr-1"></i> GitHub Explorer</h2>
+    <button onclick="B.toggleGhSidebar(false)" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="p-3 border-b border-[#1e2740] space-y-2 bg-[#080d18]">
+    <input type="text" id="gh-user" class="field !text-xs" placeholder="Username" onchange="localStorage.setItem('gh_owner', this.value)">
+    <input type="text" id="gh-repo" class="field !text-xs" placeholder="Repository" onchange="localStorage.setItem('gh_repo', this.value)">
+    <input type="password" id="gh-token" class="field !text-xs" placeholder="Token (ghp_...)" onchange="localStorage.setItem('gh_token', this.value)">
+    <button onclick="B.loadGitHubTree()" class="btn btn-indigo w-full justify-center"><i class="fas fa-sync-alt"></i> Load</button>
+  </div>
   <div class="p-3 border-b border-[#1e2740] grid grid-cols-2 gap-2">
     <button onclick="B.createNewFolder()" class="btn btn-ghost !bg-emerald-600/20 !text-emerald-400 !border-emerald-600/30 justify-center"><i class="fas fa-folder-plus"></i> Folder</button>
     <button onclick="B.createNewFile()" class="btn btn-ghost !bg-sky-600/20 !text-sky-400 !border-sky-600/30 justify-center"><i class="fas fa-file-circle-plus"></i> File</button>
   </div>
-
   <div class="flex-grow overflow-y-auto p-3 space-y-1 text-sm text-gray-300" id="gh-tree-container">
     <div class="text-center text-xs text-gray-500 mt-4">Enter credentials and click Load.</div>
   </div>
 </aside>
 
-<!-- ============ IMPORT MODAL ============ -->
+<!-- MODALS -->
+<!-- Import Modal -->
 <div id="import-modal" class="modal-shell hidden">
   <div class="modal-card">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
-      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Manual Import</h2>
-      <button onclick="B.closeModal('import-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
+      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Import Questions</h2>
+      <button onclick="B.closeModal('import-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-4">
-      <div class="flex justify-between items-center bg-indigo-500/10 border border-indigo-500/30 p-3 rounded-xl mb-2">
-        <p class="text-xs text-indigo-200"><i class="fas fa-info-circle mr-1"></i> Want to browse your repository directly?</p>
-        <button onclick="B.closeModal('import-modal'); B.toggleGhSidebar(true);" class="btn btn-indigo !py-1.5 !text-[11px]"><i class="fab fa-github"></i> Open Explorer</button>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="document.getElementById('md-file-input').click()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-file-alt"></i> Markdown (.md)</button>
+        <button onclick="document.getElementById('js-file-input').click()" class="btn btn-ghost justify-center !py-3"><i class="fab fa-js"></i> JS Bank (.js)</button>
       </div>
-      
-      <div id="import-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors">
+      <input type="file" id="md-file-input" accept=".md,.txt" class="hidden" onchange="B.handleMdFileSelect(this)">
+      <input type="file" id="js-file-input" accept=".js,.txt" class="hidden" onchange="B.handleJsFileSelect(this)">
+
+      <div class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="document.getElementById('md-file-input').click()">
         <i class="fas fa-cloud-arrow-up text-2xl text-indigo-400"></i>
-        <p class="mt-2 text-sm font-semibold text-slate-200">Drop a <span class="text-amber-400">.js</span> bank file here</p>
-        <p class="text-[11px] text-slate-500 mt-0.5">or click to pick a file</p>
-        <input type="file" id="import-file" accept=".js,.txt" class="hidden" onchange="B.readImportFile(this)">
+        <p class="mt-2 text-sm font-semibold text-slate-200">Tap to choose a file from storage</p>
       </div>
-      <div>
-        <label class="lbl mb-1.5">Or paste bank code / DSL</label>
-        <textarea id="import-text" rows="8" class="field font-mono !text-[11.5px]" placeholder="window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];&#10;window.CBT_SUBJECT_BANKS.push(`Subject: Physics&#10;Topic: Mechanics&#10;...`);"></textarea>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <button onclick="B.previewImport()" class="btn btn-indigo"><i class="fas fa-magnifying-glass"></i> Parse &amp; Preview</button>
-        <span class="text-[11px] text-slate-500">Nothing is applied until you choose Replace or Merge.</span>
-      </div>
+
       <div id="import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
-        <div id="import-summary" class="text-sm font-semibold text-slate-200"></div>
-        <div id="import-warnings" class="mt-2 text-[11.5px] text-amber-400 space-y-1"></div>
-        <div class="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-[#1e2740]">
-          <label class="flex items-center gap-2 text-xs font-semibold text-slate-300"><input type="radio" name="import-mode" value="replace" checked class="accent-indigo-500"> Replace current bank</label>
-          <label class="flex items-center gap-2 text-xs font-semibold text-slate-300"><input type="radio" name="import-mode" value="merge" class="accent-indigo-500"> Merge (dedupe by name)</label>
-          <button onclick="B.applyImport()" class="btn btn-amber ml-auto"><i class="fas fa-check"></i> Apply import</button>
+        <div id="import-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
+        <div id="import-warnings" class="text-[11.5px] text-amber-400 space-y-1 mb-3"></div>
+        <div class="flex items-center gap-2">
+            <select id="import-target-subtopic" class="field"></select>
+            <button onclick="B.applyImport()" class="btn btn-amber whitespace-nowrap"><i class="fas fa-check"></i> Apply</button>
         </div>
       </div>
       <p id="import-status" class="text-[11.5px] text-slate-400"></p>
@@ -132,153 +169,136 @@ window.MathJax = {
   </div>
 </div>
 
-<!-- ============ EXPORT MODAL ============ -->
+<!-- Export Modal -->
 <div id="export-modal" class="modal-shell hidden">
   <div class="modal-card !max-w-3xl">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
-      <h2 class="font-bold text-sm"><i class="fas fa-file-export text-amber-400 mr-2"></i>Export question bank</h2>
-      <button onclick="B.closeModal('export-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
+      <h2 class="font-bold text-sm"><i class="fas fa-file-export text-amber-400 mr-2"></i>Export Bank</h2>
+      <button onclick="B.closeModal('export-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-4">
       <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
         <div><label class="lbl">Filename (Path)</label><input id="export-filename" class="field font-mono" onchange="B.updateExportPreview()"></div>
-        <label class="flex items-center gap-2 text-xs font-semibold text-slate-300 pb-2"><input type="checkbox" id="export-shuffle" class="accent-amber-500" onchange="B.updateExportPreview()"> Shuffle options</label>
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-300 pb-2"><input type="checkbox" id="export-shuffle" class="accent-amber-500" onchange="B.updateExportPreview()"> Shuffle</label>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="B.copyExport()" class="btn btn-ghost"><i class="fas fa-copy"></i> Copy to clipboard</button>
-        <button onclick="B.downloadExport()" class="btn btn-amber"><i class="fas fa-download"></i> Download .js</button>
-        <button onclick="B.openPublish()" class="btn btn-indigo ml-auto"><i class="fab fa-github"></i> Publish to GitHub</button>
+        <button onclick="B.copyExport()" class="btn btn-ghost"><i class="fas fa-copy"></i> Copy</button>
+        <button onclick="B.downloadExport()" class="btn btn-amber"><i class="fas fa-download"></i> Download</button>
+        <button onclick="B.openPublish()" class="btn btn-indigo ml-auto"><i class="fab fa-github"></i> Publish</button>
       </div>
-      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-        <span id="export-summary"></span><span id="export-size"></span>
-      </div>
-      <pre id="export-preview" class="bg-[#05080f] border border-[#1e2740] rounded-xl p-3.5 text-[11px] leading-relaxed text-emerald-300 overflow-auto max-h-72 font-mono"></pre>
+      <pre id="export-preview" class="bg-[#05080f] border border-[#1e2740] rounded-xl p-3.5 text-[11px] text-emerald-300 overflow-auto max-h-72 font-mono"></pre>
     </div>
   </div>
 </div>
 
-<!-- ============ PUBLISH MODAL ============ -->
+<!-- Publish Modal -->
 <div id="publish-modal" class="modal-shell hidden">
   <div class="modal-card !max-w-lg">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
       <h2 class="font-bold text-sm"><i class="fab fa-github text-indigo-400 mr-2"></i>Publish to GitHub</h2>
-      <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
+      <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-3">
-      <p class="text-[11.5px] text-slate-400">Commits to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>.</p>
       <div class="grid sm:grid-cols-2 gap-3">
-        <div><label class="lbl">GitHub owner</label><input id="pub-owner" class="field" placeholder="octocat"></div>
-        <div><label class="lbl">Repository</label><input id="pub-repo" class="field" placeholder="my-question-banks"></div>
+        <div><label class="lbl">Owner</label><input id="pub-owner" class="field"></div>
+        <div><label class="lbl">Repository</label><input id="pub-repo" class="field"></div>
       </div>
-      <div><label class="lbl">Fine-grained token <span class="text-slate-600 normal-case tracking-normal">(stored locally)</span></label><input id="pub-token" type="password" class="field" placeholder="github_pat_…"></div>
-      <div><label class="lbl">Target File Path</label><input id="pub-filename" class="field font-mono" placeholder="subject/topic/topic-bank.js"></div>
-      <div class="flex items-center gap-2">
-        <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber flex-grow justify-center"><i class="fas fa-cloud-arrow-up"></i> Publish bank</button>
-      </div>
+      <div><label class="lbl">Token</label><input id="pub-token" type="password" class="field"></div>
+      <div><label class="lbl">Target File Path</label><input id="pub-filename" class="field font-mono"></div>
+      <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber w-full justify-center !py-3 mt-2"><i class="fas fa-cloud-arrow-up"></i> Publish</button>
       <p id="pub-status" class="text-[11.5px] text-slate-400"></p>
       <div id="pub-error" class="hidden rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11.5px] p-2.5"></div>
     </div>
   </div>
 </div>
 
-<div id="backdrop" class="hidden fixed inset-0 top-[62px] z-[65] bg-black/60 md:hidden" onclick="B.toggleSidebar(false)"></div>
 <div id="toast-layer" class="fixed top-20 right-4 z-[90] flex flex-col gap-2 items-end pointer-events-none"></div>
 
 <script>
 (function () {
   'use strict';
-  var KEY = 'cbt_bank_builder_state';
+  var KEY = 'cbt_bank_builder_v3';
   var uid = function (p) { return (p || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
   var esc = function (s) { return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
   var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
 
   var appData = { bankName: 'Untitled Bank', subjects: [] };
-  var selected = { subjectId: null, topicId: null, questionId: null };
-  var previewMode = false;
-  var previewRevealed = {};
+  var selected = { subjectId: null, topicId: null, subTopicId: null, questionId: null };
+  var activeTab = 'structure';
   var searchQuery = '';
   var undoStack = [], redoStack = [];
-  var lastUndoPush = 0;
-  var pendingImport = null;
   var saveTimer = null;
-  var exportCode = '';
+  var pendingImport = null;
   var currentLoadedPath = '';
+  var exportCode = '';
 
-  // Helper to decode Base64 strings safely
   function b64DecodeUnicode(str) {
       return decodeURIComponent(atob(str).split('').map(function(c) {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
   }
 
-  function newQuestion(type) {
-    type = type || 'MCQ';
-    return {
-      id: uid('q'), type: type, subTopic: 'General', question: '',
-      options: ['', '', '', ''], correct: type === 'MCQ' ? 'A' : '',
-      explanation: '', maxMarks: 10
-    };
+  function newSubTopic(name) { return { id: uid('st'), name: name || 'General' }; }
+  function newQuestion(type, subTopicId) {
+    return { id: uid('q'), type: type || 'MCQ', subTopicId: subTopicId || 'general', question: '', options: ['', '', '', ''], correct: type === 'MCQ' ? 'A' : '', explanation: '', maxMarks: 10 };
   }
-  function newTopic(name) { return { id: uid('t'), name: name || 'New Topic', questions: [] }; }
+  function newTopic(name) {
+    var st = newSubTopic('General');
+    return { id: uid('t'), name: name || 'New Topic', subTopics: [st], questions: [] };
+  }
   function newSubject(name) {
     var t = newTopic('General');
-    var q = newQuestion('MCQ');
-    t.questions.push(q);
     return { id: uid('s'), name: name || 'New Subject', duration: 30, topics: [t] };
   }
 
-  function getSubject(id) { return appData.subjects.find(function (s) { return s.id === id; }); }
-  function getTopic(sid, tid) { var s = getSubject(sid); return s ? s.topics.find(function (t) { return t.id === tid; }) : null; }
-  function getQuestion(sid, tid, qid) { var t = getTopic(sid, tid); return t ? t.questions.find(function (q) { return q.id === qid; }) : null; }
+  function getSubject(id) { return appData.subjects.find(s => s.id === id); }
+  function getTopic(sid, tid) { var s = getSubject(sid); return s ? s.topics.find(t => t.id === tid) : null; }
+  function getQuestion(sid, tid, qid) { var t = getTopic(sid, tid); return t ? t.questions.find(q => q.id === qid) : null; }
   function currentSubject() { return getSubject(selected.subjectId); }
   function currentTopic() { return getTopic(selected.subjectId, selected.topicId); }
   function currentQuestion() { return getQuestion(selected.subjectId, selected.topicId, selected.questionId); }
 
   var B = {
-    /* ------------- persistence ------------- */
     start: function () {
       try {
         var raw = localStorage.getItem(KEY);
         if (raw) {
           var parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.subjects)) appData = parsed;
-          if (!appData.bankName) appData.bankName = 'Untitled Bank';
+        } else {
+            // Migrate from old version if exists
+            var oldRaw = localStorage.getItem('cbt_bank_builder_state');
+            if (oldRaw) {
+                var oldData = JSON.parse(oldRaw);
+                if (oldData && oldData.subjects) {
+                    appData = oldData;
+                    // Basic migration logic: ensure subTopics exist
+                    appData.subjects.forEach(s => {
+                        s.topics.forEach(t => {
+                            if (!t.subTopics) t.subTopics = [newSubTopic('General')];
+                            t.questions.forEach(q => {
+                                if (!q.subTopicId) {
+                                    // Find or create subTopic based on string
+                                    var found = t.subTopics.find(st => st.name === q.subTopic);
+                                    if (!found) { found = newSubTopic(q.subTopic || 'General'); t.subTopics.push(found); }
+                                    q.subTopicId = found.id;
+                                }
+                            });
+                        });
+                    });
+                }
+            }
         }
-      } catch (e) { console.warn('builder load failed', e); }
+      } catch (e) { console.warn(e); }
+
       if (appData.subjects.length) {
         var s = appData.subjects[0];
         selected.subjectId = s.id;
-        if (s.topics[0]) {
-          selected.topicId = s.topics[0].id;
-          if (s.topics[0].questions[0]) selected.questionId = s.topics[0].questions[0].id;
-        }
+        if (s.topics[0]) selected.topicId = s.topics[0].id;
+        if (s.topics[0] && s.topics[0].subTopics[0]) selected.subTopicId = s.topics[0].subTopics[0].id;
       }
-      try { history.replaceState(null, '', '#builder'); } catch (e) {}
-      window.addEventListener('popstate', function (e) {
-        if (!appData.subjects.length) { B.render(); return; }
-        if (e.state && getSubject(e.state.subjectId)) {
-          selected.subjectId = e.state.subjectId;
-          selected.topicId = e.state.topicId || null;
-          selected.questionId = e.state.questionId || null;
-          previewMode = false;
-          B.render();
-        } else {
-          selected = { subjectId: null, topicId: null, questionId: null };
-          previewMode = false;
-          B.render();
-        }
-      });
-      window.addEventListener('keydown', function (e) {
-        if (!(e.ctrlKey || e.metaKey)) return;
-        if (e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) B.redo(); else B.undo(); }
-        else if (e.key.toLowerCase() === 'y') { e.preventDefault(); B.redo(); }
-      });
-      B.render();
-      B.bindDropZone();
-      var exportInput = document.getElementById('export-filename');
-      if (exportInput) exportInput.value = B.defaultFilename();
-
-      // Populate GitHub form from cache
+      
+      B.renderAll();
       if (localStorage.getItem('gh_owner')) document.getElementById('gh-user').value = localStorage.getItem('gh_owner');
       if (localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
       if (localStorage.getItem('gh_token')) document.getElementById('gh-token').value = localStorage.getItem('gh_token');
@@ -291,1166 +311,591 @@ window.MathJax = {
       saveTimer = setTimeout(function () {
         try { localStorage.setItem(KEY, JSON.stringify(appData)); } catch (e) { console.warn(e); }
         var p = document.getElementById('saved-pill');
-        if (p) { p.textContent = 'Saved'; p.className = 'chip bg-emerald-500/15 text-emerald-400 saved-flash'; }
+        if (p) { p.textContent = 'Saved'; p.className = 'chip bg-emerald-500/15 text-emerald-400'; }
       }, 500);
     },
 
-    pushUndoState: function (coalesce) {
-      var now = Date.now();
-      if (coalesce && now - lastUndoPush < 700) { lastUndoPush = now; B.scheduleSave(); return; }
-      lastUndoPush = now;
+    pushUndoState: function () {
       undoStack.push(JSON.stringify(appData));
-      if (undoStack.length > 50) undoStack.shift();
+      if (undoStack.length > 30) undoStack.shift();
       redoStack = [];
       B.scheduleSave();
     },
-
     undo: function () {
       if (!undoStack.length) return B.toast('Nothing to undo', 'info');
       redoStack.push(JSON.stringify(appData));
       appData = JSON.parse(undoStack.pop());
-      B.ensureSelection();
-      B.render(); B.scheduleSave(); B.toast('Undo applied', 'info');
-    },
-    redo: function () {
-      if (!redoStack.length) return B.toast('Nothing to redo', 'info');
-      undoStack.push(JSON.stringify(appData));
-      appData = JSON.parse(redoStack.pop());
-      B.ensureSelection();
-      B.render(); B.scheduleSave(); B.toast('Redo applied', 'info');
-    },
-
-    ensureSelection: function () {
-      if (!getSubject(selected.subjectId)) selected = { subjectId: null, topicId: null, questionId: null };
-      if (selected.subjectId && selected.topicId && !getTopic(selected.subjectId, selected.topicId)) { selected.topicId = null; selected.questionId = null; }
-      if (selected.topicId && selected.questionId && !getQuestion(selected.subjectId, selected.topicId, selected.questionId)) selected.questionId = null;
-      if (!selected.subjectId && appData.subjects[0]) selected.subjectId = appData.subjects[0].id;
+      B.renderAll(); B.scheduleSave(); B.toast('Undo applied', 'info');
     },
 
     toast: function (msg, type) {
       var layer = document.getElementById('toast-layer');
-      if (!layer) return;
       var el = document.createElement('div');
       var color = type === 'error' ? 'bg-rose-600' : (type === 'success' ? 'bg-emerald-600' : 'bg-indigo-600');
-      el.className = 'cbt-toast pointer-events-auto text-white text-xs font-bold px-3.5 py-2.5 rounded-lg shadow-2xl ' + color;
+      el.className = 'pointer-events-auto text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-2xl mb-2 ' + color;
       el.textContent = msg;
       layer.appendChild(el);
-      setTimeout(function () { el.remove(); }, 3000);
+      setTimeout(() => { el.remove(); }, 3000);
     },
 
-    bindDropZone: function () {
-      var dz = document.getElementById('import-drop');
-      var input = document.getElementById('import-file');
-      if (dz && input) {
-        dz.onclick = function () { input.click(); };
-        dz.ondragover = function (e) { e.preventDefault(); dz.classList.add('border-indigo-500'); };
-        dz.ondragleave = function () { dz.classList.remove('border-indigo-500'); };
-        dz.ondrop = function (e) {
-          e.preventDefault(); dz.classList.remove('border-indigo-500');
-          var f = e.dataTransfer.files && e.dataTransfer.files[0];
-          if (f) B.readImportFileData(f);
-        };
-      }
-    },
-
-    /* ------------- GitHub Explorer ------------- */
+    openModal: function (id) { document.getElementById(id).classList.remove('hidden'); },
+    closeModal: function (id) { document.getElementById(id).classList.add('hidden'); },
     toggleGhSidebar: function (force) {
       var sb = document.getElementById('gh-sidebar');
       var ov = document.getElementById('gh-overlay');
-      if (!sb) return;
-      var open = typeof force === 'boolean' ? force : !sb.classList.contains('open');
-      sb.classList.toggle('open', open);
-      if (ov) ov.classList.toggle('open', open);
+      var open = typeof force === 'boolean' ? force : sb.style.transform === 'translateX(0px)';
+      if (open) { sb.style.transform = 'translateX(0)'; ov.classList.remove('hidden'); }
+      else { sb.style.transform = 'translateX(-100%)'; ov.classList.add('hidden'); }
     },
 
-    loadGitHubTree: async function () {
-      var owner = document.getElementById('gh-user').value.trim();
-      var repo = document.getElementById('gh-repo').value.trim();
-      var token = document.getElementById('gh-token').value.trim();
-      
-      if (!owner || !repo || !token) return B.toast('Enter Username, Repo, and Token first.', 'error');
-      
-      localStorage.setItem('gh_owner', owner);
-      localStorage.setItem('gh_repo', repo);
-      localStorage.setItem('gh_token', token);
-
-      var container = document.getElementById('gh-tree-container');
-      container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-spinner fa-spin"></i> Fetching tree...</div>';
-
-      try {
-        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`, {
-          headers: { 
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        
-        if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
-        const data = await res.json();
-        
-        const root = {};
-        data.tree.forEach(item => {
-          if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
-          
-          const parts = item.path.replace('question-banks/', '').split('/');
-          let current = root;
-          
-          parts.forEach((part, i) => {
-            if (!current[part]) {
-              current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
-            }
-            if (current[part] !== 'FILE') {
-              current = current[part];
-            }
-          });
-        });
-
-        B.renderGhTree(root);
-      } catch (err) {
-        container.innerHTML = `<div class="text-center text-xs text-red-400 mt-4">${err.message}</div>`;
-        B.toast(err.message, 'error');
-      }
+    switchTab: function (tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+      document.getElementById('pane-' + tab).classList.add('active');
+      if (tab === 'preview') B.renderPreview();
     },
 
-    renderGhTree: function (tree, container = document.getElementById('gh-tree-container'), parentPath = '') {
-      if (!container) return;
-      if (parentPath === '') container.innerHTML = '';
+    renderAll: function () {
+      B.renderStructure();
+      B.renderContent();
+      if (activeTab === 'preview') B.renderPreview();
+      B.scheduleSave();
+    },
 
-      if (Object.keys(tree).length === 0) {
-        if (parentPath === '') container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No folders found.</div>';
-        return;
-      }
-
-      const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
-      const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
-
-      folders.forEach(folder => {
-        const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
+    /* ------------- STRUCTURE RENDERER ------------- */
+    renderStructure: function () {
+      var container = document.getElementById('structure-content');
+      var html = '<div class="max-w-3xl mx-auto space-y-4">';
+      
+      // Subjects
+      appData.subjects.forEach(s => {
+        html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
+        html += `<div class="flex justify-between items-center mb-3">
+            <input class="font-extrabold text-sm bg-transparent border-b border-transparent hover:border-gray-600 focus:border-indigo-500 outline-none w-full" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
+            <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 ml-2"><i class="fas fa-trash"></i></button>
+        </div>`;
         
-        const details = document.createElement('details');
-        details.className = 'mb-1';
+        // Topics
+        s.topics.forEach(t => {
+            html += `<div class="ml-2 pl-3 border-l border-[#1e2740] mb-3">
+                <div class="flex justify-between items-center mb-2">
+                    <button onclick="B.selectTopic('${s.id}','${t.id}')" class="text-sm font-bold ${selected.topicId === t.id ? 'text-amber-400' : 'text-slate-300'} hover:text-white text-left flex-grow">
+                        <i class="fas fa-folder mr-2 text-amber-500/70"></i> ${esc(t.name)}
+                    </button>
+                    <button onclick="B.deleteTopic('${s.id}','${t.id}')" class="text-rose-500 text-xs px-2"><i class="fas fa-times"></i></button>
+                </div>`;
+                
+                // SubTopics
+                html += `<div class="flex flex-wrap gap-1.5 ml-4">`;
+                t.subTopics.forEach(st => {
+                    var count = t.questions.filter(q => q.subTopicId === st.id).length;
+                    html += `<div class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'} group" onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')">
+                        ${esc(st.name)} <span class="opacity-50 text-[9px] ml-1">${count}</span>
+                        <button onclick="event.stopPropagation(); B.deleteSubTopic('${s.id}','${t.id}','${st.id}')" class="hidden group-hover:inline ml-1 text-rose-400"><i class="fas fa-times-circle"></i></button>
+                    </div>`;
+                });
+                html += `<button onclick="B.addSubTopic('${s.id}','${t.id}')" class="chip inactive text-indigo-400 border-indigo-500/30"><i class="fas fa-plus"></i> Sub</button></div>`;
+            html += `</div>`;
+        });
         
-        const summary = document.createElement('summary');
-        summary.className = `flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] text-gray-300`;
-        summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
-        
-        details.appendChild(summary);
-        const childContainer = document.createElement('div');
-        childContainer.className = 'tree-spine';
-        details.appendChild(childContainer);
-        
-        B.renderGhTree(tree[folder], childContainer, fullPath);
-        container.appendChild(details);
+        html += `<div class="mt-3 flex gap-2">
+            <button onclick="B.addTopic('${s.id}')" class="btn btn-ghost !text-xs !py-1.5"><i class="fas fa-folder-plus"></i> Topic</button>
+        </div></div>`;
       });
-
-      files.forEach(file => {
-        const fullPath = parentPath ? `${parentPath}/${file}` : file;
-        
-        if (file.endsWith('.js') || file.endsWith('.txt')) {
-          const btn = document.createElement('button');
-          btn.className = `w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] text-gray-400 hover:bg-[#101830] hover:text-gray-200`;
-          btn.innerHTML = `<span class="w-3"></span> <i class="fas fa-file-code w-4 text-center text-gray-600"></i> <span class="truncate">${file}</span>`;
-          btn.onclick = () => B.importFromGitHubPath(fullPath);
-          container.appendChild(btn);
-        }
-      });
-    },
-
-    importFromGitHubPath: async function (path) {
-      var owner = localStorage.getItem('gh_owner');
-      var repo = localStorage.getItem('gh_repo');
-      var token = localStorage.getItem('gh_token');
       
-      B.toggleGhSidebar(false);
-      var status = document.getElementById('import-status');
-      B.openModal('import-modal');
-      if (status) status.textContent = 'Fetching ' + path + ' from GitHub...';
-
-      try {
-        const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/question-banks/${encodedPath}?ref=main&t=${Date.now()}`;
-        
-        const res = await fetch(apiUrl, {
-           headers: { 
-             'Authorization': `token ${token}`,
-             'Accept': 'application/vnd.github.v3+json'
-           }
-        });
-        
-        if (!res.ok) throw new Error('File not found on GitHub.');
-        const fileData = await res.json();
-        const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
-        
-        var ta = document.getElementById('import-text');
-        if (ta) ta.value = text;
-        if (status) status.textContent = 'Fetched ' + path + ' from GitHub.';
-        
-        // Auto update export/publish filename so it saves to the exact same location
-        currentLoadedPath = path;
-        var exportInput = document.getElementById('export-filename');
-        if (exportInput) exportInput.value = path;
-
-        B.previewImport();
-      } catch (err) {
-        if (status) status.textContent = 'GitHub fetch failed: ' + err.message;
-        B.toast('GitHub fetch failed: ' + err.message, 'error');
-      }
+      html += `<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center !py-3"><i class="fas fa-plus"></i> New Subject</button>`;
+      html += '</div>';
+      container.innerHTML = html;
     },
 
-    createNewFolder: async function () {
-      var owner = localStorage.getItem('gh_owner');
-      var repo = localStorage.getItem('gh_repo');
-      var token = localStorage.getItem('gh_token');
-      if (!owner || !repo || !token) return B.toast('Load GitHub credentials first.', 'error');
+    /* ------------- CONTENT RENDERER ------------- */
+    renderContent: function () {
+      var container = document.getElementById('content-body');
+      var header = document.getElementById('content-header');
       
-      const path = prompt("Enter new folder path (e.g. chemistry/organic-chemistry):\nDo not include 'question-banks/'.");
-      if (!path) return;
-      
-      const cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
-      B.toast('Creating folder...', 'info');
-
-      try {
-        const res = await fetch('/api/publish-bank', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            filename: `question-banks/${cleanPath}/.gitkeep`, 
-            code: '', 
-            githubToken: token, 
-            repoOwner: owner, 
-            repoName: repo 
-          })
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create folder');
-        
-        B.toast('Folder created!', 'success');
-        B.loadGitHubTree(); 
-      } catch (err) {
-        B.toast(err.message, 'error');
-      }
-    },
-
-    createNewFile: async function () {
-      var owner = localStorage.getItem('gh_owner');
-      var repo = localStorage.getItem('gh_repo');
-      var token = localStorage.getItem('gh_token');
-      if (!owner || !repo || !token) return B.toast('Load GitHub credentials first.', 'error');
-      
-      const path = prompt("Enter new file path (must end in .js):\nDo not include 'question-banks/'.\nExample: chemistry/organic/alkanes-bank.js");
-      if (!path) return;
-      
-      let cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
-      if (!cleanPath.endsWith('.js')) cleanPath += '.js';
-      
-      B.toast('Creating file...', 'info');
-
-      try {
-        // Create a blank template
-        const templateCode = `window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\nwindow.CBT_SUBJECT_BANKS.push(\`Subject: New Subject\nTopic: New Topic\n\nSubTopic: General\nType: MCQ\nQ001: Sample Question?\nOption: A: Option 1\nOption: B: Option 2\nAnswer: A\nExplanation: Explanation here.\n\`);\n`;
-
-        const res = await fetch('/api/publish-bank', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            filename: `question-banks/${cleanPath}`, 
-            code: templateCode, 
-            githubToken: token, 
-            repoOwner: owner, 
-            repoName: repo 
-          })
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create file');
-        
-        B.toast('File created! Loading it now...', 'success');
-        
-        // Wait a moment for GitHub to index the file, then refresh tree and import it
-        setTimeout(async () => {
-            await B.loadGitHubTree();
-            B.importFromGitHubPath(cleanPath);
-        }, 1500);
-        
-      } catch (err) {
-        B.toast(err.message, 'error');
-      }
-    },
-
-    /* ------------- navigation ------------- */
-    pushHistory: function () {
-      try {
-        history.pushState({ subjectId: selected.subjectId, topicId: selected.topicId, questionId: selected.questionId }, '', '#' + (selected.questionId || selected.topicId || selected.subjectId || 'builder'));
-      } catch (e) {}
-    },
-    selectSubject: function (sid) {
-      selected = { subjectId: sid, topicId: null, questionId: null };
-      previewMode = false; B.pushHistory(); B.render(); B.toggleSidebar(false);
-    },
-    selectTopic: function (sid, tid) {
-      selected = { subjectId: sid, topicId: tid, questionId: null };
-      previewMode = false; B.pushHistory(); B.render(); B.toggleSidebar(false);
-    },
-    selectQuestion: function (sid, tid, qid) {
-      selected = { subjectId: sid, topicId: tid, questionId: qid };
-      previewMode = false; B.pushHistory(); B.render(); B.toggleSidebar(false);
-    },
-    openPreview: function () { previewMode = true; B.render(); B.toggleSidebar(false); },
-    closePreview: function () { previewMode = false; B.render(); },
-    reveal: function (qid) { previewRevealed[qid] = !previewRevealed[qid]; B.render(); B.typeset(); },
-
-    toggleSidebar: function (force) {
-      var sb = document.getElementById('sidebar');
-      var bd = document.getElementById('backdrop');
-      if (!sb) return;
-      var open = typeof force === 'boolean' ? force : !sb.classList.contains('open');
-      sb.classList.toggle('open', open);
-      if (bd) bd.classList.toggle('hidden', !open);
-    },
-
-    /* ------------- empty view ------------- */
-    createBlank: function () {
-      B.pushUndoState();
-      currentLoadedPath = '';
-      appData = { bankName: 'Untitled Bank', subjects: [newSubject('New Subject')] };
-      var s = appData.subjects[0];
-      selected = { subjectId: s.id, topicId: s.topics[0].id, questionId: s.topics[0].questions[0].id };
-      previewMode = false; B.render(); B.scheduleSave(); B.toast('Blank bank created', 'success');
-    },
-
-    loadSample: function () {
-      B.pushUndoState();
-      currentLoadedPath = '';
-      var physics = {
-        id: uid('s'), name: 'Physics', duration: 45,
-        topics: [
-          {
-            id: uid('t'), name: 'Thermodynamics', questions: [
-              { id: uid('q'), type: 'MCQ', subTopic: 'First Law', question: 'A gas absorbs 300 J of heat and does 120 J of work. What is the change in internal energy?', options: ['420 J', '180 J', '-180 J', '120 J'], correct: 'B', explanation: 'First law: $\\Delta U = Q - W = 300 - 120 = 180$ J.', maxMarks: 10 }
-            ]
-          }
-        ]
-      };
-      appData = { bankName: 'Physics Sample Bank', subjects: [physics] };
-      selected = { subjectId: physics.id, topicId: physics.topics[0].id, questionId: physics.topics[0].questions[0].id };
-      previewMode = false; B.render(); B.scheduleSave(); B.toast('Physics sample loaded', 'success');
-    },
-
-    /* ------------- structural CRUD ------------- */
-    updateBankName: function (v) { B.pushUndoState(true); appData.bankName = v; B.scheduleSave(); },
-    addSubject: function () {
-      B.pushUndoState();
-      var s = newSubject('New Subject');
-      appData.subjects.push(s);
-      selected = { subjectId: s.id, topicId: s.topics[0].id, questionId: s.topics[0].questions[0].id };
-      B.pushHistory(); B.render(); B.scheduleSave();
-    },
-    updateSubjectName: function (v) { B.pushUndoState(true); var s = currentSubject(); if (s) s.name = v; B.refreshSidebar(); B.scheduleSave(); },
-    updateDuration: function (v) { B.pushUndoState(true); var s = currentSubject(); if (s) s.duration = Number(v) || 30; B.scheduleSave(); },
-    deleteSubject: function () {
-      var s = currentSubject(); if (!s) return;
-      if (!confirm('Delete subject "' + s.name + '" and all of its topics? This cannot be undone except with Undo.')) return;
-      B.pushUndoState();
-      appData.subjects = appData.subjects.filter(function (x) { return x.id !== s.id; });
-      selected = { subjectId: appData.subjects[0] ? appData.subjects[0].id : null, topicId: null, questionId: null };
-      B.render(); B.scheduleSave();
-    },
-    addTopic: function () {
-      var s = currentSubject(); if (!s) return;
-      B.pushUndoState();
-      var t = newTopic('New Topic');
-      s.topics.push(t);
-      selected = { subjectId: s.id, topicId: t.id, questionId: null };
-      B.pushHistory(); B.render(); B.scheduleSave();
-    },
-    updateTopicName: function (v) { B.pushUndoState(true); var t = currentTopic(); if (t) t.name = v; B.refreshSidebar(); B.scheduleSave(); },
-    deleteTopic: function () {
-      var s = currentSubject(), t = currentTopic(); if (!s || !t) return;
-      if (!confirm('Delete topic "' + t.name + '" and its ' + t.questions.length + ' question(s)?')) return;
-      B.pushUndoState();
-      s.topics = s.topics.filter(function (x) { return x.id !== t.id; });
-      selected.topicId = null; selected.questionId = null;
-      B.render(); B.scheduleSave();
-    },
-    addQuestion: function (type) {
       var s = currentSubject(), t = currentTopic();
-      if (!s) return;
-      if (!t) { t = newTopic('General'); s.topics.push(t); selected.topicId = t.id; }
-      B.pushUndoState();
-      var q = newQuestion(type || 'MCQ');
-      t.questions.push(q);
-      selected.questionId = q.id;
-      previewMode = false;
-      B.pushHistory(); B.render(); B.scheduleSave();
-    },
-    addQuestionBelow: function () { B.addQuestion('MCQ'); },
-    duplicateQuestion: function () {
-      var t = currentTopic(), q = currentQuestion(); if (!t || !q) return;
-      B.pushUndoState();
-      var copy = clone(q); copy.id = uid('q');
-      var idx = t.questions.findIndex(function (x) { return x.id === q.id; });
-      t.questions.splice(idx + 1, 0, copy);
-      selected.questionId = copy.id;
-      B.render(); B.scheduleSave(); B.toast('Question duplicated', 'success');
-    },
-    deleteQuestion: function () {
-      var t = currentTopic(), q = currentQuestion(); if (!t || !q) return;
-      if (!confirm('Delete this question?')) return;
-      B.pushUndoState();
-      var idx = t.questions.findIndex(function (x) { return x.id === q.id; });
-      t.questions = t.questions.filter(function (x) { return x.id !== q.id; });
-      q = t.questions[Math.min(idx, t.questions.length - 1)] || null;
-      selected.questionId = q ? q.id : null;
-      B.render(); B.scheduleSave();
-    },
-
-    changeType: function (type) {
-      var q = currentQuestion(); if (!q) return;
-      B.pushUndoState();
-      q.type = type;
-      if (!Array.isArray(q.options) || q.options.length < 4) q.options = (q.options || []).concat(['', '', '', '']).slice(0, 4);
-      if (type === 'MCQ' && (!q.correct || q.correct.length > 1)) q.correct = 'A';
-      if (type !== 'MCQ' && ['A', 'B', 'C', 'D'].indexOf(String(q.correct).toUpperCase()) !== -1) q.correct = '';
-      B.render(); B.scheduleSave();
-    },
-    updateQField: function (field, value) {
-      var q = currentQuestion(); if (!q) return;
-      B.pushUndoState(true);
-      q[field] = field === 'maxMarks' ? (Number(value) || 0) : value;
-      if (field === 'question') B.updatePreviewText('question-preview', value);
-      if (field === 'explanation') B.updatePreviewText('explanation-preview', value);
-      B.refreshSidebar();
-      B.scheduleSave();
-    },
-    updateOption: function (i, value) {
-      var q = currentQuestion(); if (!q) return;
-      B.pushUndoState(true);
-      if (!Array.isArray(q.options)) q.options = ['', '', '', ''];
-      q.options[i] = value;
-      B.scheduleSave();
-    },
-    setCorrect: function (value) { B.pushUndoState(true); var q = currentQuestion(); if (q) q.correct = value; B.scheduleSave(); },
-    shuffleQuestionOptions: function () {
-      var q = currentQuestion(); if (!q || q.type !== 'MCQ') return;
-      B.pushUndoState();
-      var correctVal = q.options[['A', 'B', 'C', 'D'].indexOf(String(q.correct).toUpperCase())];
-      var pairs = q.options.slice(0, 4).map(function (v, i) { return { v: v, letter: 'ABCD'[i] }; });
-      B.shuffle(pairs);
-      q.options = pairs.map(function (p) { return p.v; });
-      var idx = pairs.findIndex(function (p) { return p.letter === String(q.correct).toUpperCase(); });
-      q.correct = 'ABCD'[idx >= 0 ? idx : 0];
-      q.options[q.correct.charCodeAt(0) - 65] = correctVal;
-      B.render(); B.scheduleSave(); B.toast('Options shuffled', 'success');
-    },
-    shuffleTopicOptions: function () {
-      var t = currentTopic(); if (!t) return;
-      B.pushUndoState();
-      t.questions.forEach(function (q) {
-        if (q.type !== 'MCQ') return;
-        var opts = Array.isArray(q.options) ? q.options.slice(0, 4) : ['', '', '', ''];
-        var correctVal = opts[Math.max(0, 'ABCD'.indexOf(String(q.correct).toUpperCase()))];
-        var pairs = opts.map(function (v, i) { return { v: v, letter: 'ABCD'[i] }; });
-        B.shuffle(pairs);
-        q.options = pairs.map(function (p) { return p.v; });
-        q.correct = 'ABCD'[pairs.findIndex(function (p) { return p.v === correctVal; })] || 'A';
-      });
-      B.render(); B.scheduleSave(); B.toast('Options shuffled for the whole topic', 'success');
-    },
-    shuffle: function (arr) { for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; },
-
-    refreshSidebar: function () {
-      var sb = document.getElementById('sidebar-body');
-      if (sb) sb.innerHTML = B.treeHTML();
-      var bc = document.getElementById('breadcrumb');
-      if (bc) bc.innerHTML = B.breadcrumbHTML();
-    },
-
-    updatePreviewText: function (id, value) {
-      var el = document.getElementById(id);
-      if (el) el.innerHTML = value ? B.renderMathText(value) : '<span class="text-slate-500 italic">Preview appears here…</span>';
-      B.typeset();
-    },
-    renderMathText: function (value) {
-      return esc(value).replace(/\n/g, '<br>');
-    },
-    typeset: function () {
-      if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-        try { window.MathJax.typesetPromise([document.getElementById('builder-root')]).catch(function () {}); } catch (e) {}
+      if (!s || !t) {
+          header.innerHTML = '';
+          container.innerHTML = '<div class="text-center text-slate-500 py-10">Select a Topic from the Structure tab to start editing.</div>';
+          return;
       }
-    },
 
-    /* ------------- rendering ------------- */
-    render: function () {
-      B.ensureSelection();
-      var root = document.getElementById('builder-root');
-      if (!root) return;
-      root.innerHTML = B.headerHTML() + (appData.subjects.length ? B.editorHTML() : B.emptyHTML());
-      B.bindDropZone();
-      B.typeset();
-    },
+      header.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="font-extrabold text-lg text-white">${esc(t.name)}</h2>
+            <button onclick="B.openModal('import-modal')" class="btn btn-ghost !py-1.5 !text-xs"><i class="fas fa-file-import"></i> Import</button>
+        </div>
+        <div class="flex gap-2 overflow-x-auto pb-2">
+            <button onclick="B.selectSubTopic('${s.id}','${t.id}', null)" class="chip ${!selected.subTopicId ? 'active' : 'inactive'}">All (${t.questions.length})</button>
+            ${t.subTopics.map(st => {
+                var count = t.questions.filter(q => q.subTopicId === st.id).length;
+                return `<button onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')" class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'}">${esc(st.name)} (${count})</button>`;
+            }).join('')}
+        </div>
+      `;
 
-    headerHTML: function () {
-      var hasBank = appData.subjects.length > 0;
-      return '<header class="h-[62px] sticky top-0 z-[75] border-b border-[#1e2740] bg-[#080d18]/95 backdrop-blur flex items-center gap-3 px-3 md:px-5">' +
-        '<button onclick="B.toggleSidebar()" class="md:hidden w-9 h-9 rounded-lg bg-[#131c31] text-slate-300"><i class="fas fa-bars"></i></button>' +
-        '<div class="flex items-center gap-2.5 min-w-0">' +
-        '<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shrink-0"><i class="fas fa-pen-ruler text-white text-sm"></i></div>' +
-        '<div class="min-w-0 hidden sm:block"><div class="font-extrabold text-sm leading-tight">Question Builder</div><div class="text-[10px] text-slate-500 leading-tight">authoring studio</div></div>' +
-        '</div>' +
-        (hasBank ? '<div class="hidden lg:flex items-center gap-2 min-w-0 ml-3"><input value="' + esc(appData.bankName) + '" oninput="B.updateBankName(this.value)" class="bg-transparent border-b border-transparent hover:border-[#33405f] focus:border-indigo-500 outline-none text-xs font-bold text-slate-200 px-1 py-1 min-w-0 w-[190px]" aria-label="Bank name"></div>' : '') +
-        '<span id="saved-pill" class="chip bg-emerald-500/15 text-emerald-400 hidden sm:inline-flex">Ready</span>' +
-        '<div class="flex items-center gap-1.5 ml-auto">' +
-        (hasBank ? '<button onclick="B.undo()" class="btn btn-ghost !px-2.5" title="Undo (Ctrl+Z)"><i class="fas fa-rotate-left"></i></button>' +
-          '<button onclick="B.redo()" class="btn btn-ghost !px-2.5" title="Redo (Ctrl+Y)"><i class="fas fa-rotate-right"></i></button>' : '') +
-        '<button onclick="B.toggleGhSidebar(true)" class="btn btn-ghost !text-indigo-300 !border-indigo-500/30"><i class="fab fa-github"></i><span class="hidden sm:inline">Load Repo</span></button>' +
-        '<button onclick="B.openModal(\'import-modal\')" class="btn btn-ghost"><i class="fas fa-file-import"></i><span class="hidden sm:inline">Manual Import</span></button>' +
-        (hasBank ? '<button onclick="B.openExport()" class="btn btn-ghost"><i class="fas fa-file-export"></i><span class="hidden sm:inline">Export</span></button>' +
-          '<button onclick="B.openPublish()" class="btn btn-amber"><i class="fab fa-github"></i><span class="hidden sm:inline">Publish</span></button>' : '') +
-        '<a href="index.html" class="btn btn-ghost" title="Open the exam app"><i class="fas fa-arrow-up-right-from-square"></i></a>' +
-        '</div></header>';
-    },
-
-    emptyHTML: function () {
-      return '<main class="max-w-3xl mx-auto px-4 py-10 md:py-16">' +
-        '<div class="text-center mb-8">' +
-        '<div class="mx-auto w-16 h-16 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-2xl text-indigo-300"><i class="fas fa-pen-ruler"></i></div>' +
-        '<h1 class="text-2xl md:text-3xl font-extrabold mt-4">Author a question bank</h1>' +
-        '<p class="text-sm text-slate-400 mt-2 max-w-xl mx-auto">Build subjects, topics and questions, preview them exactly as candidates will see them, then export or publish to your repository. No build step — everything is stored locally.</p>' +
-        '</div>' +
-        '<div class="panel rounded-2xl p-6">' +
-        '<div class="text-center mb-4">' +
-        '<button onclick="B.toggleGhSidebar(true)" class="btn btn-indigo justify-center !py-3 w-full"><i class="fab fa-github"></i> Load from GitHub Repository</button>' +
-        '</div>' +
-        '<div id="empty-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#080d18] p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="B.openModal(\'import-modal\')">' +
-        '<i class="fas fa-cloud-arrow-up text-3xl text-indigo-400"></i>' +
-        '<p class="mt-3 font-bold text-sm">Drag &amp; drop a <span class="text-amber-400">.js</span> question bank</p>' +
-        '<p class="text-[11.5px] text-slate-500 mt-1">or click anywhere in this area to open the importer</p></div>' +
-        '<div class="grid sm:grid-cols-2 gap-3 mt-4">' +
-        '<button onclick="B.createBlank()" class="btn btn-ghost justify-center !py-3"><i class="fas fa-plus"></i> Create blank bank</button>' +
-        '<button onclick="B.loadSample()" class="btn btn-ghost justify-center !py-3"><i class="fas fa-flask"></i> Load Physics sample</button>' +
-        '</div></div></main>';
-    },
-
-    editorHTML: function () {
-      return '<div class="flex min-h-[calc(100vh-62px)]">' +
-        B.sidebarHTML() +
-        '<div class="flex-grow min-w-0 flex flex-col">' + B.breadcrumbHTML() + '<div class="flex-grow overflow-y-auto p-3 md:p-5">' +
-        (previewMode ? B.previewHTML() : B.contextHTML()) +
-        '</div></div></div>';
-    },
-
-    sidebarHTML: function () {
-      return '<aside id="sidebar" class="w-[280px] shrink-0 border-r border-[#1e2740] bg-[#0a0f1d] flex flex-col md:static">' +
-        '<div class="p-3 border-b border-[#1e2740]">' +
-        '<div class="relative"><i class="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[11px]"></i>' +
-        '<input id="tree-search" value="' + esc(searchQuery) + '" oninput="B.search(this.value)" placeholder="Search subjects, topics, questions…" class="field !pl-8 !text-[12px]"></div>' +
-        '<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center mt-2.5"><i class="fas fa-folder-plus"></i> New Subject</button>' +
-        '</div><div id="sidebar-body" class="flex-grow overflow-y-auto p-2.5">' + B.treeHTML() + '</div>' +
-        '<div class="p-2.5 border-t border-[#1e2740] text-[10px] text-slate-500 flex items-center justify-between"><span>' + B.counts().subjects + ' subjects · ' + B.counts().questions + ' questions</span><span class="text-emerald-500"><i class="fas fa-circle text-[6px]"></i> local</span></div></aside>';
-    },
-
-    counts: function () {
-      var subjects = appData.subjects.length;
-      var topics = 0, questions = 0;
-      appData.subjects.forEach(function (s) { topics += s.topics.length; s.topics.forEach(function (t) { questions += t.questions.length; }); });
-      return { subjects: subjects, topics: topics, questions: questions };
-    },
-
-    treeHTML: function () {
-      var q = searchQuery.toLowerCase().trim();
-      var html = '';
-      appData.subjects.forEach(function (s) {
-        var topicMatch = !q || s.name.toLowerCase().indexOf(q) !== -1;
-        var topicsHTML = s.topics.map(function (t) {
-          var showTopic = topicMatch || t.name.toLowerCase().indexOf(q) !== -1;
-          var questionsHTML = t.questions.map(function (question, i) {
-            var showQ = topicMatch || t.name.toLowerCase().indexOf(q) !== -1 || (question.question || '').toLowerCase().indexOf(q) !== -1;
-            if (!showQ) return '';
-            var dotColor = question.type === 'MCQ' ? '#6366f1' : (question.type === 'Fill' ? '#f59e0b' : '#a78bfa');
-            var active = selected.questionId === question.id;
-            return '<button onclick="B.selectQuestion(\'' + s.id + '\',\'' + t.id + '\',\'' + question.id + '\')" class="tree-item !pl-7 ' + (active ? 'active' : '') + '">' +
-              '<span class="dot" style="background:' + dotColor + '"></span>' +
-              '<span class="truncate min-w-0">' + esc((question.question || '(untitled)').slice(0, 46) || '(untitled)') + '</span>' +
-              (question.type === 'Theory' ? '<i class="fas fa-pen-nib text-[9px] text-violet-400 ml-auto shrink-0"></i>' : '') + '</button>';
-          }).join('');
-          if (!showTopic) {
-            var anyQ = t.questions.some(function (question) { return (question.question || '').toLowerCase().indexOf(q) !== -1; });
-            if (!anyQ) return '';
-          }
-          return '<button onclick="B.selectTopic(\'' + s.id + '\',\'' + t.id + '\')" class="tree-item !pl-6 !text-[12px] ' + (selected.topicId === t.id && !selected.questionId ? 'active' : '') + '">' +
-            '<i class="fas fa-folder text-[10px] text-amber-500/80"></i><span class="truncate min-w-0">' + esc(t.name) + '</span>' +
-            '<span class="ml-auto text-[9px] text-slate-500">' + t.questions.length + '</span></button>' + questionsHTML;
-        }).join('');
-        if (!topicMatch && !topicsHTML) return;
-        return '<div class="mb-1.5">' +
-          '<button onclick="B.selectSubject(\'' + s.id + '\')" class="tree-item font-bold ' + (selected.subjectId === s.id && !selected.topicId ? 'active' : '') + '">' +
-          '<i class="fas fa-book text-[11px] text-indigo-400"></i><span class="truncate min-w-0">' + esc(s.name) + '</span>' +
-          '<span class="ml-auto text-[9px] text-slate-500">' + s.topics.length + '</span></button>' +
-          '<div class="ml-1 border-l border-[#1a2339] pl-1">' + topicsHTML + '</div></div>';
-      });
-      return html || '<div class="p-4 text-center text-[11.5px] text-slate-500"><i class="fas fa-search mr-1"></i>No matches.</div>';
-    },
-
-    search: function (v) { searchQuery = v; var sb = document.getElementById('sidebar-body'); if (sb) sb.innerHTML = B.treeHTML(); },
-
-    breadcrumbHTML: function () {
-      var s = currentSubject(), t = currentTopic(), q = currentQuestion();
-      var crumb = '<div class="flex items-center gap-1.5 text-[11.5px] text-slate-500 min-w-0 overflow-hidden">' +
-        '<i class="fas fa-layer-group text-indigo-400"></i>' +
-        (s ? '<span class="text-slate-300 font-semibold truncate">' + esc(s.name) + '</span>' : '<span>No subject</span>') +
-        (t ? '<i class="fas fa-chevron-right text-[8px]"></i><span class="text-slate-300 font-semibold truncate">' + esc(t.name) + '</span>' : '') +
-        (q ? '<i class="fas fa-chevron-right text-[8px]"></i><span class="text-amber-400 font-bold">Q' + String(t.questions.indexOf(q) + 1).padStart(3, '0') + '</span>' : '') +
-        '</div>';
-      return '<div id="breadcrumb" class="sticky top-[62px] z-[55] flex items-center gap-2 flex-wrap px-3 md:px-5 py-2.5 bg-[#080d18]/95 backdrop-blur border-b border-[#1e2740]">' + crumb +
-        '<div class="ml-auto flex items-center gap-1.5">' +
-        (previewMode ? '<span class="chip bg-violet-500/15 text-violet-300"><i class="fas fa-eye"></i> Preview Mode</span>' : '') +
-        '<button onclick="' + (previewMode ? 'B.closePreview()' : 'B.openPreview()') + '" class="btn ' + (previewMode ? 'btn-ghost' : 'btn-ghost') + ' !py-1.5">' +
-        '<i class="fas fa-eye"></i><span class="hidden sm:inline">' + (previewMode ? 'Exit Preview' : 'Preview Mode') + '</span></button>' +
-        (selected.subjectId && !previewMode ? '<button onclick="B.addQuestion(\'MCQ\')" class="btn btn-indigo !py-1.5"><i class="fas fa-plus"></i><span class="hidden sm:inline">Question</span></button>' : '') +
-        '</div></div>';
-    },
-
-    contextHTML: function () {
-      if (!selected.subjectId) {
-        return '<div class="panel rounded-2xl p-8 text-center"><div class="text-3xl mb-2">👈</div><p class="text-sm text-slate-400">Pick a subject from the sidebar, or create a new one.</p><button onclick="B.addSubject()" class="btn btn-indigo mt-3"><i class="fas fa-folder-plus"></i> New Subject</button></div>';
+      var filteredQs = t.questions;
+      if (selected.subTopicId) {
+          filteredQs = filteredQs.filter(q => q.subTopicId === selected.subTopicId);
       }
-      if (selected.questionId && currentQuestion()) return B.questionEditorHTML();
-      if (selected.topicId && currentTopic()) return B.topicEditorHTML();
-      return B.subjectEditorHTML();
-    },
 
-    subjectEditorHTML: function () {
-      var s = currentSubject(); if (!s) return '';
-      var questions = 0; s.topics.forEach(function (t) { questions += t.questions.length; });
-      var topics = s.topics.map(function (t) {
-        return '<button onclick="B.selectTopic(\'' + s.id + '\',\'' + t.id + '\')" class="w-full text-left panel rounded-xl p-3.5 hover:border-indigo-500 transition-colors">' +
-          '<div class="flex items-center justify-between gap-2"><span class="font-bold text-sm text-slate-200"><i class="fas fa-folder text-amber-500/80 mr-2"></i>' + esc(t.name) + '</span>' +
-          '<span class="chip bg-[#131c31] text-slate-400">' + t.questions.length + ' Q</span></div></button>';
+      if (selected.questionId && currentQuestion()) {
+          container.innerHTML = B.questionEditorHTML();
+          B.typeset();
+          return;
+      }
+
+      var qHtml = filteredQs.map((q, i) => {
+          var stName = t.subTopics.find(st => st.id === q.subTopicId)?.name || 'General';
+          return `<div class="qcard p-3.5 mb-2 cursor-pointer hover:border-indigo-500/50 transition-colors" onclick="B.selectQuestion('${s.id}','${t.id}','${q.id}')">
+            <div class="flex items-center gap-2 mb-1.5">
+                <span class="chip bg-indigo-500/15 text-indigo-300">${esc(q.type)}</span>
+                <span class="chip bg-[#131c31] text-slate-400">${esc(stName)}</span>
+            </div>
+            <p class="text-sm text-slate-200 line-clamp-2">${esc(q.question || '(untitled)')}</p>
+          </div>`;
       }).join('');
-      return '<div class="max-w-3xl space-y-4">' +
-        '<div class="panel rounded-2xl p-5">' +
-        '<div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h2 class="font-extrabold text-lg"><i class="fas fa-book text-indigo-400 mr-2"></i>Subject settings</h2><span class="chip bg-indigo-500/15 text-indigo-300">' + questions + ' questions</span></div>' +
-        '<div class="grid sm:grid-cols-[1fr_160px] gap-3">' +
-        '<div><label class="lbl">Subject name</label><input class="field" value="' + esc(s.name) + '" oninput="B.updateSubjectName(this.value)"></div>' +
-        '<div><label class="lbl">Exam duration (minutes)</label><input type="number" min="1" max="999" class="field" value="' + (s.duration || 30) + '" oninput="B.updateDuration(this.value)"></div>' +
-        '</div>' +
-        '<div class="flex flex-wrap gap-2 mt-4"><button onclick="B.addTopic()" class="btn btn-ghost"><i class="fas fa-folder-plus"></i> New Topic</button>' +
-        '<button onclick="B.deleteSubject()" class="btn btn-danger ml-auto"><i class="fas fa-trash"></i> Delete subject</button></div></div>' +
-        '<div class="panel rounded-2xl p-5"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">Topics</h3><span class="text-[11px] text-slate-500">' + s.topics.length + ' total</span></div>' +
-        '<div class="space-y-2">' + (topics || '<p class="text-sm text-slate-500">No topics yet — create one to start adding questions.</p>') + '</div></div></div>';
-    },
 
-    topicEditorHTML: function () {
-      var s = currentSubject(), t = currentTopic(); if (!s || !t) return '';
-      return '<div class="max-w-3xl space-y-4">' +
-        '<div class="panel rounded-2xl p-5">' +
-        '<div class="flex flex-wrap items-center justify-between gap-2 mb-4"><h2 class="font-extrabold text-lg"><i class="fas fa-folder text-amber-400 mr-2"></i>Topic settings</h2><span class="chip bg-[#131c31] text-slate-400">' + t.questions.length + ' questions</span></div>' +
-        '<label class="lbl">Topic name</label><input class="field" value="' + esc(t.name) + '" oninput="B.updateTopicName(this.value)">' +
-        '<div class="flex flex-wrap gap-2 mt-4">' +
-        '<button onclick="B.addQuestion(\'MCQ\')" class="btn btn-indigo"><i class="fas fa-list-check"></i> Add MCQ</button>' +
-        '<button onclick="B.addQuestion(\'Fill\')" class="btn btn-ghost"><i class="fas fa-keyboard"></i> Add Fill</button>' +
-        '<button onclick="B.addQuestion(\'Theory\')" class="btn btn-ghost"><i class="fas fa-pen-nib"></i> Add Theory</button>' +
-        '<button onclick="B.shuffleTopicOptions()" class="btn btn-ghost"><i class="fas fa-shuffle"></i> Shuffle Options</button>' +
-        '<button onclick="B.deleteTopic()" class="btn btn-danger ml-auto"><i class="fas fa-trash"></i> Delete topic</button></div></div>' +
-        '<div class="panel rounded-2xl p-5"><h3 class="font-bold text-sm mb-3">Questions</h3>' +
-        '<div class="space-y-2">' + (t.questions.map(function (question, i) {
-          var chipCls = question.type === 'MCQ' ? 'bg-indigo-500/15 text-indigo-300' : (question.type === 'Fill' ? 'bg-amber-500/15 text-amber-300' : 'bg-violet-500/15 text-violet-300');
-          return '<div class="flex items-center gap-2 rounded-xl bg-[#0d1526] border border-[#1e2740] p-2.5">' +
-            '<button onclick="B.selectQuestion(\'' + s.id + '\',\'' + t.id + '\',\'' + question.id + '\')" class="flex items-center gap-2.5 min-w-0 flex-grow text-left">' +
-            '<span class="chip ' + chipCls + '">' + esc(question.type) + '</span>' +
-            '<span class="text-[12.5px] text-slate-300 truncate min-w-0">Q' + String(i + 1).padStart(3, '0') + ' · ' + esc((question.question || '(untitled)').slice(0, 70)) + '</span></button>' +
-            '<button onclick="B.selectQuestion(\'' + s.id + '\',\'' + t.id + '\',\'' + question.id + '\')" class="btn btn-ghost !px-2 !py-1.5"><i class="fas fa-pen"></i></button></div>';
-        }).join('') || '<p class="text-sm text-slate-500">No questions in this topic yet.</p>') + '</div></div></div>';
+      container.innerHTML = qHtml || '<div class="text-center text-slate-500 py-10">No questions in this view. Tap "New Q" to add one.</div>';
     },
 
     questionEditorHTML: function () {
-      var s = currentSubject(), t = currentTopic(), q = currentQuestion(); if (!s || !t || !q) return '';
-      var idx = t.questions.indexOf(q);
-      var letters = ['A', 'B', 'C', 'D'];
-      var typeBtn = function (type, icon) {
-        return '<button onclick="B.changeType(\'' + type + '\')" class="btn ' + (q.type === type ? 'btn-indigo' : 'btn-ghost') + '"><i class="' + icon + '"></i>' + type + '</button>';
-      };
-      var optionsHTML = '';
-      if (q.type === 'MCQ') {
-        optionsHTML = '<div class="space-y-2.5">' + letters.map(function (l, i) {
-          return '<div class="flex items-center gap-2.5">' +
-            '<label class="flex items-center justify-center w-9 h-9 rounded-lg bg-[#131c31] border border-[#26314f] cursor-pointer shrink-0" title="Mark ' + l + ' correct">' +
-            '<input type="radio" name="correct-option" value="' + l + '" ' + (String(q.correct).toUpperCase() === l ? 'checked' : '') + ' onchange="B.setCorrect(\'' + l + '\')" class="accent-amber-500">' +
-            '</label>' +
-            '<span class="w-5 text-center text-xs font-extrabold ' + (String(q.correct).toUpperCase() === l ? 'text-amber-400' : 'text-slate-500') + '">' + l + '</span>' +
-            '<input class="field" value="' + esc(q.options[i] || '') + '" oninput="B.updateOption(' + i + ', this.value)" placeholder="Option ' + l + '">' +
-            '</div>';
-        }).join('') + '</div>' +
-          '<div class="flex flex-wrap items-center gap-2 mt-3"><button onclick="B.shuffleQuestionOptions()" class="btn btn-ghost"><i class="fas fa-shuffle"></i> Shuffle options</button>' +
-          '<span class="text-[11px] text-slate-500">Correct answer: <strong class="text-amber-400">' + esc(q.correct || '—') + '</strong></span></div>';
-      } else if (q.type === 'Fill') {
-        optionsHTML = '<div><label class="lbl">Exact accepted answer (case-insensitive)</label><input class="field" value="' + esc(q.correct) + '" oninput="B.updateQField(\'correct\', this.value)" placeholder="e.g. adiabatic"></div>' +
-          '<p class="text-[11px] text-slate-500 mt-2"><i class="fas fa-circle-info mr-1"></i>Answers are compared after trimming and lower-casing; internal spaces are preserved.</p>';
-      } else {
-        optionsHTML = '<div class="rounded-xl border border-violet-500/25 bg-violet-500/5 p-3 text-[11.5px] text-violet-200"><i class="fas fa-robot mr-1.5"></i>Theory answers are graded by AI out of the marks below. The explanation is used as the model answer.</div>';
-        optionsHTML += '<div class="mt-3"><label class="lbl">Maximum marks</label><input type="number" min="1" max="100" class="field !w-32" value="' + (q.maxMarks || 10) + '" oninput="B.updateQField(\'maxMarks\', this.value)"></div>';
-      }
-      return '<div class="max-w-4xl space-y-4">' +
-        '<div class="panel rounded-2xl p-4 md:p-5">' +
-        '<div class="flex flex-wrap items-center justify-between gap-2 mb-4">' +
-        '<h2 class="font-extrabold text-base"><i class="fas fa-circle-question text-indigo-400 mr-2"></i>Q' + String(idx + 1).padStart(3, '0') + '</h2>' +
-        '<div class="flex flex-wrap items-center gap-1.5">' + typeBtn('MCQ', 'fas fa-list-check') + typeBtn('Fill', 'fas fa-keyboard') + typeBtn('Theory', 'fas fa-pen-nib') + '</div></div>' +
-        '<div class="grid sm:grid-cols-[1fr_180px] gap-3">' +
-        '<div><label class="lbl">Question text</label><textarea rows="3" class="field" oninput="B.updateQField(\'question\', this.value)" placeholder="Type the question…">' + esc(q.question) + '</textarea></div>' +
-        '<div><label class="lbl">Sub-topic</label><input class="field" value="' + esc(q.subTopic || 'General') + '" oninput="B.updateQField(\'subTopic\', this.value)"><p class="text-[10.5px] text-slate-500 mt-1.5">Groups candidates on the login form.</p></div>' +
-        '</div>' +
-        '<div class="mt-2 rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300"><div class="lbl !mb-1 !text-[9.5px]">LaTeX live preview</div><div id="question-preview" class="fmt">' + (q.question ? B.renderMathText(q.question) : '<span class="text-slate-500 italic">Preview appears here…</span>') + '</div></div>' +
-        '</div>' +
-        '<div class="panel rounded-2xl p-4 md:p-5"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-sm">Answer configuration</h3><span class="chip bg-[#131c31] text-slate-400">' + esc(q.type) + '</span></div>' + optionsHTML + '</div>' +
-        '<div class="panel rounded-2xl p-4 md:p-5">' +
-        '<label class="lbl">Explanation / model answer</label>' +
-        '<textarea rows="4" class="field" oninput="B.updateQField(\'explanation\', this.value)" placeholder="Explain the reasoning. LaTeX with $…$ is supported.">' + esc(q.explanation) + '</textarea>' +
-        '<div class="mt-2 rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300"><div class="lbl !mb-1 !text-[9.5px]">Preview</div><div id="explanation-preview" class="fmt">' + (q.explanation ? B.renderMathText(q.explanation) : '<span class="text-slate-500 italic">Explanation preview appears here…</span>') + '</div></div>' +
-        '<div class="flex flex-wrap gap-2 mt-4">' +
-        '<button onclick="B.duplicateQuestion()" class="btn btn-ghost"><i class="fas fa-copy"></i> Duplicate</button>' +
-        '<button onclick="B.addQuestionBelow()" class="btn btn-ghost"><i class="fas fa-plus"></i> Add question</button>' +
-        '<button onclick="B.deleteQuestion()" class="btn btn-danger ml-auto"><i class="fas fa-trash"></i> Delete question</button></div></div></div>';
-    },
-
-    /* ------------- preview ------------- */
-    scopeQuestions: function () {
-      var out = [];
-      appData.subjects.forEach(function (s) {
-        if (selected.subjectId && s.id !== selected.subjectId) return;
-        s.topics.forEach(function (t) {
-          if (selected.topicId && t.id !== selected.topicId) return;
-          t.questions.forEach(function (q) { out.push({ s: s, t: t, q: q }); });
-        });
-      });
-      return out;
-    },
-    previewHTML: function () {
-      var items = B.scopeQuestions();
-      var cards = items.map(function (item, i) {
-        var q = item.q, revealed = !!previewRevealed[q.id];
-        var opts = '';
-        if (q.type === 'MCQ') {
-          opts = '<div class="grid sm:grid-cols-2 gap-2 mt-3">' + ['A', 'B', 'C', 'D'].map(function (l, idx) {
-            var correct = String(q.correct).toUpperCase() === l;
-            var cls = revealed && correct ? 'border-emerald-500 bg-emerald-500/10' : 'border-[#26314f] bg-[#0d1526]';
-            return '<div class="rounded-lg border p-2.5 text-[12.5px] ' + cls + '"><span class="font-extrabold mr-1.5 ' + (revealed && correct ? 'text-emerald-400' : 'text-slate-400') + '">' + l + '</span>' + esc(q.options[idx] || '') + (revealed && correct ? ' <i class="fas fa-check text-emerald-400 ml-1"></i>' : '') + '</div>';
-          }).join('') + '</div>';
-        } else if (q.type === 'Fill') {
-          opts = '<div class="mt-3 rounded-lg bg-[#0d1526] border border-[#26314f] p-2.5 text-[12.5px]"><span class="text-slate-500">Answer: </span><span class="' + (revealed ? 'text-emerald-400 font-bold' : 'blur-sm select-none text-slate-500') + '">' + esc(q.correct || '—') + '</span></div>';
-        }
-        var explanation = revealed
-          ? '<div class="mt-3 rounded-lg border-l-4 border-amber-500 bg-amber-500/5 p-3 text-[12.5px] text-slate-300 fmt">📚 ' + B.renderMathText(q.explanation || 'No explanation provided.') + '</div>'
-          : '';
-        return '<div class="qcard p-4">' +
-          '<div class="flex flex-wrap items-center gap-2 mb-2.5">' +
-          '<span class="text-[11px] font-extrabold text-slate-500">Q' + String(i + 1).padStart(2, '0') + '</span>' +
-          '<span class="chip bg-indigo-500/15 text-indigo-300">' + esc(q.type) + '</span>' +
-          '<span class="chip bg-[#131c31] text-slate-400">' + esc(item.t.name) + '</span>' +
-          '<span class="chip bg-violet-500/10 text-violet-300">' + esc(q.subTopic || 'General') + '</span>' +
-          '<button onclick="B.reveal(\'' + q.id + '\')" class="btn ' + (revealed ? 'btn-ghost' : 'btn-amber') + ' !py-1 !px-2.5 !text-[11px] ml-auto"><i class="fas fa-eye' + (revealed ? '-slash' : '') + '"></i>' + (revealed ? 'Hide' : 'Reveal') + '</button></div>' +
-          '<p class="text-[13.5px] font-medium text-slate-200 fmt">' + B.renderMathText(q.question || '(untitled question)') + '</p>' +
-          opts + explanation + '</div>';
-      }).join('');
-      return '<div class="max-w-3xl mx-auto space-y-3"><div class="flex items-center gap-2 flex-wrap mb-1"><h2 class="font-extrabold"><i class="fas fa-eye text-violet-400 mr-2"></i>Study preview</h2>' +
-        '<span class="chip bg-violet-500/15 text-violet-300">' + items.length + ' questions</span>' +
-        '<span class="text-[11px] text-slate-500">' + (selected.topicId ? 'Topic scope' : (selected.subjectId ? 'Subject scope' : 'Whole bank')) + '</span></div>' +
-        (cards || '<div class="panel rounded-xl p-8 text-center text-sm text-slate-500">No questions in this scope.</div>') + '</div>';
-    },
-
-    /* ------------- modals ------------- */
-    openModal: function (id) { var el = document.getElementById(id); if (el) el.classList.remove('hidden'); },
-    closeModal: function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); },
-
-    readImportFile: function (input) { var f = input.files && input.files[0]; if (f) B.readImportFileData(f); },
-    readImportFileData: function (f) {
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        var ta = document.getElementById('import-text');
-        if (ta) ta.value = e.target.result;
-        B.toast('Loaded ' + f.name + ' · now parse & preview', 'success');
-        B.previewImport();
-      };
-      reader.readAsText(f);
-    },
-
-    parseDSL: function (text) {
-      var subjects = [], warnings = [];
-      var subject = null, topic = null, q = null, subTopic = 'General', explanationMode = false;
-      var lines = String(text || '').split(/\r?\n/);
-      function ensureSubject(name) { var s = { id: uid('s'), name: String(name || 'Untitled').trim(), duration: 30, topics: [] }; subjects.push(s); return s; }
-      function ensureTopic(name) {
-        var tname = String(name || 'General').trim();
-        var found = subject.topics.find(function (t) { return t.name.toLowerCase() === tname.toLowerCase(); });
-        if (!found) { found = { id: uid('t'), name: tname, questions: [] }; subject.topics.push(found); }
-        return found;
-      }
-      lines.forEach(function (raw) {
-        var line = raw.trim();
-        if (!line || line.indexOf('===') === 0) return;
-        if (/^Subject\s*:/i.test(line)) { subject = ensureSubject(line.replace(/^Subject\s*:/i, '')); topic = null; q = null; return; }
-        if (/^Duration\s*:/i.test(line)) { if (subject) subject.duration = Number(line.replace(/^Duration\s*:/i, '')) || 30; return; }
-        if (/^Topic\s*:/i.test(line)) { if (!subject) subject = ensureSubject('Untitled'); topic = ensureTopic(line.replace(/^Topic\s*:/i, '')); q = null; subTopic = 'General'; return; }
-        if (/^SubTopic\s*:/i.test(line)) { subTopic = line.replace(/^SubTopic\s*:/i, '').trim() || 'General'; q = null; explanationMode = false; return; }
-        if (/^Type\s*:/i.test(line)) {
-          if (!subject) subject = ensureSubject('Untitled');
-          if (!topic) topic = ensureTopic('General');
-          var rawType = line.replace(/^Type\s*:/i, '').trim();
-          var type = /theory/i.test(rawType) ? 'Theory' : (/fill/i.test(rawType) ? 'Fill' : 'MCQ');
-          q = newQuestion(type);
-          q.subTopic = subTopic;
-          topic.questions.push(q);
-          explanationMode = false;
-          return;
-        }
-        if (/^Q\d+\s*:/i.test(line)) {
-          if (!subject) subject = ensureSubject('Untitled');
-          if (!topic) topic = ensureTopic('General');
-          if (!q) { q = newQuestion('MCQ'); q.subTopic = subTopic; topic.questions.push(q); warnings.push('Q line without Type: — assumed MCQ in "' + topic.name + '".'); }
-          q.question = line.replace(/^Q\d+\s*:/i, '').trim();
-          explanationMode = false;
-          return;
-        }
-        if (/^Marks\s*:/i.test(line)) { if (q) q.maxMarks = Number(line.replace(/^Marks\s*:/i, '')) || 10; return; }
-        if (/^Option\s*:/i.test(line)) {
-          if (!q) { warnings.push('Option line before any question — skipped.'); return; }
-          if (!Array.isArray(q.options)) q.options = ['', '', '', ''];
-          var rest = line.replace(/^Option\s*:/i, '').trim();
-          var m = rest.match(/^([A-Da-d])\s*:\s*([\s\S]*)$/);
-          if (m) q.options['ABCD'.indexOf(m[1].toUpperCase())] = m[2].trim();
-          else {
-            var next = q.options.findIndex(function (v) { return !v; });
-            if (next >= 0) q.options[next] = rest;
-          }
-          explanationMode = false;
-          return;
-        }
-        if (/^Answer\s*:/i.test(line)) { if (q) q.correct = line.replace(/^Answer\s*:/i, '').trim(); explanationMode = false; return; }
-        if (/^Explanation\s*:/i.test(line)) { if (q) q.explanation = line.replace(/^Explanation\s*:/i, '').trim(); explanationMode = true; return; }
-        if (explanationMode && q) { q.explanation = (q.explanation ? q.explanation + ' ' : '') + line; return; }
-        if (!subject && line) {
-          subject = ensureSubject(line);
-          subject.__recovered = true;
-          return;
-        }
-        warnings.push('Ignored unrecognised line: "' + line.slice(0, 60) + '"');
-      });
-
-      subjects.forEach(function (s) {
-        s.topics.forEach(function (t) {
-          t.questions = t.questions.filter(function (question) {
-            var ok = question.type === 'MCQ' ? (question.options || []).filter(function (v) { return v && String(v).trim(); }).length >= 2 && !!question.correct
-              : question.type === 'Fill' ? !!question.correct
-                : !!question.question;
-            if (!ok) warnings.push('Skipped an incomplete ' + question.type + ' in "' + t.name + '".');
-            return ok;
-          });
-          if (!Array.isArray(t.questions)) t.questions = [];
-        });
-        s.topics = s.topics.filter(function (t) { return t.questions.length; });
-        if (!s.topics.length) s.topics.push(newTopic('General'));
-        delete s.__recovered;
-      });
-      return { subjects: subjects, warnings: warnings };
-    },
-
-    previewImport: function () {
-      var text = (document.getElementById('import-text') || {}).value || '';
-      if (!text.trim()) { B.toast('Paste bank code or choose a file first.', 'error'); return; }
-      var parsed = B.parseImportCode(text);
-      pendingImport = parsed;
-      var subjects = parsed.subjects || [];
-      var topics = 0, questions = 0;
-      subjects.forEach(function (s) { topics += s.topics.length; s.topics.forEach(function (t) { questions += t.questions.length; }); });
-      var panel = document.getElementById('import-preview');
-      if (panel) panel.classList.remove('hidden');
-      var summary = document.getElementById('import-summary');
-      if (summary) summary.innerHTML = '<i class="fas fa-circle-check text-emerald-400 mr-1.5"></i>Parsed <strong>' + subjects.length + '</strong> subject(s) · <strong>' + topics + '</strong> topic(s) · <strong>' + questions + '</strong> question(s)';
-      var warnings = document.getElementById('import-warnings');
-      if (warnings) warnings.innerHTML = (parsed.warnings || []).slice(0, 8).map(function (w) { return '<div><i class="fas fa-triangle-exclamation mr-1"></i>' + esc(w) + '</div>'; }).join('');
-      if (parsed.error) { if (summary) summary.innerHTML = '<span class="text-rose-400"><i class="fas fa-circle-xmark mr-1"></i>' + esc(parsed.error) + '</span>'; }
-    },
-
-    parseImportCode: function (code) {
-      var banks;
-      try {
-        banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + code + '\nreturn window.CBT_SUBJECT_BANKS;')();
-      } catch (e) {
-        banks = [code];
-      }
-      if (!Array.isArray(banks)) banks = [code];
-      var merged = { subjects: [], warnings: [] };
-      banks.forEach(function (item) {
-        if (typeof item === 'string') {
-          var parsed = B.parseDSL(item);
-          parsed.subjects.forEach(function (s) { merged.subjects.push(s); });
-          merged.warnings = merged.warnings.concat(parsed.warnings);
-        } else if (item && Array.isArray(item.topics)) {
-          merged.subjects.push(B.normalizeSubject(item));
-        } else if (item && item.subjects && Array.isArray(item.subjects)) {
-          item.subjects.forEach(function (s) { merged.subjects.push(B.normalizeSubject(s)); });
-        } else {
-          merged.warnings.push('Unrecognised bank entry skipped.');
-        }
-      });
-      if (!merged.subjects.length) {
-        merged.warnings.push('No subjects found. Falling back to raw-text DSL parse.');
-        var fallback = B.parseDSL(String(code));
-        merged.subjects = fallback.subjects;
-        merged.warnings = merged.warnings.concat(fallback.warnings);
-      }
-      if (!merged.subjects.length) merged.error = 'Nothing could be parsed from this source.';
-      return merged;
-    },
-
-    normalizeSubject: function (raw) {
-      var s = {
-        id: uid('s'), name: String(raw.name || 'Untitled').trim(), duration: Number(raw.duration) || 30,
-        topics: (raw.topics || []).map(function (t) {
-          return {
-            id: uid('t'), name: String(t.name || 'General').trim(),
-            questions: (t.questions || []).map(function (q) {
-              return {
-                id: uid('q'),
-                type: q.type === 'objective' ? 'MCQ' : (q.type === 'fill' ? 'Fill' : (q.type === 'theory' ? 'Theory' : (q.type || 'MCQ'))),
-                subTopic: q.subTopic || 'General',
-                question: q.question || q.text || '',
-                options: Array.isArray(q.options) ? q.options.slice(0, 4).concat(['', '', '', '']).slice(0, 4) : (q.options && typeof q.options === 'object' ? ['A', 'B', 'C', 'D'].map(function (l) { return q.options[l] || ''; }) : ['', '', '', '']),
-                correct: q.correct || '',
-                explanation: q.explanation || '',
-                maxMarks: Number(q.maxMarks) || 10
-              };
-            })
-          };
-        })
-      };
-      if (!s.topics.length) s.topics.push({ id: uid('t'), name: 'General', questions: [] });
-      return s;
-    },
-
-    applyImport: function () {
-      if (!pendingImport || !pendingImport.subjects || !pendingImport.subjects.length) { B.toast('Parse a source with subjects first.', 'error'); return; }
-      var modeEl = document.querySelector('input[name="import-mode"]:checked');
-      var mode = modeEl ? modeEl.value : 'replace';
-      B.pushUndoState();
-      if (mode === 'replace') {
-        appData.subjects = clone(pendingImport.subjects);
-        appData.bankName = appData.subjects[0] ? appData.subjects[0].name + ' Bank' : appData.bankName;
-      } else {
-        pendingImport.subjects.forEach(function (incoming) {
-          var existing = appData.subjects.find(function (s) { return s.name.toLowerCase() === incoming.name.toLowerCase(); });
-          if (!existing) { appData.subjects.push(clone(incoming)); return; }
-          incoming.topics.forEach(function (it) {
-            var et = existing.topics.find(function (t) { return t.name.toLowerCase() === it.name.toLowerCase(); });
-            if (!et) existing.topics.push(clone(it));
-            else it.questions.forEach(function (q) { et.questions.push(clone(q)); });
-          });
-        });
-      }
-      B.closeModal('import-modal');
-      var first = appData.subjects[0];
-      selected = first ? { subjectId: first.id, topicId: first.topics[0] ? first.topics[0].id : null, questionId: null } : { subjectId: null, topicId: null, questionId: null };
-      previewMode = false;
-      B.render(); B.scheduleSave();
-      B.toast('Imported ' + pendingImport.subjects.length + ' subject(s) · ' + mode, 'success');
-      pendingImport = null;
-    },
-
-    /* ------------- export ------------- */
-    defaultFilename: function () {
-      var s = currentSubject();
-      var t = currentTopic();
-      var subjSlug = B.slug(s ? s.name : 'subject');
-      var topicSlug = t ? B.slug(t.name) : 'general';
-      return subjSlug + '/' + topicSlug + '/' + topicSlug + '-bank.js';
-    },
-    slug: function (str) { 
-      return String(str || 'untitled').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); 
-    },
-    openExport: function () {
-      B.openModal('export-modal');
-      var input = document.getElementById('export-filename');
-      if (input) {
-          if (currentLoadedPath) {
-              input.value = currentLoadedPath;
-          } else if (!input.value) {
-              input.value = B.defaultFilename();
-          }
-      }
-      B.updateExportPreview();
-    },
-    fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },
-    sanitize: function (s) { return String(s === undefined || s === null ? '' : s).replace(/`/g, "'").replace(/\$\{/g, '$ {').replace(/\r?\n/g, ' ').trim(); },
-    generateExportJSCode: function (shuffleOptions) {
-      var data = clone(appData);
-      if (shuffleOptions) {
-        data.subjects.forEach(function (s) {
-          s.topics.forEach(function (t) {
-            t.questions.forEach(function (q) {
-              if (q.type !== 'MCQ') return;
-              var originalCorrectValue = (q.options || [])['ABCD'.indexOf(String(q.correct).toUpperCase())] || '';
-              var wanted = B.sanitize(originalCorrectValue);
-              var pairs = (q.options || []).slice(0, 4).map(function (v, i) { return { v: B.sanitize(v), i: i }; });
-              B.shuffle(pairs);
-              q.options = pairs.map(function (p) { return p.v; });
-              var idx = q.options.findIndex(function (v) { return v === wanted; });
-              q.correct = 'ABCD'[idx >= 0 ? idx : 0];
-            });
-          });
-        });
-      }
-
-      var blocks = [];
-      data.subjects.forEach(function (s) {
-        var lines = ['Subject: ' + B.sanitize(s.name)];
-        if (Number(s.duration) && Number(s.duration) !== 30) lines.push('Duration: ' + (Number(s.duration) || 30));
-        s.topics.forEach(function (t) {
-          lines.push('', 'Topic: ' + B.sanitize(t.name));
-          t.questions.forEach(function (q, i) {
-            lines.push('');
-            lines.push('SubTopic: ' + B.fixMath(B.sanitize(q.subTopic || 'General')));
-            lines.push('Type: ' + (q.type || 'MCQ'));
-            lines.push('Q' + String(i + 1).padStart(3, '0') + ': ' + B.fixMath(B.sanitize(q.question)));
-            if (q.type === 'MCQ') {
-              (q.options || []).slice(0, 4).forEach(function (opt, oi) {
-                if (opt && String(opt).trim()) lines.push('Option: ' + 'ABCD'[oi] + ': ' + B.fixMath(B.sanitize(opt)));
-              });
-              lines.push('Answer: ' + B.sanitize(q.correct || 'A'));
-            } else if (q.type === 'Fill') {
-              lines.push('Answer: ' + B.fixMath(B.sanitize(q.correct)));
-            } else {
-              lines.push('Marks: ' + (q.maxMarks || 10));
-            }
-            if (q.explanation && String(q.explanation).trim()) lines.push('Explanation: ' + B.fixMath(B.sanitize(q.explanation)));
-          });
-        });
-        blocks.push(lines.join('\n'));
-      });
-      return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' +
-        blocks.map(function (b) { return 'window.CBT_SUBJECT_BANKS.push(`' + b + '\n`);'; }).join('\n\n') + '\n';
-    },
-    updateExportPreview: function () {
-      var shuffleEl = document.getElementById('export-shuffle');
-      exportCode = B.generateExportJSCode(!!(shuffleEl && shuffleEl.checked));
-      var pre = document.getElementById('export-preview');
-      if (pre) pre.textContent = exportCode;
-      var counts = B.counts();
-      var summary = document.getElementById('export-summary');
-      if (summary) summary.textContent = counts.subjects + ' Subjects · ' + counts.topics + ' Topics · ' + counts.questions + ' Questions';
-      var size = document.getElementById('export-size');
-      if (size) size.textContent = '~' + (new Blob([exportCode]).size / 1024).toFixed(1) + ' KB';
-    },
-    copyExport: async function () {
-      if (!exportCode) B.updateExportPreview();
-      try { await navigator.clipboard.writeText(exportCode); B.toast('Copied export code to clipboard', 'success'); }
-      catch (e) {
-        var ta = document.createElement('textarea'); ta.value = exportCode; document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); B.toast('Copied export code', 'success'); } catch (err) { B.toast('Copy failed — select the preview manually', 'error'); }
-        ta.remove();
-      }
-    },
-    downloadExport: function () {
-      var input = document.getElementById('export-filename');
-      var filename = (input && input.value.trim()) || B.defaultFilename();
-      if (!/\.js$/i.test(filename)) filename += '.js';
-      var blob = new Blob([exportCode || B.generateExportJSCode(false)], { type: 'text/javascript' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
-      B.toast('Downloaded ' + filename, 'success');
-    },
-
-    /* ------------- publish ------------- */
-    openPublish: function () {
-      if (!appData.subjects.length) {
-        B.toast('Nothing to publish! Create a subject and add questions first.', 'error');
-        return;
-      }
+      var s = currentSubject(), t = currentTopic(), q = currentQuestion();
+      var typeBtn = (type, icon) => `<button onclick="B.changeType('${type}')" class="btn ${q.type === type ? 'btn-indigo' : 'btn-ghost'} !py-1.5 flex-1 justify-center"><i class="${icon}"></i>${type}</button>`;
       
-      B.openModal('publish-modal');
-      document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
-      document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
-      document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
-      
-      var input = document.getElementById('pub-filename');
-      if (currentLoadedPath) {
-          input.value = currentLoadedPath;
-      } else {
-          input.value = B.defaultFilename();
-      }
-      
-      var err = document.getElementById('pub-error');
-      if (err) err.classList.add('hidden');
-      var st = document.getElementById('pub-status');
-      if (st) st.textContent = '';
-    },
-    
-    submitPublish: async function () {
-      var owner = document.getElementById('pub-owner').value.trim();
-      var repo = document.getElementById('pub-repo').value.trim();
-      var token = document.getElementById('pub-token').value.trim();
-      var filename = document.getElementById('pub-filename').value.trim();       
-      filename = filename.replace(/^question-banks\//i, ''); 
-      
-      var status = document.getElementById('pub-status');
-      var errBox = document.getElementById('pub-error');
-      var btn = document.getElementById('pub-submit');
-      
-      if (!owner || !repo || !token || !filename) {
-        if (errBox) { errBox.textContent = 'Owner, repository, token and filename are all required.'; errBox.classList.remove('hidden'); }
-        return;
-      }
-      
-      localStorage.setItem('gh_owner', owner); localStorage.setItem('gh_repo', repo); localStorage.setItem('gh_token', token);
-      var code = B.generateExportJSCode(false);
-      
-      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing…'; }
-      if (errBox) errBox.classList.add('hidden');
-      if (status) status.textContent = 'Committing to question-banks/' + filename + ' on main…';
-      
-      try {
-        // 1. Publish the bank file
-        var res = await fetch('/api/publish-bank', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: filename, code: code, githubToken: token, repoOwner: owner, repoName: repo })
-        });
-        var data = await res.json().catch(function () { return {}; });
-        if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
+      var stOptions = t.subTopics.map(st => `<option value="${st.id}" ${q.subTopicId === st.id ? 'selected' : ''}>${esc(st.name)}</option>`).join('');
+
+      return `<div class="max-w-3xl mx-auto space-y-4">
+        <div class="flex justify-between items-center">
+            <button onclick="B.selectQuestion(null,null,null)" class="btn btn-ghost !py-1.5 !px-2"><i class="fas fa-arrow-left"></i> Back to List</button>
+            <button onclick="B.deleteQuestion()" class="btn btn-danger !py-1.5 !px-2"><i class="fas fa-trash"></i></button>
+        </div>
         
-        if (status) status.innerHTML = '<span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>' + esc(data.message || 'Published successfully.') + '</span>';
-        B.toast('Published to GitHub', 'success');
-
-        // Update local loaded path so subsequent saves go to this new location
-        currentLoadedPath = filename;
-
-        // 2. Update index.html
-        if (status) status.textContent = 'Updating index.html…';
-        try {
-            const indexRes = await fetch('/api/publish-bank', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                filename: 'update-index', 
-                githubToken: token, 
-                repoOwner: owner, 
-                repoName: repo 
-              })
-            });
-            const indexData = await indexRes.json();
-            if (!indexRes.ok) throw new Error(indexData.error || 'Failed to update index.html');
+        <div class="panel rounded-xl p-4">
+            <div class="flex gap-2 mb-4">${typeBtn('MCQ','fas fa-list-check')} ${typeBtn('Fill','fas fa-keyboard')} ${typeBtn('Theory','fas fa-pen-nib')}</div>
             
-            B.toast('Index updated successfully!', 'success');
-            if (status) status.innerHTML += ' <br><span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>Index updated.</span>';
-        } catch (indexErr) {
-            console.warn('Index update failed:', indexErr);
-            B.toast(indexErr.message, 'error');
-            if (status) status.innerHTML += ' <br><span class="text-rose-400"><i class="fas fa-circle-xmark mr-1"></i>Failed to update index.</span>';
-        }
+            <label class="lbl">Question Text</label>
+            <textarea rows="4" class="field mb-2" oninput="B.updateQField('question', this.value)" placeholder="Type the question...">${esc(q.question)}</textarea>
+            <div class="rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300 mb-4"><div class="fmt" id="question-preview">${B.renderMathText(q.question) || '<span class="text-slate-500 italic">Preview appears here…</span>'}</div></div>
 
-      } catch (err) {
-        if (errBox) { errBox.textContent = err.message; errBox.classList.remove('hidden'); }
-        if (status) status.textContent = '';
-      } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-upload"></i> Publish bank'; }
-      }
-    }
+            <div class="mb-4">
+                <label class="lbl">Sub-Topic</label>
+                <select class="field" onchange="B.updateQField('subTopicId', this.value)">${stOptions}</select>
+            </div>
+
+            <div class="p-3 bg-[#080d18] rounded-lg border border-[#1e2740]">
+                <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Answer Configuration</h3>
+                ${B.answerConfigHTML(q)}
+            </div>
+        </div>
+
+        <div class="panel rounded-xl p-4">
+            <label class="lbl">Explanation / Model Answer</label>
+            <textarea rows="4" class="field mb-2" oninput="B.updateQField('explanation', this.value)" placeholder="Explain the reasoning...">${esc(q.explanation)}</textarea>
+        </div>
+      </div>`;
+    },
+
+    answerConfigHTML: function (q) {
+        if (q.type === 'MCQ') {
+            return ['A','B','C','D'].map((l, i) => `
+                <div class="flex items-center gap-2 mb-2">
+                    <input type="radio" name="correct" value="${l}" ${q.correct === l ? 'checked' : ''} onchange="B.updateQField('correct', this.value)" class="accent-amber-500">
+                    <span class="text-xs font-bold text-slate-500 w-4">${l}</span>
+                    <input class="field" value="${esc(q.options[i] || '')}" oninput="B.updateOption(${i}, this.value)" placeholder="Option ${l}">
+                </div>
+            `).join('');
+        } else if (q.type === 'Fill') {
+            return `<label class="lbl">Exact Answer</label><input class="field" value="${esc(q.correct)}" oninput="B.updateQField('correct', this.value)" placeholder="e.g. 42">`;
+        } else {
+            return `<label class="lbl">Max Marks</label><input type="number" class="field !w-24" value="${q.maxMarks || 10}" oninput="B.updateQField('maxMarks', this.value)">`;
+        }
+    },
+
+    updateQField: function (field, value) {
+        var q = currentQuestion(); if (!q) return;
+        B.pushUndoState();
+        q[field] = value;
+        B.scheduleSave();
+        if (field === 'question') {
+            var el = document.getElementById('question-preview');
+            if (el) el.innerHTML = B.renderMathText(value);
+            B.typeset();
+        }
+    },
+    updateOption: function (i, val) {
+        var q = currentQuestion(); if (!q) return;
+        B.pushUndoState();
+        q.options[i] = val;
+        B.scheduleSave();
+    },
+    changeType: function(type) {
+        var q = currentQuestion(); if (!q) return;
+        B.pushUndoState();
+        q.type = type;
+        if (type === 'MCQ' && !['A','B','C','D'].includes(q.correct)) q.correct = 'A';
+        B.renderContent();
+    },
+    selectQuestion: function (sid, tid, qid) {
+        if (sid) selected.subjectId = sid;
+        if (tid) selected.topicId = tid;
+        selected.questionId = qid;
+        B.renderContent();
+    },
+    selectTopic: function (sid, tid) {
+        selected.subjectId = sid; selected.topicId = tid; selected.subTopicId = null; selected.questionId = null;
+        B.renderStructure(); B.renderContent();
+    },
+    selectSubTopic: function (sid, tid, stid) {
+        selected.subjectId = sid; selected.topicId = tid; selected.subTopicId = stid; selected.questionId = null;
+        B.renderStructure(); B.renderContent();
+    },
+
+    renderMathText: function (t) { return esc(t).replace(/\n/g, '<br>'); },
+    typeset: function () {
+        if (window.MathJax) MathJax.typesetPromise([document.getElementById('workspace')]).catch(()=>{});
+    },
+
+    /* ------------- CRUD OPERATIONS ------------- */
+    addSubject: function() {
+        B.pushUndoState();
+        var s = newSubject('New Subject');
+        appData.subjects.push(s);
+        B.selectTopic(s.id, s.topics[0].id);
+    },
+    addTopic: function(sid) {
+        B.pushUndoState();
+        var s = getSubject(sid); if (!s) return;
+        var t = newTopic('New Topic');
+        s.topics.push(t);
+        B.selectTopic(sid, t.id);
+    },
+    addSubTopic: function(sid, tid) {
+        var name = prompt("Enter Sub-Topic Name:");
+        if (!name) return;
+        B.pushUndoState();
+        var t = getTopic(sid, tid); if (!t) return;
+        t.subTopics.push(newSubTopic(name));
+        B.renderStructure();
+    },
+    deleteSubTopic: function(sid, tid, stid) {
+        if (!confirm('Delete this sub-topic? Questions will remain but need a new sub-topic assigned.')) return;
+        B.pushUndoState();
+        var t = getTopic(sid, tid);
+        t.subTopics = t.subTopics.filter(st => st.id !== stid);
+        if (selected.subTopicId === stid) selected.subTopicId = null;
+        B.renderAll();
+    },
+    addQuestion: function(type) {
+        var s = currentSubject(), t = currentTopic();
+        if (!s || !t) return B.toast('Select a topic first.', 'error');
+        B.pushUndoState();
+        var stId = selected.subTopicId || t.subTopics[0]?.id || 'general';
+        var q = newQuestion(type, stId);
+        t.questions.push(q);
+        B.selectQuestion(s.id, t.id, q.id);
+        B.switchTab('content');
+    },
+    deleteQuestion: function() {
+        var t = currentTopic(), q = currentQuestion();
+        if (!q || !confirm('Delete this question?')) return;
+        B.pushUndoState();
+        t.questions = t.questions.filter(x => x.id !== q.id);
+        selected.questionId = null;
+        B.renderContent();
+    },
+    updateSubjectName: function(sid, val) {
+        var s = getSubject(sid); if (s) s.name = val; B.scheduleSave();
+    },
+    deleteSubject: function(sid) {
+        if (!confirm('Delete entire subject?')) return;
+        B.pushUndoState();
+        appData.subjects = appData.subjects.filter(s => s.id !== sid);
+        selected = { subjectId: null, topicId: null, subTopicId: null, questionId: null };
+        B.renderAll();
+    },
+    deleteTopic: function(sid, tid) {
+        if (!confirm('Delete entire topic?')) return;
+        B.pushUndoState();
+        var s = getSubject(sid);
+        s.topics = s.topics.filter(t => t.id !== tid);
+        selected.topicId = null; selected.subTopicId = null;
+        B.renderAll();
+    },
+
+    /* ------------- IMPORT & PARSING ------------- */
+    handleMdFileSelect: function(input) {
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var text = e.target.result;
+            var parsed = B.parseMarkdownToCBT(text);
+            B.showImportPreview(parsed);
+        };
+        reader.readAsText(file);
+    },
+    handleJsFileSelect: function(input) {
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
+                var parsed = [];
+                if (Array.isArray(banks)) {
+                    banks.forEach(str => {
+                        var p = B.parseDSL(str);
+                        p.subjects.forEach(s => s.topics.forEach(t => t.questions.forEach(q => parsed.push(q))));
+                    });
+                }
+                B.showImportPreview(parsed);
+            } catch(err) { B.toast('Invalid JS file', 'error'); }
+        };
+        reader.readAsText(file);
+    },
+
+    parseMarkdownToCBT: function(raw) {
+        var blocks = raw.split(/\n\s*---\s*\n/);
+        var questions = [];
+        blocks.forEach(block => {
+            var lines = block.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length === 0) return;
+            var q = newQuestion('MCQ');
+            q.question = '';
+            var inOptions = false;
+            
+            lines.forEach(line => {
+                if (/^Type:\s*/i.test(line)) {
+                    var t = line.replace(/^Type:\s*/i, '').trim().toUpperCase();
+                    q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
+                    return;
+                }
+                var optMatch = line.match(/^([A-Da-d])[\.\)]\s*(.+)$/);
+                if (optMatch) {
+                    inOptions = true;
+                    q.options['ABCD'.indexOf(optMatch[1].toUpperCase())] = optMatch[2].trim();
+                    return;
+                }
+                if (/^(Answer|Ans):\s*/i.test(line)) {
+                    var ans = line.replace(/^(Answer|Ans):\s*/i, '').trim();
+                    q.correct = q.type === 'MCQ' ? ans.charAt(0).toUpperCase() : ans;
+                    return;
+                }
+                if (/^Explanation:\s*/i.test(line)) {
+                    q.explanation = line.replace(/^Explanation:\s*/i, '').trim();
+                    return;
+                }
+                if (!inOptions && !q.question) q.question = line;
+                else if (!inOptions && q.question && !q.explanation) q.question += ' ' + line;
+            });
+            if (q.question) questions.push(q);
+        });
+        return questions;
+    },
+
+    parseDSL: function(text) {
+        // Simplified DSL parser for the import
+        var subjects = [];
+        var subject = null, topic = null, q = null;
+        var lines = String(text || '').split(/\r?\n/);
+        lines.forEach(line => {
+            line = line.trim();
+            if (/^Subject\s*:/i.test(line)) { subject = { name: line.replace(/^Subject\s*:/i, ''), topics: [] }; subjects.push(subject); }
+            else if (/^Topic\s*:/i.test(line) && subject) { topic = { name: line.replace(/^Topic\s*:/i, ''), questions: [] }; subject.topics.push(topic); }
+            else if (/^Type\s*:/i.test(line) && topic) {
+                var type = line.replace(/^Type\s*:/i, '').trim();
+                q = { type: type, options: ['','','',''], correct: '', explanation: '' };
+                topic.questions.push(q);
+            }
+            else if (/^Q\d+\s*:/i.test(line) && q) q.question = line.replace(/^Q\d+\s*:/i, '');
+            else if (/^Option\s*:/i.test(line) && q) {
+                var m = line.match(/^Option\s*:\s*([A-D])\s*:\s*(.+)$/i);
+                if (m) q.options['ABCD'.indexOf(m[1].toUpperCase())] = m[2];
+            }
+            else if (/^Answer\s*:/i.test(line) && q) q.correct = line.replace(/^Answer\s*:/i, '').trim();
+        });
+        return { subjects: subjects };
+    },
+
+    showImportPreview: function(questions) {
+        pendingImport = questions;
+        document.getElementById('import-preview').classList.remove('hidden');
+        document.getElementById('import-summary').innerHTML = `<i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${questions.length}</strong> questions.`;
+        
+        var t = currentTopic();
+        var sel = document.getElementById('import-target-subtopic');
+        sel.innerHTML = t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
+        B.openModal('import-modal');
+    },
+
+    applyImport: function() {
+        var t = currentTopic();
+        if (!t || !pendingImport) return;
+        var targetSt = document.getElementById('import-target-subtopic').value;
+        B.pushUndoState();
+        
+        pendingImport.forEach(q => {
+            q.id = uid('q');
+            q.subTopicId = targetSt;
+            t.questions.push(q);
+        });
+        
+        B.closeModal('import-modal');
+        B.renderAll();
+        B.toast(`Imported ${pendingImport.length} questions!`, 'success');
+        pendingImport = null;
+    },
+
+    /* ------------- GITHUB & PUBLISH ------------- */
+    loadGitHubTree: async function() {
+        var o = document.getElementById('gh-user').value.trim();
+        var r = document.getElementById('gh-repo').value.trim();
+        var t = document.getElementById('gh-token').value.trim();
+        if (!o || !r || !t) return B.toast('Credentials required', 'error');
+        
+        var c = document.getElementById('gh-tree-container');
+        c.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+        
+        try {
+            const res = await fetch(`https://api.github.com/repos/${o}/${r}/git/trees/main?recursive=1`, {
+                headers: { 'Authorization': `token ${t}` }
+            });
+            if (!res.ok) throw new Error('Failed to load tree');
+            const data = await res.json();
+            
+            var html = '';
+            data.tree.filter(x => x.path.startsWith('question-banks/') && x.path.endsWith('.js') && !x.path.includes('question-loader')).forEach(x => {
+                var path = x.path.replace('question-banks/', '');
+                html += `<button onclick="B.importFromGitHub('${path}')" class="w-full text-left flex items-center gap-2 px-2 py-2 rounded hover:bg-[#101830] text-xs text-gray-300">
+                    <i class="fab fa-js text-amber-400"></i> ${esc(path)}
+                </button>`;
+            });
+            c.innerHTML = html || '<div class="text-center text-xs text-gray-500 mt-4">No .js banks found.</div>';
+        } catch (err) { c.innerHTML = `<div class="text-red-400 text-xs mt-4">${err.message}</div>`; }
+    },
+
+    importFromGitHub: async function(path) {
+        B.toggleGhSidebar(false);
+        currentLoadedPath = path;
+        var o = localStorage.getItem('gh_owner');
+        var r = localStorage.getItem('gh_repo');
+        var t = localStorage.getItem('gh_token');
+        try {
+            const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${path}?ref=main`, {
+                headers: { 'Authorization': `token ${t}` }
+            });
+            if (!res.ok) throw new Error('Fetch failed');
+            const data = await res.json();
+            var text = b64DecodeUnicode(data.content.replace(/\n/g, ''));
+            
+            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
+            if (Array.isArray(banks)) {
+                var qs = [];
+                banks.forEach(str => {
+                    var p = B.parseDSL(str);
+                    p.subjects.forEach(s => s.topics.forEach(t => t.questions.forEach(q => qs.push(q))));
+                });
+                B.showImportPreview(qs);
+            }
+        } catch (err) { B.toast(err.message, 'error'); }
+    },
+
+    createNewFolder: async function() {
+        var path = prompt("Folder path (e.g., chemistry/organic):");
+        if (!path) return;
+        var o = localStorage.getItem('gh_owner'), r = localStorage.getItem('gh_repo'), t = localStorage.getItem('gh_token');
+        await fetch('/api/publish-bank', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: `question-banks/${path}/.gitkeep`, code: '', githubToken: t, repoOwner: o, repoName: r })
+        });
+        B.toast('Folder created!', 'success');
+        B.loadGitHubTree();
+    },
+
+    createNewFile: async function() {
+        var path = prompt("File path (e.g., chemistry/organic/alkanes-bank.js):");
+        if (!path) return;
+        if (!path.endsWith('.js')) path += '.js';
+        var o = localStorage.getItem('gh_owner'), r = localStorage.getItem('gh_repo'), t = localStorage.getItem('gh_token');
+        await fetch('/api/publish-bank', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: `question-banks/${path}`, code: 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];', githubToken: t, repoOwner: o, repoName: r })
+        });
+        B.toast('File created!', 'success');
+        B.loadGitHubTree();
+    },
+
+    openPublish: function() {
+        B.openModal('publish-modal');
+        document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
+        document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
+        document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
+        document.getElementById('pub-filename').value = currentLoadedPath || (B.slug(currentSubject()?.name) + '/' + B.slug(currentTopic()?.name) + '/bank.js');
+    },
+
+    submitPublish: async function() {
+        var o = document.getElementById('pub-owner').value.trim();
+        var r = document.getElementById('pub-repo').value.trim();
+        var t = document.getElementById('pub-token').value.trim();
+        var f = document.getElementById('pub-filename').value.trim();
+        
+        if (!o || !r || !t || !f) return B.toast('All fields required', 'error');
+        
+        var btn = document.getElementById('pub-submit');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        btn.disabled = true;
+
+        var code = B.generateExportJSCode(false);
+        try {
+            var res = await fetch('/api/publish-bank', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: f, code: code, githubToken: t, repoOwner: o, repoName: r })
+            });
+            if (!res.ok) throw new Error('Publish failed');
+            B.toast('Published successfully!', 'success');
+            currentLoadedPath = f;
+        } catch (err) { B.toast(err.message, 'error'); }
+        finally { btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; btn.disabled = false; }
+    },
+
+    slug: function(s) { return String(s || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-'); },
+
+    generateExportJSCode: function(shuffle) {
+        var blocks = [];
+        appData.subjects.forEach(s => {
+            var lines = ['Subject: ' + s.name];
+            s.topics.forEach(t => {
+                lines.push('Topic: ' + t.name);
+                t.questions.forEach((q, i) => {
+                    lines.push(`SubTopic: ${t.subTopics.find(x => x.id === q.subTopicId)?.name || 'General'}`);
+                    lines.push(`Type: ${q.type}`);
+                    lines.push(`Q${String(i+1).padStart(3,'0')}: ${q.question}`);
+                    if (q.type === 'MCQ') {
+                        q.options.forEach((opt, oi) => { if (opt) lines.push(`Option: ${'ABCD'[oi]}: ${opt}`); });
+                        lines.push(`Answer: ${q.correct}`);
+                    } else {
+                        lines.push(`Answer: ${q.correct}`);
+                    }
+                    if (q.explanation) lines.push(`Explanation: ${q.explanation}`);
+                });
+            });
+            blocks.push(lines.join('\n'));
+        });
+        return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' + blocks.map(b => `window.CBT_SUBJECT_BANKS.push(\`${b}\n\`);`).join('\n\n');
+    },
+
+    renderPreview: function() {
+        document.getElementById('preview-content').innerHTML = '<div class="text-center text-slate-500 py-10">Preview logic here...</div>';
+    },
+
+    copyExport: function() { navigator.clipboard.writeText(exportCode); B.toast('Copied!', 'success'); },
+    downloadExport: function() {
+        var blob = new Blob([exportCode], {type: 'text/javascript'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'bank.js'; a.click();
+    },
+    updateExportPreview: function() { exportCode = B.generateExportJSCode(false); document.getElementById('export-preview').textContent = exportCode; }
   };
 
   window.B = B;
