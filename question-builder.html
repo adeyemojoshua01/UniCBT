@@ -70,7 +70,7 @@ window.MathJax = {
 <div id="gh-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[65]" onclick="B.toggleGhSidebar(false)"></div>
 <aside id="gh-sidebar" class="fixed top-0 left-0 w-[320px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-[70] flex flex-col">
   <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
-    <h2 class="font-extrabold text-sm"><i class="fab fa-github text-indigo-400 mr-1"></i> GitHub Import</h2>
+    <h2 class="font-extrabold text-sm"><i class="fab fa-github text-indigo-400 mr-1"></i> GitHub Explorer</h2>
     <button onclick="B.toggleGhSidebar(false)" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
   </div>
   
@@ -79,6 +79,11 @@ window.MathJax = {
     <div><label class="lbl">Repository Name</label><input type="text" id="gh-repo" class="field !text-xs" placeholder="e.g. UniCBT" onchange="localStorage.setItem('gh_repo', this.value)"></div>
     <div><label class="lbl">Personal Access Token</label><input type="password" id="gh-token" class="field !text-xs" placeholder="ghp_..." onchange="localStorage.setItem('gh_token', this.value)"></div>
     <button onclick="B.loadGitHubTree()" class="btn btn-indigo w-full justify-center mt-2"><i class="fas fa-sync-alt"></i> Load Repository</button>
+  </div>
+
+  <div class="p-3 border-b border-[#1e2740] grid grid-cols-2 gap-2">
+    <button onclick="B.createNewFolder()" class="btn btn-ghost !bg-emerald-600/20 !text-emerald-400 !border-emerald-600/30 justify-center"><i class="fas fa-folder-plus"></i> Folder</button>
+    <button onclick="B.createNewFile()" class="btn btn-ghost !bg-sky-600/20 !text-sky-400 !border-sky-600/30 justify-center"><i class="fas fa-file-circle-plus"></i> File</button>
   </div>
 
   <div class="flex-grow overflow-y-auto p-3 space-y-1 text-sm text-gray-300" id="gh-tree-container">
@@ -96,7 +101,7 @@ window.MathJax = {
     <div class="p-5 space-y-4">
       <div class="flex justify-between items-center bg-indigo-500/10 border border-indigo-500/30 p-3 rounded-xl mb-2">
         <p class="text-xs text-indigo-200"><i class="fas fa-info-circle mr-1"></i> Want to browse your repository directly?</p>
-        <button onclick="B.closeModal('import-modal'); B.toggleGhSidebar(true);" class="btn btn-indigo !py-1.5 !text-[11px]"><i class="fab fa-github"></i> Open GitHub Explorer</button>
+        <button onclick="B.closeModal('import-modal'); B.toggleGhSidebar(true);" class="btn btn-indigo !py-1.5 !text-[11px]"><i class="fab fa-github"></i> Open Explorer</button>
       </div>
       
       <div id="import-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors">
@@ -160,13 +165,13 @@ window.MathJax = {
       <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-3">
-      <p class="text-[11.5px] text-slate-400">Commits to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>. The path is automatically generated based on the selected Subject and Topic.</p>
+      <p class="text-[11.5px] text-slate-400">Commits to branch <code class="text-amber-300">main</code> via <code>/api/publish-bank</code>.</p>
       <div class="grid sm:grid-cols-2 gap-3">
         <div><label class="lbl">GitHub owner</label><input id="pub-owner" class="field" placeholder="octocat"></div>
         <div><label class="lbl">Repository</label><input id="pub-repo" class="field" placeholder="my-question-banks"></div>
       </div>
       <div><label class="lbl">Fine-grained token <span class="text-slate-600 normal-case tracking-normal">(stored locally)</span></label><input id="pub-token" type="password" class="field" placeholder="github_pat_…"></div>
-      <div><label class="lbl">Target File Path (Auto-generated)</label><input id="pub-filename" class="field font-mono bg-[#0a0f1d] text-gray-400 cursor-not-allowed" readonly></div>
+      <div><label class="lbl">Target File Path</label><input id="pub-filename" class="field font-mono" placeholder="subject/topic/topic-bank.js"></div>
       <div class="flex items-center gap-2">
         <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber flex-grow justify-center"><i class="fas fa-cloud-arrow-up"></i> Publish bank</button>
       </div>
@@ -197,6 +202,7 @@ window.MathJax = {
   var pendingImport = null;
   var saveTimer = null;
   var exportCode = '';
+  var currentLoadedPath = '';
 
   // Helper to decode Base64 strings safely
   function b64DecodeUnicode(str) {
@@ -384,7 +390,6 @@ window.MathJax = {
         
         const root = {};
         data.tree.forEach(item => {
-          // Only show files inside question-banks that are NOT notes
           if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
           
           const parts = item.path.replace('question-banks/', '').split('/');
@@ -441,7 +446,6 @@ window.MathJax = {
       files.forEach(file => {
         const fullPath = parentPath ? `${parentPath}/${file}` : file;
         
-        // Show all files, but highlight the bank files
         if (file.endsWith('.js') || file.endsWith('.txt')) {
           const btn = document.createElement('button');
           btn.className = `w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] text-gray-400 hover:bg-[#101830] hover:text-gray-200`;
@@ -481,7 +485,8 @@ window.MathJax = {
         if (ta) ta.value = text;
         if (status) status.textContent = 'Fetched ' + path + ' from GitHub.';
         
-        // Auto update export filename so it saves to the exact same location
+        // Auto update export/publish filename so it saves to the exact same location
+        currentLoadedPath = path;
         var exportInput = document.getElementById('export-filename');
         if (exportInput) exportInput.value = path;
 
@@ -489,6 +494,83 @@ window.MathJax = {
       } catch (err) {
         if (status) status.textContent = 'GitHub fetch failed: ' + err.message;
         B.toast('GitHub fetch failed: ' + err.message, 'error');
+      }
+    },
+
+    createNewFolder: async function () {
+      var owner = localStorage.getItem('gh_owner');
+      var repo = localStorage.getItem('gh_repo');
+      var token = localStorage.getItem('gh_token');
+      if (!owner || !repo || !token) return B.toast('Load GitHub credentials first.', 'error');
+      
+      const path = prompt("Enter new folder path (e.g. chemistry/organic-chemistry):\nDo not include 'question-banks/'.");
+      if (!path) return;
+      
+      const cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
+      B.toast('Creating folder...', 'info');
+
+      try {
+        const res = await fetch('/api/publish-bank', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            filename: `question-banks/${cleanPath}/.gitkeep`, 
+            code: '', 
+            githubToken: token, 
+            repoOwner: owner, 
+            repoName: repo 
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create folder');
+        
+        B.toast('Folder created!', 'success');
+        B.loadGitHubTree(); 
+      } catch (err) {
+        B.toast(err.message, 'error');
+      }
+    },
+
+    createNewFile: async function () {
+      var owner = localStorage.getItem('gh_owner');
+      var repo = localStorage.getItem('gh_repo');
+      var token = localStorage.getItem('gh_token');
+      if (!owner || !repo || !token) return B.toast('Load GitHub credentials first.', 'error');
+      
+      const path = prompt("Enter new file path (must end in .js):\nDo not include 'question-banks/'.\nExample: chemistry/organic/alkanes-bank.js");
+      if (!path) return;
+      
+      let cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
+      if (!cleanPath.endsWith('.js')) cleanPath += '.js';
+      
+      B.toast('Creating file...', 'info');
+
+      try {
+        // Create a blank template
+        const templateCode = `window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\nwindow.CBT_SUBJECT_BANKS.push(\`Subject: New Subject\nTopic: New Topic\n\nSubTopic: General\nType: MCQ\nQ001: Sample Question?\nOption: A: Option 1\nOption: B: Option 2\nAnswer: A\nExplanation: Explanation here.\n\`);\n`;
+
+        const res = await fetch('/api/publish-bank', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            filename: `question-banks/${cleanPath}`, 
+            code: templateCode, 
+            githubToken: token, 
+            repoOwner: owner, 
+            repoName: repo 
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create file');
+        
+        B.toast('File created! Loading it now...', 'success');
+        
+        // Wait a moment for GitHub to index the file, then refresh tree and import it
+        setTimeout(async () => {
+            await B.loadGitHubTree();
+            B.importFromGitHubPath(cleanPath);
+        }, 1500);
+        
+      } catch (err) {
+        B.toast(err.message, 'error');
       }
     },
 
@@ -526,6 +608,7 @@ window.MathJax = {
     /* ------------- empty view ------------- */
     createBlank: function () {
       B.pushUndoState();
+      currentLoadedPath = '';
       appData = { bankName: 'Untitled Bank', subjects: [newSubject('New Subject')] };
       var s = appData.subjects[0];
       selected = { subjectId: s.id, topicId: s.topics[0].id, questionId: s.topics[0].questions[0].id };
@@ -534,19 +617,13 @@ window.MathJax = {
 
     loadSample: function () {
       B.pushUndoState();
+      currentLoadedPath = '';
       var physics = {
         id: uid('s'), name: 'Physics', duration: 45,
         topics: [
           {
             id: uid('t'), name: 'Thermodynamics', questions: [
-              { id: uid('q'), type: 'MCQ', subTopic: 'First Law', question: 'A gas absorbs 300 J of heat and does 120 J of work. What is the change in internal energy?', options: ['420 J', '180 J', '-180 J', '120 J'], correct: 'B', explanation: 'First law: $\\Delta U = Q - W = 300 - 120 = 180$ J.', maxMarks: 10 },
-              { id: uid('q'), type: 'Fill', subTopic: 'Processes', question: 'A process at constant pressure is called an ______ process.', options: ['', '', '', ''], correct: 'isobaric', explanation: 'Isobaric means constant pressure, so $W = P\\Delta V$.', maxMarks: 10 },
-              { id: uid('q'), type: 'Theory', subTopic: 'First Law', question: 'State the first law of thermodynamics and explain what happens when a gas is compressed adiabatically.', options: ['', '', '', ''], correct: '', explanation: '$\\Delta U = Q - W$. With $Q=0$, work done on the gas raises its internal energy and temperature.', maxMarks: 10 }
-            ]
-          },
-          {
-            id: uid('t'), name: 'Mechanics', questions: [
-              { id: uid('q'), type: 'MCQ', subTopic: "Newton's Laws", question: 'A 5 kg mass accelerates at 3 m/s2. What net force acts on it?', options: ['8 N', '15 N', '1.67 N', '45 N'], correct: 'B', explanation: '$F = ma = 5 \\times 3 = 15$ N.', maxMarks: 10 }
+              { id: uid('q'), type: 'MCQ', subTopic: 'First Law', question: 'A gas absorbs 300 J of heat and does 120 J of work. What is the change in internal energy?', options: ['420 J', '180 J', '-180 J', '120 J'], correct: 'B', explanation: 'First law: $\\Delta U = Q - W = 300 - 120 = 180$ J.', maxMarks: 10 }
             ]
           }
         ]
@@ -1189,7 +1266,13 @@ window.MathJax = {
     openExport: function () {
       B.openModal('export-modal');
       var input = document.getElementById('export-filename');
-      if (input && !input.value) input.value = B.defaultFilename();
+      if (input) {
+          if (currentLoadedPath) {
+              input.value = currentLoadedPath;
+          } else if (!input.value) {
+              input.value = B.defaultFilename();
+          }
+      }
       B.updateExportPreview();
     },
     fixMath: function (s) { return String(s === undefined || s === null ? '' : s).replace(/\\/g, '\\\\'); },
@@ -1285,7 +1368,13 @@ window.MathJax = {
       document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
       document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
       document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
-      document.getElementById('pub-filename').value = B.defaultFilename();
+      
+      var input = document.getElementById('pub-filename');
+      if (currentLoadedPath) {
+          input.value = currentLoadedPath;
+      } else {
+          input.value = B.defaultFilename();
+      }
       
       var err = document.getElementById('pub-error');
       if (err) err.classList.add('hidden');
@@ -1327,6 +1416,9 @@ window.MathJax = {
         
         if (status) status.innerHTML = '<span class="text-emerald-400"><i class="fas fa-circle-check mr-1"></i>' + esc(data.message || 'Published successfully.') + '</span>';
         B.toast('Published to GitHub', 'success');
+
+        // Update local loaded path so subsequent saves go to this new location
+        currentLoadedPath = filename;
 
         // 2. Update index.html
         if (status) status.textContent = 'Updating index.html…';
