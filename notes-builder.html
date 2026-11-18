@@ -46,19 +46,19 @@ window.MathJax = {
   .preview-content hr { border: 0; border-top: 1px solid var(--border-dark); margin: 1.5em 0; }
   .preview-content strong { color: #fff; font-weight: 700; }
   
-  /* Sidebar Tree */
-  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); width: 320px; }
+  /* Sidebar Tree - Vercel Style */
+  #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
   #sidebar.open { transform: translateX(0); }
   #sidebar-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
   #sidebar-overlay.open { opacity: 1; pointer-events: auto; }
   
-  /* Vercel-style Tree UI */
-  details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; }
+  details > summary { list-style: none; cursor: pointer; }
   details > summary::-webkit-details-marker { display: none; }
-  details[open] > summary .chevron { transform: rotate(90deg); }
-  .chevron { transition: transform 0.2s ease; width: 12px; text-align: center; color: #64748b; font-size: 10px; }
-  .tree-line { border-left: 1px solid #2a3a5e; margin-left: 14px; padding-left: 6px; }
   
+  .tree-spine { border-left: 1px solid var(--border-dark); margin-left: 10px; padding-left: 10px; }
+  .folder-icon { transition: transform 0.2s; }
+  details[open] > summary .folder-icon { transform: rotate(90deg); }
+
   .svg-item-btn { transition: all 0.2s; }
   .svg-item-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.1); }
   
@@ -180,22 +180,20 @@ window.MathJax = {
 
   <!-- SIDEBAR (DYNAMIC GITHUB EXPLORER) -->
   <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onclick="toggleSidebar()"></div>
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 flex flex-col">
+  <aside id="sidebar" class="fixed top-0 left-0 w-[300px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 flex flex-col">
     <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
       <h2 class="font-extrabold text-sm"><i class="fas fa-folder-tree text-amber-500 mr-1"></i> GitHub Repo</h2>
       <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
     </div>
-    
-    <div class="p-3 border-b border-[#1e2740] grid grid-cols-2 gap-2">
+    <div class="p-3 border-b border-[#1e2740] flex flex-col gap-2">
       <button onclick="fetchGitHubTree(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
-        <i class="fas fa-sync-alt"></i> Refresh
+        <i class="fas fa-sync-alt"></i> Refresh Tree
       </button>
       <button onclick="createNewFolder()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
         <i class="fas fa-folder-plus"></i> New Folder
       </button>
     </div>
-
-    <div class="flex-grow overflow-y-auto p-2 space-y-1 text-sm text-gray-300" id="sidebar-tree">
+    <div class="flex-grow overflow-y-auto p-3 space-y-1 text-sm text-gray-300" id="sidebar-tree">
       <div class="text-center text-xs text-gray-500 mt-4">Connect GitHub to view files.</div>
     </div>
   </aside>
@@ -249,16 +247,15 @@ window.MathJax = {
     function saveState() { localStorage.setItem('cbt_studio_codex', JSON.stringify(state)); }
     function getSlug(str) { return String(str || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
-    // Helper to decode Base64 strings safely (handles UTF-8 characters)
+    // Helper to decode Base64 strings safely
     function b64DecodeUnicode(str) {
-        if (!str) return '';
-        return decodeURIComponent(atob(str.replace(/\n/g, '')).split('').map(function(c) {
+        return decodeURIComponent(atob(str).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
     }
 
     /* =========================================================
-       GITHUB TREE FETCHING & RENDERING (Vercel Style)
+       GITHUB TREE FETCHING & PARSING
        ========================================================= */
     async function fetchGitHubTree(force = false) {
       if (!state.github.owner || !state.github.repo || !state.github.token) {
@@ -280,20 +277,19 @@ window.MathJax = {
         if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
         const data = await res.json();
         
-        // Build recursive tree object
+        // Build recursive tree structure
         const root = {};
         data.tree.forEach(item => {
           if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
           
-          const cleanPath = item.path.replace('question-banks/', '');
-          const parts = cleanPath.split('/');
+          const parts = item.path.replace('question-banks/', '').split('/');
           let current = root;
           
           parts.forEach((part, i) => {
             if (!current[part]) {
-              current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
+              current[part] = (i === parts.length - 1) ? 'FILE' : {};
             }
-            if (current[part] !== 'FILE' && typeof current[part] === 'object') {
+            if (current[part] !== 'FILE') {
               current = current[part];
             }
           });
@@ -313,50 +309,46 @@ window.MathJax = {
       if (parentPath === '') container.innerHTML = '';
 
       if (Object.keys(tree).length === 0) {
-        if (parentPath === '') container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No files or folders found.</div>';
+        if (parentPath === '') container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No folders found.</div>';
         return;
       }
 
       const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
       const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
 
-      // Render Folders
       folders.forEach(folder => {
         const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
         
         const details = document.createElement('details');
-        details.className = 'mb-0.5 group';
+        // Auto-expand folders that contain the active path
+        if (state.activePath.startsWith(fullPath)) {
+          details.open = true;
+        }
+        details.className = 'mb-1';
         
         const summary = document.createElement('summary');
-        summary.className = `flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] ${state.activePath.startsWith(fullPath) ? 'text-amber-400 font-bold' : 'text-gray-300'}`;
-        summary.innerHTML = `
-          <i class="fas fa-chevron-right chevron"></i>
-          <i class="fas fa-folder text-amber-500/80 w-4 text-center"></i> 
-          <span class="truncate flex-grow">${folder}</span>
-        `;
+        summary.className = `flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] ${state.activePath.startsWith(fullPath) ? 'text-amber-400 font-bold' : 'text-gray-300'}`;
+        summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
         
         details.appendChild(summary);
         
         const childContainer = document.createElement('div');
-        childContainer.className = 'tree-line mt-0.5 space-y-0.5';
+        childContainer.className = 'tree-spine';
         details.appendChild(childContainer);
         
         renderSidebarTree(tree[folder], childContainer, fullPath);
         container.appendChild(details);
       });
 
-      // Render Files (Filtering out banks and loaders)
       files.forEach(file => {
         const fullPath = parentPath ? `${parentPath}/${file}` : file;
         const isActive = state.activePath === fullPath;
         
-        if (file.endsWith('.js') && !file.includes('-bank.js') && file !== 'question-loader.js') {
+        // Show all .js files (removed strict filtering so user can organize freely)
+        if (file.endsWith('.js')) {
           const btn = document.createElement('button');
           btn.className = `w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] ${isActive ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-gray-400 hover:bg-[#101830] hover:text-gray-200'}`;
-          btn.innerHTML = `
-            <i class="fas fa-file-code w-4 text-center ${isActive ? 'text-amber-400' : 'text-gray-500'}"></i> 
-            <span class="truncate">${file}</span>
-          `;
+          btn.innerHTML = `<span class="w-3"></span> <i class="fas fa-file-code w-4 text-center ${isActive ? 'text-amber-400' : 'text-gray-600'}"></i> <span class="truncate">${file}</span>`;
           btn.onclick = () => loadFileFromPath(fullPath);
           container.appendChild(btn);
         }
@@ -364,7 +356,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING (Dynamic Path Resolution)
+       FILE LOADING & DYNAMIC PATH RESOLUTION
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -376,9 +368,8 @@ window.MathJax = {
       const parts = path.split('/');
       const filename = parts.pop();
       
-      // DYNAMIC PATH RESOLUTION
-      // Example: 'chemistry/organic/alkanes.js' -> Subject: 'chemistry', Topic: 'organic' (or 'alkanes')
-      const subjectSlug = parts[0] || 'general';
+      // Dynamic Resolution: First folder is Subject, Last folder (or filename) is Topic
+      const subjectSlug = parts.length > 1 ? parts[0] : 'general';
       const topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
       
       const formatName = (str) => str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' ');
@@ -389,8 +380,9 @@ window.MathJax = {
       document.getElementById('current-path-label').textContent = `question-banks / ${path}`;
       document.getElementById('topic-name-input').value = state.activeTopic;
       
-      toast('Fetching ' + filename + '...', 'info');
+      toast('Fetching ' + path + '...', 'info');
       try {
+        // Use GitHub Contents API to bypass CORS for private repos
         const apiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${path}?ref=main&t=${Date.now()}`;
         
         const res = await fetch(apiUrl, {
@@ -400,13 +392,12 @@ window.MathJax = {
            }
         });
         
-        if (!res.ok) throw new Error('File not found on GitHub');
+        if (!res.ok) throw new Error('File not found on GitHub (Check token or path)');
         
         const fileData = await res.json();
-        const text = b64DecodeUnicode(fileData.content);
+        const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
 
-        // Parse content - fallback to raw text if not CBT_SUBJECT_NOTES
-        let noteContent = text;
+        let noteContent = '';
         const noteMatch = text.match(/window\.CBT_SUBJECT_NOTES\s*=\s*window\.CBT_SUBJECT_NOTES\s*\|\|\s*\{\};[\s\S]*?window\.CBT_SUBJECT_NOTES\['[^']+'\]\['[^']+'\]\s*=\s*`([\s\S]*?)`;/);
         if (noteMatch && noteMatch[1]) {
           noteContent = noteMatch[1].replace(/\\`/g, '`').replace(/\\\\/g, '\\');
@@ -428,7 +419,7 @@ window.MathJax = {
             let svgCode = '';
             const filename = img.filename || img.data.split('/').pop();
             try {
-              // Look for SVG in the actual subject folder
+              // Dynamically use the correct subject folder for SVGs
               const svgApiUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${subjectSlug}/svg/${filename}?ref=main`;
               const svgRes = await fetch(svgApiUrl, { 
                 headers: { 
@@ -438,7 +429,7 @@ window.MathJax = {
               });
               if (svgRes.ok) {
                 const svgData = await svgRes.json();
-                svgCode = b64DecodeUnicode(svgData.content);
+                svgCode = b64DecodeUnicode(svgData.content.replace(/\n/g, ''));
               }
             } catch (e) {
               console.warn('Could not fetch SVG content for', filename);
@@ -502,25 +493,23 @@ window.MathJax = {
     }
 
     /* =========================================================
-       DYNAMIC FOLDER CREATION
+       DEEP FOLDER CREATION (Via .gitkeep)
        ========================================================= */
     async function createNewFolder() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
-      const path = prompt("Enter the new folder path (e.g. biology/genetics or math/algebra):\nDo not include 'question-banks/'.");
+      const path = prompt("Enter new folder path (e.g. chemistry/organic-chemistry):\nDo not include 'question-banks/'.");
       if (!path) return;
       
       const cleanPath = path.replace(/^question-banks\//i, '').replace(/^\/+|\/+$/g, '');
-      if (!cleanPath) return toast('Invalid path', 'error');
-      
       toast('Creating folder...', 'info');
 
       try {
-        // Creating a .gitkeep file forces GitHub to create the directory structure
+        // We create a .gitkeep file inside the folder to force GitHub to create the directory
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            filename: `${cleanPath}/.gitkeep`, 
+            filename: `question-banks/${cleanPath}/.gitkeep`, 
             code: '', 
             githubToken: state.github.token, 
             repoOwner: state.github.owner, 
@@ -572,10 +561,14 @@ window.MathJax = {
         if (svg.code && svg.code.trim().startsWith('<svg')) {
           const blob = new Blob([svg.code], {type: 'image/svg+xml'});
           previewUrl = URL.createObjectURL(blob);
+        } else {
+          // Dynamically resolve subject slug from active path for previews
+          const subjSlug = state.activePath.split('/')[0] || 'physics';
+          previewUrl = `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${svg.filename}`;
         }
 
         return `<button onclick="selectSVG(${i})" class="svg-item-btn flex-none w-24 h-20 rounded-xl border border-[#1e2740] bg-[#101830] p-2 overflow-hidden flex flex-col items-center justify-center ${isActive ? 'active' : ''}">
-          <img src="${previewUrl || 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Preview%3C/text%3E%3C/svg%3E'}" class="w-full h-10 object-contain mb-1">
+          <img src="${previewUrl}" class="w-full h-10 object-contain mb-1" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'12\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Code%3C/text%3E%3C/svg%3E'">
           <span class="text-[9px] truncate w-full text-center text-gray-400 font-mono">${svg.filename || 'image.svg'}</span>
         </button>`;
       }).join('');
@@ -676,13 +669,14 @@ window.MathJax = {
       
       const gallery = document.getElementById('preview-svg-gallery');
       if (draft.svgs && draft.svgs.length > 0) {
+        const subjSlug = state.activePath.split('/')[0] || 'physics';
         gallery.innerHTML = draft.svgs.map(svg => {
           let imgUrl = svg.code && svg.code.trim().startsWith('<svg') 
             ? URL.createObjectURL(new Blob([svg.code], {type: 'image/svg+xml'})) 
-            : '';
+            : `https://raw.githubusercontent.com/${state.github.owner}/${state.github.repo}/main/question-banks/${subjSlug}/svg/${svg.filename}`;
             
           return `<div onclick="viewImageFullscreen('${imgUrl}')" class="bg-[#101830] border border-[#1e2740] rounded-lg p-2 cursor-pointer transition-transform active:scale-95 hover:border-amber-500/50">
-            <img src="${imgUrl || 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'10\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Img%3C/text%3E%3C/svg%3E'}" class="w-full h-32 object-contain rounded">
+            <img src="${imgUrl}" class="w-full h-32 object-contain rounded" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231e2740\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' fill=\\'%238598AC\\' font-size=\\'10\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Img%3C/text%3E%3C/svg%3E'">
           </div>`;
         }).join('');
       } else {
@@ -693,7 +687,6 @@ window.MathJax = {
     }
 
     function viewImageFullscreen(url) {
-      if (!url) return;
       const overlay = document.createElement('div');
       overlay.className = 'fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn';
       overlay.onclick = () => overlay.remove();
@@ -710,7 +703,8 @@ window.MathJax = {
 
       const parts = state.activePath.split('/');
       const filename = parts.pop(); 
-      const subjectSlug = parts[0] || 'general';
+      const topicSlug = parts[parts.length - 1] || 'general';
+      const subjSlug = parts.length > 1 ? parts[0] : 'general';
       
       const subj = state.activeSubject;
       const topic = state.activeTopic;
@@ -730,17 +724,16 @@ window.MathJax = {
           for (let i = 0; i < draft.svgs.length; i++) {
             const svg = draft.svgs[i];
             let rawName = (svg.filename || '').trim();
-            if (!rawName) rawName = `image-${i + 1}.svg`;
+            if (!rawName) rawName = `${topicSlug}-image-${i + 1}.svg`;
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            // Dynamically place SVGs in the correct subject folder
-            imagesContent += `  { data: 'question-banks/${subjectSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
+            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjectSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
                if (!svgRes.ok) {
                  const err = await svgRes.json().catch(()=>({}));
@@ -760,7 +753,7 @@ window.MathJax = {
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
         
-        toast('Published successfully!', 'success');
+        toast('Published ' + filename + ' successfully!', 'success');
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
