@@ -43,7 +43,18 @@ window.MathJax = {
   mjx-container { max-width:100% !important; overflow-x:auto; overflow-y:hidden; }
   mjx-container[display="true"] { display:block !important; width:100% !important; max-width:100% !important; overflow-x:auto !important; }
   #builder-root, .min-w-0 { min-width:0; }
-  #sidebar { transition: transform .22s ease; }
+  
+  /* GitHub Tree Sidebar */
+  #gh-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+  #gh-sidebar.open { transform: translateX(0); }
+  #gh-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
+  #gh-overlay.open { opacity: 1; pointer-events: auto; }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
+  .folder-icon { transition: transform 0.2s; }
+  details[open] > summary .folder-icon { transform: rotate(90deg); }
+
   @media (max-width: 767px) {
     #sidebar { position:fixed; top:62px; bottom:0; left:0; z-index:70; width:280px; transform:translateX(-102%); }
     #sidebar.open { transform:translateX(0); }
@@ -55,14 +66,39 @@ window.MathJax = {
 <body class="text-slate-100">
 <div id="builder-root" class="min-h-screen"></div>
 
+<!-- ============ GITHUB EXPLORER SIDEBAR ============ -->
+<div id="gh-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[65]" onclick="B.toggleGhSidebar(false)"></div>
+<aside id="gh-sidebar" class="fixed top-0 left-0 w-[320px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-[70] flex flex-col">
+  <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
+    <h2 class="font-extrabold text-sm"><i class="fab fa-github text-indigo-400 mr-1"></i> GitHub Import</h2>
+    <button onclick="B.toggleGhSidebar(false)" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+  </div>
+  
+  <div class="p-3 border-b border-[#1e2740] flex flex-col gap-2 space-y-2 bg-[#080d18]">
+    <div><label class="lbl">GitHub Username</label><input type="text" id="gh-user" class="field !text-xs" placeholder="e.g. octocat" onchange="localStorage.setItem('gh_owner', this.value)"></div>
+    <div><label class="lbl">Repository Name</label><input type="text" id="gh-repo" class="field !text-xs" placeholder="e.g. UniCBT" onchange="localStorage.setItem('gh_repo', this.value)"></div>
+    <div><label class="lbl">Personal Access Token</label><input type="password" id="gh-token" class="field !text-xs" placeholder="ghp_..." onchange="localStorage.setItem('gh_token', this.value)"></div>
+    <button onclick="B.loadGitHubTree()" class="btn btn-indigo w-full justify-center mt-2"><i class="fas fa-sync-alt"></i> Load Repository</button>
+  </div>
+
+  <div class="flex-grow overflow-y-auto p-3 space-y-1 text-sm text-gray-300" id="gh-tree-container">
+    <div class="text-center text-xs text-gray-500 mt-4">Enter credentials and click Load.</div>
+  </div>
+</aside>
+
 <!-- ============ IMPORT MODAL ============ -->
 <div id="import-modal" class="modal-shell hidden">
   <div class="modal-card">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
-      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Import question bank</h2>
+      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Manual Import</h2>
       <button onclick="B.closeModal('import-modal')" class="w-8 h-8 rounded-lg bg-[#16203a] hover:bg-[#1e2b4b] text-slate-300"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-4">
+      <div class="flex justify-between items-center bg-indigo-500/10 border border-indigo-500/30 p-3 rounded-xl mb-2">
+        <p class="text-xs text-indigo-200"><i class="fas fa-info-circle mr-1"></i> Want to browse your repository directly?</p>
+        <button onclick="B.closeModal('import-modal'); B.toggleGhSidebar(true);" class="btn btn-indigo !py-1.5 !text-[11px]"><i class="fab fa-github"></i> Open GitHub Explorer</button>
+      </div>
+      
       <div id="import-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors">
         <i class="fas fa-cloud-arrow-up text-2xl text-indigo-400"></i>
         <p class="mt-2 text-sm font-semibold text-slate-200">Drop a <span class="text-amber-400">.js</span> bank file here</p>
@@ -70,10 +106,7 @@ window.MathJax = {
         <input type="file" id="import-file" accept=".js,.txt" class="hidden" onchange="B.readImportFile(this)">
       </div>
       <div>
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <label class="lbl mb-0">Or paste bank code / DSL</label>
-          <button onclick="B.importFromGitHub()" class="btn btn-ghost !py-1.5 !text-[11px]"><i class="fab fa-github"></i> Import from my GitHub Repo</button>
-        </div>
+        <label class="lbl mb-1.5">Or paste bank code / DSL</label>
         <textarea id="import-text" rows="8" class="field font-mono !text-[11.5px]" placeholder="window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];&#10;window.CBT_SUBJECT_BANKS.push(`Subject: Physics&#10;Topic: Mechanics&#10;...`);"></textarea>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -238,6 +271,11 @@ window.MathJax = {
       B.bindDropZone();
       var exportInput = document.getElementById('export-filename');
       if (exportInput) exportInput.value = B.defaultFilename();
+
+      // Populate GitHub form from cache
+      if (localStorage.getItem('gh_owner')) document.getElementById('gh-user').value = localStorage.getItem('gh_owner');
+      if (localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
+      if (localStorage.getItem('gh_token')) document.getElementById('gh-token').value = localStorage.getItem('gh_token');
     },
 
     scheduleSave: function () {
@@ -306,6 +344,151 @@ window.MathJax = {
           var f = e.dataTransfer.files && e.dataTransfer.files[0];
           if (f) B.readImportFileData(f);
         };
+      }
+    },
+
+    /* ------------- GitHub Explorer ------------- */
+    toggleGhSidebar: function (force) {
+      var sb = document.getElementById('gh-sidebar');
+      var ov = document.getElementById('gh-overlay');
+      if (!sb) return;
+      var open = typeof force === 'boolean' ? force : !sb.classList.contains('open');
+      sb.classList.toggle('open', open);
+      if (ov) ov.classList.toggle('open', open);
+    },
+
+    loadGitHubTree: async function () {
+      var owner = document.getElementById('gh-user').value.trim();
+      var repo = document.getElementById('gh-repo').value.trim();
+      var token = document.getElementById('gh-token').value.trim();
+      
+      if (!owner || !repo || !token) return B.toast('Enter Username, Repo, and Token first.', 'error');
+      
+      localStorage.setItem('gh_owner', owner);
+      localStorage.setItem('gh_repo', repo);
+      localStorage.setItem('gh_token', token);
+
+      var container = document.getElementById('gh-tree-container');
+      container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-spinner fa-spin"></i> Fetching tree...</div>';
+
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`, {
+          headers: { 
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!res.ok) throw new Error('Failed to fetch tree. Check token permissions.');
+        const data = await res.json();
+        
+        const root = {};
+        data.tree.forEach(item => {
+          // Only show files inside question-banks that are NOT notes
+          if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
+          
+          const parts = item.path.replace('question-banks/', '').split('/');
+          let current = root;
+          
+          parts.forEach((part, i) => {
+            if (!current[part]) {
+              current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
+            }
+            if (current[part] !== 'FILE') {
+              current = current[part];
+            }
+          });
+        });
+
+        B.renderGhTree(root);
+      } catch (err) {
+        container.innerHTML = `<div class="text-center text-xs text-red-400 mt-4">${err.message}</div>`;
+        B.toast(err.message, 'error');
+      }
+    },
+
+    renderGhTree: function (tree, container = document.getElementById('gh-tree-container'), parentPath = '') {
+      if (!container) return;
+      if (parentPath === '') container.innerHTML = '';
+
+      if (Object.keys(tree).length === 0) {
+        if (parentPath === '') container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No folders found.</div>';
+        return;
+      }
+
+      const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
+      const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
+
+      folders.forEach(folder => {
+        const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
+        
+        const details = document.createElement('details');
+        details.className = 'mb-1';
+        
+        const summary = document.createElement('summary');
+        summary.className = `flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] text-gray-300`;
+        summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
+        
+        details.appendChild(summary);
+        const childContainer = document.createElement('div');
+        childContainer.className = 'tree-spine';
+        details.appendChild(childContainer);
+        
+        B.renderGhTree(tree[folder], childContainer, fullPath);
+        container.appendChild(details);
+      });
+
+      files.forEach(file => {
+        const fullPath = parentPath ? `${parentPath}/${file}` : file;
+        
+        // Show all files, but highlight the bank files
+        if (file.endsWith('.js') || file.endsWith('.txt')) {
+          const btn = document.createElement('button');
+          btn.className = `w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] text-gray-400 hover:bg-[#101830] hover:text-gray-200`;
+          btn.innerHTML = `<span class="w-3"></span> <i class="fas fa-file-code w-4 text-center text-gray-600"></i> <span class="truncate">${file}</span>`;
+          btn.onclick = () => B.importFromGitHubPath(fullPath);
+          container.appendChild(btn);
+        }
+      });
+    },
+
+    importFromGitHubPath: async function (path) {
+      var owner = localStorage.getItem('gh_owner');
+      var repo = localStorage.getItem('gh_repo');
+      var token = localStorage.getItem('gh_token');
+      
+      B.toggleGhSidebar(false);
+      var status = document.getElementById('import-status');
+      B.openModal('import-modal');
+      if (status) status.textContent = 'Fetching ' + path + ' from GitHub...';
+
+      try {
+        const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/question-banks/${encodedPath}?ref=main&t=${Date.now()}`;
+        
+        const res = await fetch(apiUrl, {
+           headers: { 
+             'Authorization': `token ${token}`,
+             'Accept': 'application/vnd.github.v3+json'
+           }
+        });
+        
+        if (!res.ok) throw new Error('File not found on GitHub.');
+        const fileData = await res.json();
+        const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
+        
+        var ta = document.getElementById('import-text');
+        if (ta) ta.value = text;
+        if (status) status.textContent = 'Fetched ' + path + ' from GitHub.';
+        
+        // Auto update export filename so it saves to the exact same location
+        var exportInput = document.getElementById('export-filename');
+        if (exportInput) exportInput.value = path;
+
+        B.previewImport();
+      } catch (err) {
+        if (status) status.textContent = 'GitHub fetch failed: ' + err.message;
+        B.toast('GitHub fetch failed: ' + err.message, 'error');
       }
     },
 
@@ -539,7 +722,8 @@ window.MathJax = {
         '<div class="flex items-center gap-1.5 ml-auto">' +
         (hasBank ? '<button onclick="B.undo()" class="btn btn-ghost !px-2.5" title="Undo (Ctrl+Z)"><i class="fas fa-rotate-left"></i></button>' +
           '<button onclick="B.redo()" class="btn btn-ghost !px-2.5" title="Redo (Ctrl+Y)"><i class="fas fa-rotate-right"></i></button>' : '') +
-        '<button onclick="B.openModal(\'import-modal\')" class="btn btn-ghost"><i class="fas fa-file-import"></i><span class="hidden sm:inline">Import</span></button>' +
+        '<button onclick="B.toggleGhSidebar(true)" class="btn btn-ghost !text-indigo-300 !border-indigo-500/30"><i class="fab fa-github"></i><span class="hidden sm:inline">Load Repo</span></button>' +
+        '<button onclick="B.openModal(\'import-modal\')" class="btn btn-ghost"><i class="fas fa-file-import"></i><span class="hidden sm:inline">Manual Import</span></button>' +
         (hasBank ? '<button onclick="B.openExport()" class="btn btn-ghost"><i class="fas fa-file-export"></i><span class="hidden sm:inline">Export</span></button>' +
           '<button onclick="B.openPublish()" class="btn btn-amber"><i class="fab fa-github"></i><span class="hidden sm:inline">Publish</span></button>' : '') +
         '<a href="index.html" class="btn btn-ghost" title="Open the exam app"><i class="fas fa-arrow-up-right-from-square"></i></a>' +
@@ -554,19 +738,17 @@ window.MathJax = {
         '<p class="text-sm text-slate-400 mt-2 max-w-xl mx-auto">Build subjects, topics and questions, preview them exactly as candidates will see them, then export or publish to your repository. No build step — everything is stored locally.</p>' +
         '</div>' +
         '<div class="panel rounded-2xl p-6">' +
+        '<div class="text-center mb-4">' +
+        '<button onclick="B.toggleGhSidebar(true)" class="btn btn-indigo justify-center !py-3 w-full"><i class="fab fa-github"></i> Load from GitHub Repository</button>' +
+        '</div>' +
         '<div id="empty-drop" class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#080d18] p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="B.openModal(\'import-modal\')">' +
         '<i class="fas fa-cloud-arrow-up text-3xl text-indigo-400"></i>' +
         '<p class="mt-3 font-bold text-sm">Drag &amp; drop a <span class="text-amber-400">.js</span> question bank</p>' +
         '<p class="text-[11.5px] text-slate-500 mt-1">or click anywhere in this area to open the importer</p></div>' +
         '<div class="grid sm:grid-cols-2 gap-3 mt-4">' +
-        '<button onclick="B.createBlank()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-plus"></i> Create blank bank</button>' +
+        '<button onclick="B.createBlank()" class="btn btn-ghost justify-center !py-3"><i class="fas fa-plus"></i> Create blank bank</button>' +
         '<button onclick="B.loadSample()" class="btn btn-ghost justify-center !py-3"><i class="fas fa-flask"></i> Load Physics sample</button>' +
-        '</div></div>' +
-        '<div class="grid sm:grid-cols-3 gap-3 mt-5 text-[11.5px] text-slate-400">' +
-        '<div class="panel rounded-xl p-3"><i class="fas fa-code text-indigo-400 mr-1.5"></i><strong class="text-slate-200">DSL native</strong><br>Export a JS bank file ready for <code class="text-amber-300">question-banks/</code>.</div>' +
-        '<div class="panel rounded-xl p-3"><i class="fas fa-eye text-violet-400 mr-1.5"></i><strong class="text-slate-200">Live preview</strong><br>See study cards with reveal buttons before publishing.</div>' +
-        '<div class="panel rounded-xl p-3"><i class="fab fa-github text-amber-400 mr-1.5"></i><strong class="text-slate-200">One-click publish</strong><br>Commit straight to <code class="text-amber-300">main</code> via the API.</div>' +
-        '</div></main>';
+        '</div></div></main>';
     },
 
     editorHTML: function () {
@@ -810,45 +992,6 @@ window.MathJax = {
       };
       reader.readAsText(f);
     },
-    
-    importFromGitHub: async function () {
-      var owner = localStorage.getItem('gh_owner');
-      var repo = localStorage.getItem('gh_repo');
-      var token = localStorage.getItem('gh_token');
-      
-      if (!owner) { owner = prompt('GitHub owner (username or organisation):'); if (!owner) return; localStorage.setItem('gh_owner', owner.trim()); }
-      if (!repo) { repo = prompt('GitHub repository name:'); if (!repo) return; localStorage.setItem('gh_repo', repo.trim()); }
-      if (!token) { token = prompt('GitHub Personal Access Token:'); if (!token) return; localStorage.setItem('gh_token', token.trim()); }
-      
-      var filename = prompt('Full file path inside question-banks/ (e.g. physics/thermodynamics/thermodynamics-bank.js):');
-      if (!filename) return;
-      
-      var status = document.getElementById('import-status');
-      if (status) status.textContent = 'Fetching from GitHub API...';
-      try {
-        const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
-        const apiUrl = `https://api.github.com/repos/${owner.trim()}/${repo.trim()}/contents/question-banks/${encodedPath}?ref=main`;
-        
-        const res = await fetch(apiUrl, {
-           headers: { 
-             'Authorization': `token ${token.trim()}`,
-             'Accept': 'application/vnd.github.v3+json'
-           }
-        });
-        
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const fileData = await res.json();
-        const text = b64DecodeUnicode(fileData.content.replace(/\n/g, ''));
-        
-        var ta = document.getElementById('import-text');
-        if (ta) ta.value = text;
-        if (status) status.textContent = 'Fetched ' + filename + ' from GitHub.';
-        B.previewImport();
-      } catch (err) {
-        if (status) status.textContent = 'GitHub fetch failed: ' + err.message;
-        B.toast('GitHub fetch failed: ' + err.message, 'error');
-      }
-    },
 
     parseDSL: function (text) {
       var subjects = [], warnings = [];
@@ -905,7 +1048,6 @@ window.MathJax = {
         if (/^Explanation\s*:/i.test(line)) { if (q) q.explanation = line.replace(/^Explanation\s*:/i, '').trim(); explanationMode = true; return; }
         if (explanationMode && q) { q.explanation = (q.explanation ? q.explanation + ' ' : '') + line; return; }
         if (!subject && line) {
-          /* smart recovery: raw text passed without a Subject tag */
           subject = ensureSubject(line);
           subject.__recovered = true;
           return;
