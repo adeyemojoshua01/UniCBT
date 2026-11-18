@@ -264,14 +264,12 @@ window.MathJax = {
         if (!html) return '';
         let md = html;
         
-        // 1. Replace MathJax block math `\[ ... \]` temporarily to avoid alteration
         const mathBlocks = [];
         md = md.replace(/\\\[([\s\S]*?)\\\]/g, (match) => {
             mathBlocks.push(match);
             return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
         });
 
-        // 2. Convert common HTML tags to Markdown
         md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '# $1\n\n');
         md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '## $1\n\n');
         md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '### $1\n\n');
@@ -286,10 +284,7 @@ window.MathJax = {
         md = md.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '*$1*');
         md = md.replace(/<br\s*\/?>/gi, '\n');
         
-        // 3. Restore MathJax blocks
         md = md.replace(/@@MATHBLOCK(\d+)@@/g, (match, index) => mathBlocks[index]);
-
-        // 4. Clean up excessive newlines
         md = md.replace(/\n{3,}/g, '\n\n').trim();
 
         return md;
@@ -391,7 +386,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION (WITH HTML TO MARKDOWN)
+       FILE LOADING & DYNAMIC PATH RESOLUTION
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -403,8 +398,8 @@ window.MathJax = {
       const parts = path.split('/');
       const filename = parts.pop();
       
-      let subjectSlug = parts.length > 0 ? parts[0] : 'general';
-      let topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
+      const subjectSlug = parts.length > 0 ? parts[0] : 'general';
+      const topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
       
       const formatName = (str) => str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' ');
 
@@ -438,15 +433,13 @@ window.MathJax = {
           const dummyWindow = { CBT_SUBJECT_NOTES: {}, CBT_SUBJECT_IMAGES: {} };
           new Function('window', text)(dummyWindow);
           
-          // 1. Try to find the exact subject match
           let notesObj = dummyWindow.CBT_SUBJECT_NOTES[state.activeSubject];
           
-          // 2. Fuzzy Fallback: If subject doesn't match, just grab the first subject found in the file
           if (!notesObj) {
               const availableSubjects = Object.keys(dummyWindow.CBT_SUBJECT_NOTES);
               if (availableSubjects.length > 0) {
                   notesObj = dummyWindow.CBT_SUBJECT_NOTES[availableSubjects[0]];
-                  state.activeSubject = availableSubjects[0]; // Update state to match reality
+                  state.activeSubject = availableSubjects[0];
               } else {
                   notesObj = {};
               }
@@ -457,7 +450,6 @@ window.MathJax = {
           if (actualNoteKey) {
               noteContent = notesObj[actualNoteKey];
           } else {
-              // 3. Fuzzy Fallback: If topic doesn't match, grab the first topic found in this subject
               const keys = Object.keys(notesObj);
               if (keys.length > 0) {
                   state.activeTopic = keys[0]; 
@@ -466,7 +458,6 @@ window.MathJax = {
               }
           }
 
-          // Do the same for images
           let imagesObj = dummyWindow.CBT_SUBJECT_IMAGES[state.activeSubject] || {};
           let actualImgKey = Object.keys(imagesObj).find(k => k.toLowerCase() === state.activeTopic.toLowerCase());
           
@@ -483,7 +474,6 @@ window.MathJax = {
           }
         }
 
-        // Convert HTML to Markdown if necessary
         if (noteContent && /<[a-z][\s\S]*>/i.test(noteContent)) {
             noteContent = convertHTMLToMarkdown(noteContent);
         }
@@ -607,11 +597,10 @@ window.MathJax = {
     async function createNewFile() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
-      // Auto-suggest path based on current context
       let defaultPath = 'new-subject/new-topic.js';
       if (state.activePath) {
           const parts = state.activePath.split('/');
-          parts.pop(); // remove filename
+          parts.pop(); 
           defaultPath = parts.join('/') + '/new-topic.js';
       }
 
@@ -632,7 +621,6 @@ window.MathJax = {
         const subj = formatName(subjectSlug);
         const topic = formatName(filename);
 
-        // Generate a starter template for the new file
         const templateCode = `/* ${subj} — ${topic} notes */\nwindow.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};\nwindow.CBT_SUBJECT_NOTES['${subj}'] = window.CBT_SUBJECT_NOTES['${subj}'] || {};\nwindow.CBT_SUBJECT_NOTES['${subj}']['${topic}'] = \`## ${topic}\nStart writing your notes here...\n\`;\n\nwindow.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}'] = window.CBT_SUBJECT_IMAGES['${subj}'] || {};\nwindow.CBT_SUBJECT_IMAGES['${subj}']['${topic}'] = [];\n`;
 
         const res = await fetch('/api/publish-bank', {
@@ -651,7 +639,6 @@ window.MathJax = {
         
         toast('File created successfully!', 'success');
         
-        // Refresh tree and auto-load the new file
         await fetchGitHubTree(true);
         loadFileFromPath(cleanPath);
         
@@ -830,10 +817,13 @@ window.MathJax = {
       const draft = state.data[state.activeSubject]?.[state.activeTopic];
       if (!draft) return toast('No data to publish.', 'error');
 
-      const parts = state.activePath.split('/');
-      const filename = parts.pop(); 
-      const topicSlug = parts[parts.length - 1] || 'general';
-      const subjSlug = parts.length > 1 ? parts[0] : 'general';
+      const pathParts = state.activePath.split('/');
+      const filename = pathParts.pop(); 
+      const topicSlug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : 'general';
+      
+      // THE FIX: Use the exact folder path for the subject folder
+      // If the file is at "test/my-topic.js", we want the SVG saved in "test/svg/"
+      const subjectFolderPath = pathParts.length > 0 ? pathParts.join('/') : 'general';
       
       const subj = state.activeSubject;
       const topic = state.activeTopic;
@@ -857,12 +847,13 @@ window.MathJax = {
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
+            // Save SVG inside the subjectFolderPath/svg/
+            imagesContent += `  { data: 'question-banks/${subjectFolderPath}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjectFolderPath}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
                if (!svgRes.ok) {
                  const err = await svgRes.json().catch(()=>({}));
