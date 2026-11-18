@@ -1,6 +1,7 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
+
 window.CBT_SUBJECT_BANKS.push(`Subject: Bible Studies
-Duration: 30
+
 Topic: Gospels
 
 SubTopic: Life of Christ
@@ -45,21 +46,11 @@ Q005: Summarise the central message of the Sermon on the Mount and give two exam
 Marks: 10
 Explanation: The Sermon on the Mount (Matthew 5-7) announces the kingdom of God and describes kingdom character through the Beatitudes. It then reframes the Law with heart-level obedience: anger is set alongside murder, and lust alongside adultery. It commands love of enemies, unrewarded generosity and prayer without display, and closes with the wise and foolish builders as a call to put the teaching into practice.
 
-SubTopic: Teachings
-Type: MCQ
-Q006: "For God so loved the world..." opens a verse in which Gospel?
-Option: A: John
-Option: B: Matthew
-Option: C: Acts
-Option: D: Romans
-Answer: A
-Explanation: John 3:16 expresses the Gospel's message of God's love and the gift of his Son.
-
 Topic: Wisdom Literature
 
 SubTopic: Psalms & Proverbs
 Type: MCQ
-Q007: The book of Proverbs is most closely associated with which kind of literature?
+Q001: The book of Proverbs is most closely associated with which kind of literature?
 Option: A: Apocalyptic
 Option: B: Wisdom
 Option: C: Law
@@ -69,7 +60,7 @@ Explanation: Proverbs belongs to the wisdom tradition, offering practical instru
 
 SubTopic: Psalms & Proverbs
 Type: MCQ
-Q008: "The LORD is my shepherd; I shall not want" is found in which Psalm?
+Q002: "The LORD is my shepherd; I shall not want" is found in which Psalm?
 Option: A: Psalm 1
 Option: B: Psalm 23
 Option: C: Psalm 51
@@ -78,14 +69,8 @@ Answer: B
 Explanation: Psalm 23 is the shepherd psalm, presenting the LORD as guide, provider and host.
 
 SubTopic: Psalms & Proverbs
-Type: Fill
-Q009: The fear of the LORD is the beginning of ______ (Proverbs 9:10).
-Answer: wisdom
-Explanation: Proverbs 9:10 says knowledge of the Holy One is understanding; reverent fear of God grounds all true wisdom.
-
-SubTopic: Psalms & Proverbs
 Type: Theory
-Q010: Explain the difference between wisdom and knowledge using any two wisdom texts you have studied.
+Q003: Explain the difference between wisdom and knowledge using any two wisdom texts you have studied.
 Marks: 10
 Explanation: Knowledge gathers facts, while wisdom is the skill of applying them rightly before God. Proverbs presents wisdom as practical, reverent living: the fear of the LORD precedes understanding, and wise speech is slow and generous. Ecclesiastes tests knowledge gained from observation and concludes that every worldly pursuit is vapour without reverence for God. James 3 distinguishes earthly knowledge-driven ambition from the peaceable gentleness of true wisdom; they differ in character, practice and final goal.
 `);
