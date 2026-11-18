@@ -43,11 +43,6 @@ window.MathJax = {
   </div>
 </header>
 
-<!-- Global Error Banner -->
-<div id="global-error-banner" class="hidden bg-red-600 text-white p-4 text-center font-bold text-sm z-50 relative">
-  <i class="fas fa-exclamation-triangle mr-2"></i> <span id="global-error-text">A script failed to load. Check console.</span>
-</div>
-
 <div id="app-container" class="mathjax max-w-7xl mx-auto p-4 md:p-6"></div>
 
 <!-- ============ SCHOLAR VIEW NOTE MODAL ============ -->
@@ -165,18 +160,6 @@ window.MathJax = {
 <!-- Toast layer -->
 <div id="toast-layer" class="fixed top-20 right-4 z-[999999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
-<!-- ============ ERROR CATCHER ============ -->
-<script>
-window.addEventListener('error', function(e) {
-  var banner = document.getElementById('global-error-banner');
-  var text = document.getElementById('global-error-text');
-  if (banner && text) {
-    banner.classList.remove('hidden');
-    text.textContent = 'Script Error: ' + e.message + ' in ' + (e.filename ? e.filename.split('/').pop() : 'unknown file');
-  }
-});
-</script>
-
 <!-- ============ SCRIPTS (exact deferred load order) ============ -->
 <script defer src="js/image-viewer.js"></script>
 <script defer src="js/app-core.js"></script>
@@ -186,6 +169,7 @@ window.addEventListener('error', function(e) {
 
 
 <!-- 1. Question Banks (each in its own folder) -->
+
 <script defer src="question-banks/physics/thermodynamics/thermodynamics-bank.js"></script>
 <script defer src="question-banks/physics/mechanics/mechanics-bank.js"></script>
 <script defer src="question-banks/physics/mechans/mechans-bank.js"></script>
@@ -196,18 +180,27 @@ window.addEventListener('error', function(e) {
   
   
 
-  <!-- NOTES_SCRIPTS_START -->
-  <script defer src="question-banks/bible-studies/notes.js"></script>
-  <script defer src="question-banks/fluid-mechanics/fluid-mechanics.js"></script>
-  <script defer src="question-banks/linear-algebra/notes.js"></script>
-  <script defer src="question-banks/physics/mechanics/mechanics.js"></script>
-  <script defer src="question-banks/physics/mechans/mechans.js"></script>
-  <script defer src="question-banks/physics/thermodynamics/thermodynamics.js"></script>
-  <script defer src="question-banks/probability/notes.js"></script>
-  <script defer src="question-banks/test/type.js"></script>
-  <script defer src="question-banks/you/new-topic.js"></script>
-<!-- NOTES_SCRIPTS_END -->
+<!-- 2. Topic Notes (each in its own folder) -->
 
-      <script defer src="question-banks/question-loader.js"></script>
+<script defer src="question-banks/physics/thermodynamics/thermodynamics.js"></script>
+<script defer src="question-banks/physics/mechanics/mechanics.js"></script>
+<script defer src="question-banks/physics/mechans/mechans.js"></script>
+<script defer src="question-banks/probability/notes.js"></script>
+<script defer src="question-banks/bible-studies/notes.js"></script>
+<script defer src="question-banks/linear-algebra/notes.js"></script>
+<script defer src="question-banks/fluid-mechanics/fluid-mechanics.js"></script>
+  
+  
+
+<!-- 3. Loader -->
+<script defer src="question-banks/question-loader.js"></script>
+
+  
+  
+<script defer src="js/explanation-viewer.js"></script>
+<script defer src="js/navigation.js"></script>
+<script defer src="js/verse-popup.js"></script>
+<script defer src="js/math-formatter.js"></script>
+<script defer src="js/init.js"></script>
 </body>
 </html>
