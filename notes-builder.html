@@ -502,21 +502,18 @@ window.MathJax = {
 }
 
     function updateTopicName(newName) {
-      if (!newName.trim() || newName === state.activeTopic) return;
-      const oldName = state.activeTopic;
-      const draft = state.data[state.activeSubject][oldName];
-      
-      state.data[state.activeSubject][newName] = draft;
-      delete state.data[state.activeSubject][oldName];
-      state.activeTopic = newName;
-      
-      const parts = state.activePath.split('/');
-      parts[parts.length - 1] = getSlug(newName) + '.js';
-      state.activePath = parts.join('/');
-      
-      document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
-      saveState();
-    }
+  if (!newName.trim() || newName === state.activeTopic) return;
+  const oldName = state.activeTopic;
+  const draft = state.data[state.activeSubject][oldName];
+  
+  state.data[state.activeSubject][newName] = draft;
+  delete state.data[state.activeSubject][oldName];
+  state.activeTopic = newName;
+  
+  // We DO NOT change state.activePath. The filename remains the same.
+  
+  saveState();
+}
 
     function saveDraft() {
       if (!state.activeSubject || !state.activeTopic) return;
