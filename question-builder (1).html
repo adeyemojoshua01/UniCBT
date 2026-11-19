@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>eduCBT — Question Builder Pro</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script>window.tailwind = window.tailwind || {}; window.tailwind.config = { theme: { extend: { colors: { brand: '#6366f1', amber: '#f59e0b', ink: '#0B1020' } } } };</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], packages: { '[+]': ['mhchem', 'ams'] } },
+  options: { ignoreHtmlClass: 'no-mathjax' },
+  startup: { typeset: false }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  html { color-scheme: dark; }
+  body { background: #070A12; color: #E7EEF6; -webkit-tap-highlight-color: transparent; }
+  * { scrollbar-width: thin; scrollbar-color: #25304d transparent; }
+  *::-webkit-scrollbar { width: 6px; height: 6px; } *::-webkit-scrollbar-thumb { background:#25304d; border-radius:8px; }
+  .panel { background: #0B1020; border: 1px solid #1e2740; }
+  .field { background:#101830; border:1px solid #26314f; color:#E7EEF6; border-radius:10px; width:100%; padding:10px 12px; font-size:13px; }
+  .field:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
+  .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#8598AC; display:block; margin-bottom:5px; }
+  .btn { display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; border:1px solid transparent; transition:.15s; white-space:nowrap; }
+  .btn-indigo { background:#4f46e5; color:#fff; } .btn-indigo:hover { background:#4338ca; }
+  .btn-amber { background:#f59e0b; color:#1f1300; } .btn-amber:hover { background:#fbbf24; }
+  .btn-ghost { background:#111a2e; color:#B7C6D4; border-color:#26314f; } .btn-ghost:hover { background:#17223a; color:#fff; }
+  .btn-danger { background:rgba(225,29,72,.14); color:#fb7185; border-color:rgba(225,29,72,.35); } .btn-danger:hover { background:rgba(225,29,72,.24); }
+  .chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.04em; cursor:pointer; border:1px solid transparent; }
+  .chip.active { background: rgba(99,102,241,.2); color: #c7d2fe; border-color: rgba(99,102,241,.5); }
+  .chip.inactive { background: #111a2e; color: #8598AC; border-color: #26314f; }
+  .modal-shell { position:fixed; inset:0; z-index:80; background:rgba(2,6,15,.85); backdrop-filter:blur(6px); display:flex; align-items:flex-start; justify-content:center; padding:20px 14px; overflow-y:auto; }
+  .modal-card { width:100%; max-width:720px; background:#0B1020; border:1px solid #26314f; border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.6); overflow:hidden; margin:auto; }
+  .hidden { display:none !important; }
+  .fmt { white-space:pre-wrap; word-break:break-word; }
+  .qcard { background:#0B1020; border:1px solid #1e2740; border-radius:14px; }
+  mjx-container { max-width:100% !important; overflow-x:auto; overflow-y:hidden; }
+  mjx-container[display="true"] { display:block !important; width:100% !important; max-width:100% !important; overflow-x:auto !important; }
+  .tab-btn { flex: 1; padding: 14px 0; font-size: 13px; font-weight: 700; color: #8598AC; border-bottom: 2px solid transparent; transition: all 0.2s; text-align: center; }
+  .tab-btn.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+  .pane { display: none; }
+  .pane.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
+  .folder-icon { transition: transform 0.2s; }
+  details[open] > summary .folder-icon { transform: rotate(90deg); }
+</style>
+</head>
+<body class="h-[100dvh] flex flex-col overflow-hidden">
+
+<header class="flex-none h-[62px] border-b border-[#1e2740] bg-[#080d18] flex items-center px-3 justify-between z-50">
+  <div class="flex items-center gap-2.5 min-w-0">
+    <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0"><i class="fas fa-pen-ruler text-white text-sm"></i></div>
+    <div class="min-w-0 hidden sm:block">
+      <div class="font-extrabold text-sm leading-tight">Question Builder Pro</div>
+      <div class="text-[10px] text-slate-500 leading-tight">authoring studio</div>
+    </div>
+  </div>
+  
+  <div class="flex items-center gap-2">
+    <span id="saved-pill" class="chip bg-emerald-500/15 text-emerald-400 hidden sm:inline-flex">Ready</span>
+    <button onclick="B.undo()" class="btn btn-ghost !px-2.5" title="Undo"><i class="fas fa-rotate-left"></i></button>
+    <button onclick="B.toggleGhSidebar(true)" class="btn btn-ghost !text-indigo-300 !border-indigo-500/30"><i class="fab fa-github"></i><span class="hidden sm:inline">Repo</span></button>
+  </div>
+</header>
+
+<main class="flex-grow flex flex-col overflow-hidden relative">
+  <div class="flex-none flex border-b border-[#1e2740] bg-[#0B1020] z-10">
+    <button onclick="B.switchTab('structure')" id="tab-structure" class="tab-btn active"><i class="fas fa-sitemap mr-1.5"></i> Structure</button>
+    <button onclick="B.switchTab('content')" id="tab-content" class="tab-btn"><i class="fas fa-file-lines mr-1.5"></i> Content</button>
+    <button onclick="B.switchTab('preview')" id="tab-preview" class="tab-btn"><i class="fas fa-eye mr-1.5"></i> Preview</button>
+  </div>
+
+  <div class="flex-grow overflow-y-auto p-4 pb-24 relative" id="workspace">
+    <div id="pane-structure" class="pane active"><div id="structure-content"></div></div>
+    <div id="pane-content" class="pane"><div id="content-header" class="mb-4"></div><div id="content-body"></div></div>
+    <div id="pane-preview" class="pane"><div id="preview-content"></div></div>
+  </div>
+</main>
+
+<div class="fixed bottom-0 left-0 w-full bg-[#0B1020]/95 backdrop-blur border-t border-[#1e2740] p-3 flex gap-2 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+  <button onclick="B.addQuestion('MCQ')" class="btn btn-ghost flex-1 justify-center !bg-indigo-600/20 !text-indigo-400 !border-indigo-600/30">
+    <i class="fas fa-plus"></i> New Q
+  </button>
+  <button onclick="B.scheduleSave()" class="btn btn-ghost flex-1 justify-center">
+    <i class="fas fa-save"></i> Save
+  </button>
+  <button onclick="B.openPublish()" class="btn btn-amber flex-[1.5] justify-center">
+    <i class="fab fa-github"></i> Publish
+  </button>
+</div>
+
+<div id="gh-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[65] hidden" onclick="B.toggleGhSidebar(false)"></div>
+<aside id="gh-sidebar" class="fixed top-0 left-0 w-[320px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-[70] flex flex-col transition-transform duration-300" style="transform: translateX(-100%);">
+  <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
+    <h2 class="font-extrabold text-sm"><i class="fab fa-github text-indigo-400 mr-1"></i> GitHub Explorer</h2>
+    <button onclick="B.toggleGhSidebar(false)" class="w-8 h-8 rounded-lg bg-[#1e2740] hover:bg-[#2a3a5e] flex items-center justify-center"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="p-3 border-b border-[#1e2740] space-y-2 bg-[#080d18]">
+    <input type="text" id="gh-user" class="field !text-xs" placeholder="Username" onchange="localStorage.setItem('gh_owner', this.value)">
+    <input type="text" id="gh-repo" class="field !text-xs" placeholder="Repository" onchange="localStorage.setItem('gh_repo', this.value)">
+    <input type="password" id="gh-token" class="field !text-xs" placeholder="Token (ghp_...)" onchange="localStorage.setItem('gh_token', this.value)">
+    <button onclick="B.loadGitHubTree()" class="btn btn-indigo w-full justify-center"><i class="fas fa-sync-alt"></i> Load</button>
+  </div>
+  <div class="p-3 border-b border-[#1e2740] grid grid-cols-2 gap-2">
+    <button onclick="B.createNewFolder()" class="btn btn-ghost !bg-emerald-600/20 !text-emerald-400 !border-emerald-600/30 justify-center"><i class="fas fa-folder-plus"></i> Folder</button>
+    <button onclick="B.createNewFile()" class="btn btn-ghost !bg-sky-600/20 !text-sky-400 !border-sky-600/30 justify-center"><i class="fas fa-file-circle-plus"></i> File</button>
+  </div>
+  <div class="flex-grow overflow-y-auto p-3 space-y-1 text-sm text-gray-300" id="gh-tree-container">
+    <div class="text-center text-xs text-gray-500 mt-4">Enter credentials and click Load.</div>
+  </div>
+</aside>
+
+<div id="import-modal" class="modal-shell hidden">
+  <div class="modal-card">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Import Questions</h2>
+      <button onclick="B.closeModal('import-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="document.getElementById('md-file-input').click()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-file-alt"></i> Markdown (.md)</button>
+        <button onclick="document.getElementById('js-file-input').click()" class="btn btn-ghost justify-center !py-3"><i class="fab fa-js"></i> JS Bank (.js)</button>
+      </div>
+      <input type="file" id="md-file-input" accept=".md,.txt" class="hidden" onchange="B.handleMdFileSelect(this)">
+      <input type="file" id="js-file-input" accept=".js,.txt" class="hidden" onchange="B.handleJsFileSelect(this)">
+
+      <div class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="document.getElementById('md-file-input').click()">
+        <i class="fas fa-cloud-arrow-up text-2xl text-indigo-400"></i>
+        <p class="mt-2 text-sm font-semibold text-slate-200">Tap to choose a file from storage</p>
+      </div>
+
+      <div id="import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
+        <div id="import-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
+        <div id="import-warnings" class="text-[11.5px] text-amber-400 space-y-1 mb-3"></div>
+        <div class="flex items-center gap-2">
+            <select id="import-target-subtopic" class="field"></select>
+            <button onclick="B.applyImport()" class="btn btn-amber whitespace-nowrap"><i class="fas fa-check"></i> Apply</button>
+        </div>
+      </div>
+      <p id="import-status" class="text-[11.5px] text-slate-400"></p>
+    </div>
+  </div>
+</div>
+
+<div id="publish-modal" class="modal-shell hidden">
+  <div class="modal-card !max-w-lg">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fab fa-github text-indigo-400 mr-2"></i>Publish to GitHub</h2>
+      <button onclick="B.closeModal('publish-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-3">
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div><label class="lbl">Owner</label><input id="pub-owner" class="field"></div>
+        <div><label class="lbl">Repository</label><input id="pub-repo" class="field"></div>
+      </div>
+      <div><label class="lbl">Token</label><input id="pub-token" type="password" class="field"></div>
+      <div><label class="lbl">Target File Path</label><input id="pub-filename" class="field font-mono"></div>
+      <button id="pub-submit" onclick="B.submitPublish()" class="btn btn-amber w-full justify-center !py-3 mt-2"><i class="fas fa-cloud-arrow-up"></i> Publish</button>
+      <p id="pub-status" class="text-[11.5px] text-slate-400"></p>
+      <div id="pub-error" class="hidden rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11.5px] p-2.5"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-layer" class="fixed top-20 right-4 z-[90] flex flex-col gap-2 items-end pointer-events-none"></div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'cbt_bank_builder_v3';
+  var uid = function (p) { return (p || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
+  var esc = function (s) { return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+
+  var appData = { bankName: 'Untitled Bank', subjects: [] };
+  var selected = { subjectId: null, topicId: null, subTopicId: null, questionId: null };
+  var activeTab = 'structure';
+  var undoStack = [], redoStack = [];
+  var saveTimer = null;
+  var pendingImport = null;
+  var currentLoadedPath = '';
+  var exportCode = '';
+  var ghTreeData = null;
+
+  function b64DecodeUnicode(str) {
+      return decodeURIComponent(atob(str).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+  }
+
+  function newSubTopic(name) { return { id: uid('st'), name: name || 'General' }; }
+  function newQuestion(type, subTopicId) {
+    return { id: uid('q'), type: type || 'MCQ', subTopicId: subTopicId || 'general', question: '', options: ['', '', '', ''], correct: type === 'MCQ' ? 'A' : '', explanation: '', maxMarks: 10 };
+  }
+  function newTopic(name) {
+    var st = newSubTopic('General');
+    return { id: uid('t'), name: name || 'New Topic', subTopics: [st], questions: [] };
+  }
+  function newSubject(name) {
+    var t = newTopic('General');
+    return { id: uid('s'), name: name || 'New Subject', duration: 30, topics: [t] };
+  }
+
+  function getSubject(id) { return appData.subjects.find(s => s.id === id); }
+  function getTopic(sid, tid) { var s = getSubject(sid); return s ? s.topics.find(t => t.id === tid) : null; }
+  function getQuestion(sid, tid, qid) { var t = getTopic(sid, tid); return t ? t.questions.find(q => q.id === qid) : null; }
+  function currentSubject() { return getSubject(selected.subjectId); }
+  function currentTopic() { return getTopic(selected.subjectId, selected.topicId); }
+  function currentQuestion() { return getQuestion(selected.subjectId, selected.topicId, selected.questionId); }
+
+  var B = {
+    start: function () {
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.subjects)) appData = parsed;
+        }
+      } catch (e) { console.warn(e); }
+
+      if (appData.subjects.length) {
+        var s = appData.subjects[0];
+        selected.subjectId = s.id;
+        if (s.topics[0]) selected.topicId = s.topics[0].id;
+        if (s.topics[0] && s.topics[0].subTopics[0]) selected.subTopicId = s.topics[0].subTopics[0].id;
+      } else {
+          B.addSubject();
+      }
+      
+      B.renderAll();
+      if (localStorage.getItem('gh_owner')) document.getElementById('gh-user').value = localStorage.getItem('gh_owner');
+      if (localStorage.getItem('gh_repo')) document.getElementById('gh-repo').value = localStorage.getItem('gh_repo');
+      if (localStorage.getItem('gh_token')) document.getElementById('gh-token').value = localStorage.getItem('gh_token');
+    },
+
+    scheduleSave: function () {
+      var pill = document.getElementById('saved-pill');
+      if (pill) { pill.textContent = 'Saving…'; pill.className = 'chip bg-amber-500/15 text-amber-400'; }
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () {
+        try { localStorage.setItem(KEY, JSON.stringify(appData)); } catch (e) { console.warn(e); }
+        var p = document.getElementById('saved-pill');
+        if (p) { p.textContent = 'Saved'; p.className = 'chip bg-emerald-500/15 text-emerald-400'; }
+      }, 500);
+    },
+
+    pushUndoState: function () {
+      undoStack.push(JSON.stringify(appData));
+      if (undoStack.length > 30) undoStack.shift();
+      redoStack = [];
+      B.scheduleSave();
+    },
+    undo: function () {
+      if (!undoStack.length) return B.toast('Nothing to undo', 'info');
+      redoStack.push(JSON.stringify(appData));
+      appData = JSON.parse(undoStack.pop());
+      B.renderAll(); B.scheduleSave(); B.toast('Undo applied', 'info');
+    },
+
+    toast: function (msg, type) {
+      var layer = document.getElementById('toast-layer');
+      var el = document.createElement('div');
+      var color = type === 'error' ? 'bg-rose-600' : (type === 'success' ? 'bg-emerald-600' : 'bg-indigo-600');
+      el.className = 'pointer-events-auto text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-2xl mb-2 ' + color;
+      el.textContent = msg;
+      layer.appendChild(el);
+      setTimeout(() => { el.remove(); }, 3000);
+    },
+
+    openModal: function (id) { document.getElementById(id).classList.remove('hidden'); },
+    closeModal: function (id) { document.getElementById(id).classList.add('hidden'); },
+    toggleGhSidebar: function (force) {
+      var sb = document.getElementById('gh-sidebar');
+      var ov = document.getElementById('gh-overlay');
+      var open = typeof force === 'boolean' ? force : sb.style.transform === 'translateX(0px)';
+      if (open) { sb.style.transform = 'translateX(0)'; ov.classList.remove('hidden'); }
+      else { sb.style.transform = 'translateX(-100%)'; ov.classList.add('hidden'); }
+    },
+
+    switchTab: function (tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+      document.getElementById('pane-' + tab).classList.add('active');
+      if (tab === 'preview') B.renderPreview();
+    },
+
+    renderAll: function () {
+      B.renderStructure();
+      B.renderContent();
+      if (activeTab === 'preview') B.renderPreview();
+      B.scheduleSave();
+    },
+
+    /* ------------- STRUCTURE RENDERER ------------- */
+    renderStructure: function () {
+      var container = document.getElementById('structure-content');
+      var html = '<div class="max-w-3xl mx-auto space-y-4">';
+      
+      appData.subjects.forEach(s => {
+        html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
+        html += `<div class="flex justify-between items-center mb-3">
+            <div class="flex-grow mr-2">
+                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 block">Subject Name</label>
+                <input class="font-extrabold text-sm bg-[#101830] border border-[#26314f] rounded px-3 py-2 w-full focus:border-indigo-500 outline-none" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
+            </div>
+            <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 mt-5"><i class="fas fa-trash"></i></button>
+        </div>`;
+        
+        s.topics.forEach(t => {
+            html += `<div class="ml-2 pl-3 border-l border-[#1e2740] mb-3">
+                <div class="flex justify-between items-center mb-2">
+                    <button onclick="B.selectTopic('${s.id}','${t.id}')" class="text-sm font-bold ${selected.topicId === t.id ? 'text-amber-400' : 'text-slate-300'} hover:text-white text-left flex-grow">
+                        <i class="fas fa-folder mr-2 text-amber-500/70"></i> ${esc(t.name)}
+                    </button>
+                    <button onclick="B.deleteTopic('${s.id}','${t.id}')" class="text-rose-500 text-xs px-2"><i class="fas fa-times"></i></button>
+                </div>`;
+                
+                html += `<div class="flex flex-wrap gap-1.5 ml-4">`;
+                t.subTopics.forEach(st => {
+                    var count = t.questions.filter(q => q.subTopicId === st.id).length;
+                    html += `<div class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'} group" onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')">
+                        ${esc(st.name)} <span class="opacity-50 text-[9px] ml-1">${count}</span>
+                        <button onclick="event.stopPropagation(); B.deleteSubTopic('${s.id}','${t.id}','${st.id}')" class="hidden group-hover:inline ml-1 text-rose-400"><i class="fas fa-times-circle"></i></button>
+                    </div>`;
+                });
+                html += `<button onclick="B.addSubTopic('${s.id}','${t.id}')" class="chip inactive text-indigo-400 border-indigo-500/30"><i class="fas fa-plus"></i> Sub</button></div>`;
+            html += `</div>`;
+        });
+        
+        html += `<div class="mt-3 flex gap-2">
+            <button onclick="B.addTopic('${s.id}')" class="btn btn-ghost !text-xs !py-1.5"><i class="fas fa-folder-plus"></i> Topic</button>
+        </div></div>`;
+      });
+      
+      html += `<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center !py-3"><i class="fas fa-plus"></i> New Subject</button>`;
+      html += '</div>';
+      container.innerHTML = html;
+    },
+
+    /* ------------- CONTENT RENDERER ------------- */
+    renderContent: function () {
+      var container = document.getElementById('content-body');
+      var header = document.getElementById('content-header');
+      
+      var s = currentSubject(), t = currentTopic();
+      if (!s || !t) {
+          header.innerHTML = '';
+          container.innerHTML = '<div class="text-center text-slate-500 py-10">Select a Topic from the Structure tab to start editing.</div>';
+          return;
+      }
+
+      header.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="font-extrabold text-lg text-white">${esc(t.name)}</h2>
+            <button onclick="B.openModal('import-modal')" class="btn btn-ghost !py-1.5 !text-xs"><i class="fas fa-file-import"></i> Import</button>
+        </div>
+        <div class="flex gap-2 overflow-x-auto pb-2">
+            <button onclick="B.selectSubTopic('${s.id}','${t.id}', null)" class="chip ${!selected.subTopicId ? 'active' : 'inactive'}">All (${t.questions.length})</button>
+            ${t.subTopics.map(st => {
+                var count = t.questions.filter(q => q.subTopicId === st.id).length;
+                return `<button onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')" class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'}">${esc(st.name)} (${count})</button>`;
+            }).join('')}
+        </div>
+      `;
+
+      var filteredQs = t.questions;
+      if (selected.subTopicId) {
+          filteredQs = filteredQs.filter(q => q.subTopicId === selected.subTopicId);
+      }
+
+      if (selected.questionId && currentQuestion()) {
+          container.innerHTML = B.questionEditorHTML();
+          B.typeset();
+          return;
+      }
+
+      var qHtml = filteredQs.map((q, i) => {
+          var stName = t.subTopics.find(st => st.id === q.subTopicId)?.name || 'General';
+          return `<div class="qcard p-3.5 mb-2 cursor-pointer hover:border-indigo-500/50 transition-colors" onclick="B.selectQuestion('${s.id}','${t.id}','${q.id}')">
+            <div class="flex items-center gap-2 mb-1.5">
+                <span class="chip bg-indigo-500/15 text-indigo-300">${esc(q.type)}</span>
+                <span class="chip bg-[#131c31] text-slate-400">${esc(stName)}</span>
+            </div>
+            <p class="text-sm text-slate-200 line-clamp-2">${esc(q.question || '(untitled)')}</p>
+          </div>`;
+      }).join('');
+
+      container.innerHTML = qHtml || '<div class="text-center text-slate-500 py-10">No questions in this view. Tap "New Q" to add one.</div>';
+    },
+
+    questionEditorHTML: function () {
+      var s = currentSubject(), t = currentTopic(), q = currentQuestion();
+      var typeBtn = (type, icon) => `<button onclick="B.changeType('${type}')" class="btn ${q.type === type ? 'btn-indigo' : 'btn-ghost'} !py-1.5 flex-1 justify-center"><i class="${icon}"></i>${type}</button>`;
+      
+      var stOptions = t.subTopics.map(st => `<option value="${st.id}" ${q.subTopicId === st.id ? 'selected' : ''}>${esc(st.name)}</option>`).join('');
+
+      return `<div class="max-w-3xl mx-auto space-y-4">
+        <div class="flex justify-between items-center">
+            <button onclick="B.selectQuestion(null,null,null)" class="btn btn-ghost !py-1.5 !px-2"><i class="fas fa-arrow-left"></i> Back to List</button>
+            <button onclick="B.deleteQuestion()" class="btn btn-danger !py-1.5 !px-2"><i class="fas fa-trash"></i></button>
+        </div>
+        
+        <div class="panel rounded-xl p-4">
+            <div class="flex gap-2 mb-4">${typeBtn('MCQ','fas fa-list-check')} ${typeBtn('Fill','fas fa-keyboard')} ${typeBtn('Theory','fas fa-pen-nib')}</div>
+            
+            <label class="lbl">Question Text</label>
+            <textarea rows="4" class="field mb-2" oninput="B.updateQField('question', this.value)" placeholder="Type the question...">${esc(q.question)}</textarea>
+            <div class="rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300 mb-4"><div class="fmt" id="question-preview">${B.renderMathText(q.question) || '<span class="text-slate-500 italic">Preview appears here…</span>'}</div></div>
+
+            <div class="mb-4">
+                <label class="lbl">Sub-Topic</label>
+                <select class="field" onchange="B.updateQField('subTopicId', this.value)">${stOptions}</select>
+            </div>
+
+            <div class="p-3 bg-[#080d18] rounded-lg border border-[#1e2740]">
+                <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Answer Configuration</h3>
+                ${B.answerConfigHTML(q)}
+            </div>
+        </div>
+
+        <div class="panel rounded-xl p-4">
+            <label class="lbl">Explanation / Model Answer</label>
+            <textarea rows="4" class="field mb-2" oninput="B.updateQField('explanation', this.value)" placeholder="Explain the reasoning...">${esc(q.explanation)}</textarea>
+        </div>
+      </div>`;
+    },
+
+    answerConfigHTML: function (q) {
+        if (q.type === 'MCQ') {
+            return ['A','B','C','D'].map((l, i) => `
+                <div class="flex items-center gap-2 mb-2">
+                    <input type="radio" name="correct" value="${l}" ${q.correct === l ? 'checked' : ''} onchange="B.updateQField('correct', this.value)" class="accent-amber-500">
+                    <span class="text-xs font-bold text-slate-500 w-4">${l}</span>
+                    <input class="field" value="${esc(q.options[i] || '')}" oninput="B.updateOption(${i}, this.value)" placeholder="Option ${l}">
+                </div>
+            `).join('');
+        } else if (q.type === 'Fill') {
+            return `<label class="lbl">Exact Answer</label><input class="field" value="${esc(q.correct)}" oninput="B.updateQField('correct', this.value)" placeholder="e.g. 42">`;
+        } else {
+            return `<label class="lbl">Max Marks</label><input type="number" class="field !w-24" value="${q.maxMarks || 10}" oninput="B.updateQField('maxMarks', this.value)">`;
+        }
+    },
+
+    updateQField: function (field, value) {
+        var q = currentQuestion(); if (!q) return;
+        B.pushUndoState();
+        q[field] = value;
+        B.scheduleSave();
+        if (field === 'question') {
+            var el = document.getElementById('question-preview');
+            if (el) el.innerHTML = B.renderMathText(value);
+            B.typeset();
+        }
+    },
+    updateOption: function (i, val) {
+        var q = currentQuestion(); if (!q) return;
+        B.pushUndoState();
+        q.options[i] = val;
+        B.scheduleSave();
+    },
+    changeType: function(type) {
+        var q = currentQuestion(); if (!q) return;
+        B.pushUndoState();
+        q.type = type;
+        if (type === 'MCQ' && !['A','B','C','D'].includes(q.correct)) q.correct = 'A';
+        B.renderContent();
+    },
+    selectQuestion: function (sid, tid, qid) {
+        if (sid) selected.subjectId = sid;
+        if (tid) selected.topicId = tid;
+        selected.questionId = qid;
+        B.renderContent();
+    },
+    selectTopic: function (sid, tid) {
+        selected.subjectId = sid; selected.topicId = tid; selected.subTopicId = null; selected.questionId = null;
+        B.renderStructure(); B.renderContent();
+    },
+    selectSubTopic: function (sid, tid, stid) {
+        selected.subjectId = sid; selected.topicId = tid; selected.subTopicId = stid; selected.questionId = null;
+        B.renderStructure(); B.renderContent();
+    },
+
+    renderMathText: function (t) { return esc(t).replace(/\n/g, '<br>'); },
+    typeset: function () {
+        if (window.MathJax) MathJax.typesetPromise([document.getElementById('workspace')]).catch(()=>{});
+    },
+
+    /* ------------- CRUD OPERATIONS ------------- */
+    addSubject: function() {
+        B.pushUndoState();
+        var s = newSubject('New Subject');
+        appData.subjects.push(s);
+        selected.subjectId = s.id;
+        selected.topicId = s.topics[0].id;
+        selected.subTopicId = s.topics[0].subTopics[0].id;
+        B.renderAll();
+    },
+    addTopic: function(sid) {
+        B.pushUndoState();
+        var s = getSubject(sid); if (!s) return;
+        var t = newTopic('New Topic');
+        s.topics.push(t);
+        B.selectTopic(sid, t.id);
+    },
+    addSubTopic: function(sid, tid) {
+        var name = prompt("Enter Sub-Topic Name:");
+        if (!name) return;
+        B.pushUndoState();
+        var t = getTopic(sid, tid); if (!t) return;
+        t.subTopics.push(newSubTopic(name));
+        B.renderAll();
+    },
+    deleteSubTopic: function(sid, tid, stid) {
+        if (!confirm('Delete this sub-topic?')) return;
+        B.pushUndoState();
+        var t = getTopic(sid, tid);
+        t.subTopics = t.subTopics.filter(st => st.id !== stid);
+        if (selected.subTopicId === stid) selected.subTopicId = null;
+        B.renderAll();
+    },
+    addQuestion: function(type) {
+        var s = currentSubject(), t = currentTopic();
+        if (!s || !t) return B.toast('Select a topic first.', 'error');
+        B.pushUndoState();
+        var stId = selected.subTopicId || t.subTopics[0]?.id || 'general';
+        var q = newQuestion(type, stId);
+        t.questions.push(q);
+        selected.questionId = q.id;
+        B.switchTab('content');
+        B.renderContent();
+    },
+    deleteQuestion: function() {
+        var t = currentTopic(), q = currentQuestion();
+        if (!q || !confirm('Delete this question?')) return;
+        B.pushUndoState();
+        t.questions = t.questions.filter(x => x.id !== q.id);
+        selected.questionId = null;
+        B.renderContent();
+    },
+    updateSubjectName: function(sid, val) {
+        var s = getSubject(sid); if (s) { s.name = val; B.scheduleSave(); }
+    },
+    deleteSubject: function(sid) {
+        if (!confirm('Delete entire subject?')) return;
+        B.pushUndoState();
+        appData.subjects = appData.subjects.filter(s => s.id !== sid);
+        selected = { subjectId: null, topicId: null, subTopicId: null, questionId: null };
+        B.renderAll();
+    },
+    deleteTopic: function(sid, tid) {
+        if (!confirm('Delete entire topic?')) return;
+        B.pushUndoState();
+        var s = getSubject(sid);
+        s.topics = s.topics.filter(t => t.id !== tid);
+        selected.topicId = null; selected.subTopicId = null;
+        B.renderAll();
+    },
+
+    /* ------------- IMPORT & PARSING ------------- */
+    handleMdFileSelect: function(input) {
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var text = e.target.result;
+            var parsed = B.parseMarkdownToCBT(text);
+            B.showImportPreview(parsed);
+        };
+        reader.readAsText(file);
+    },
+    handleJsFileSelect: function(input) {
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
+                var parsed = [];
+                if (Array.isArray(banks)) {
+                    banks.forEach(str => {
+                        var p = B.parseDSL(str);
+                        // FIXED: Properly maps subject and topics from import
+                        p.subjects.forEach(s => {
+                            s.topics.forEach(t => {
+                                t.questions.forEach(q => {
+                                    q.subjectName = s.name;
+                                    q.topicName = t.name;
+                                    parsed.push(q);
+                                });
+                            });
+                        });
+                    });
+                }
+                B.showImportPreview(parsed);
+            } catch(err) { B.toast('Invalid JS file', 'error'); }
+        };
+        reader.readAsText(file);
+    },
+
+    parseMarkdownToCBT: function(raw) {
+        var blocks = raw.split(/\n\s*---\s*\n/);
+        var questions = [];
+        blocks.forEach(block => {
+            var lines = block.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length === 0) return;
+            var q = newQuestion('MCQ');
+            q.question = '';
+            q.subTopicName = null; 
+            var inOptions = false;
+            
+            lines.forEach(line => {
+                if (/^Type:\s*/i.test(line)) {
+                    var t = line.replace(/^Type:\s*/i, '').trim().toUpperCase();
+                    q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
+                    return;
+                }
+                if (/^(SubTopic|Sub-Topic|Subtopic):\s*/i.test(line)) {
+                    q.subTopicName = line.replace(/^(SubTopic|Sub-Topic|Subtopic):\s*/i, '').trim();
+                    return;
+                }
+                var optMatch = line.match(/^([A-Da-d])[\.\)]\s*(.+)$/);
+                if (optMatch) {
+                    inOptions = true;
+                    q.options['ABCD'.indexOf(optMatch[1].toUpperCase())] = optMatch[2].trim();
+                    return;
+                }
+                if (/^(Answer|Ans):\s*/i.test(line)) {
+                    var ans = line.replace(/^(Answer|Ans):\s*/i, '').trim();
+                    q.correct = q.type === 'MCQ' ? ans.charAt(0).toUpperCase() : ans;
+                    return;
+                }
+                if (/^Explanation:\s*/i.test(line)) {
+                    q.explanation = line.replace(/^Explanation:\s*/i, '').trim();
+                    return;
+                }
+                if (!inOptions && !q.question) q.question = line;
+                else if (!inOptions && q.question && !q.explanation) q.question += ' ' + line;
+            });
+            if (q.question) questions.push(q);
+        });
+        return questions;
+    },
+
+    parseDSL: function(text) {
+        var subjects = [];
+        var subject = null, topic = null, q = null;
+        var lines = String(text || '').split(/\r?\n/);
+        lines.forEach(line => {
+            line = line.trim();
+            if (/^Subject\s*:/i.test(line)) { subject = { name: line.replace(/^Subject\s*:/i, ''), topics: [] }; subjects.push(subject); }
+            else if (/^Topic\s*:/i.test(line) && subject) { topic = { name: line.replace(/^Topic\s*:/i, ''), questions: [] }; subject.topics.push(topic); }
+            else if (/^Type\s*:/i.test(line) && topic) {
+                var type = line.replace(/^Type\s*:/i, '').trim();
+                q = { type: type, options: ['','','',''], correct: '', explanation: '', subTopicName: null };
+                topic.questions.push(q);
+            }
+            else if (/^SubTopic\s*:/i.test(line) && q) {
+                q.subTopicName = line.replace(/^SubTopic\s*:/i, '').trim();
+            }
+            else if (/^Q\d+\s*:/i.test(line) && q) q.question = line.replace(/^Q\d+\s*:/i, '');
+            else if (/^Option\s*:/i.test(line) && q) {
+                var m = line.match(/^Option\s*:\s*([A-D])\s*:\s*(.+)$/i);
+                if (m) q.options['ABCD'.indexOf(m[1].toUpperCase())] = m[2];
+            }
+            else if (/^Answer\s*:/i.test(line) && q) q.correct = line.replace(/^Answer\s*:/i, '').trim();
+            else if (/^Explanation\s*:/i.test(line) && q) q.explanation = line.replace(/^Explanation\s*:/i, '').trim();
+        });
+        return { subjects: subjects };
+    },
+
+    showImportPreview: function(questions) {
+        pendingImport = questions;
+        document.getElementById('import-preview').classList.remove('hidden');
+        document.getElementById('import-summary').innerHTML = `<i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${questions.length}</strong> questions.`;
+        
+        var t = currentTopic();
+        var sel = document.getElementById('import-target-subtopic');
+        if (t) {
+            var html = `<option value="auto">Auto-detect from file</option>`;
+            html += t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
+            sel.innerHTML = html;
+            sel.value = 'auto'; 
+        }
+        B.openModal('import-modal');
+    },
+
+    applyImport: function() {
+        var t = currentTopic();
+        if (!t) {
+            B.toast('Please select a Topic first in the Structure tab.', 'error');
+            return;
+        }
+        if (!pendingImport || pendingImport.length === 0) return;
+
+        var targetSt = document.getElementById('import-target-subtopic').value;
+        B.pushUndoState();
+        
+        var importedCount = 0;
+        pendingImport.forEach(q => {
+            q.id = uid('q');
+            
+            if (targetSt === 'auto') {
+                var stName = q.subTopicName || 'General';
+                var existingSt = t.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
+                if (!existingSt) {
+                    existingSt = newSubTopic(stName);
+                    t.subTopics.push(existingSt);
+                }
+                q.subTopicId = existingSt.id;
+            } else {
+                q.subTopicId = targetSt;
+            }
+            
+            delete q.subTopicName; 
+            t.questions.push(q);
+            importedCount++;
+        });
+        
+        B.closeModal('import-modal');
+        B.renderAll();
+        B.toast(`Imported ${importedCount} questions!`, 'success');
+        pendingImport = null;
+    },
+
+    /* ------------- GITHUB EXPLORER TREE ------------- */
+    loadGitHubTree: async function() {
+        var o = document.getElementById('gh-user').value.trim();
+        var r = document.getElementById('gh-repo').value.trim();
+        var t = document.getElementById('gh-token').value.trim();
+        if (!o || !r || !t) return B.toast('Credentials required', 'error');
+        
+        var c = document.getElementById('gh-tree-container');
+        c.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+        
+        try {
+            const res = await fetch(`https://api.github.com/repos/${o}/${r}/git/trees/main?recursive=1`, {
+                headers: { 'Authorization': `token ${t}` }
+            });
+            if (!res.ok) throw new Error('Failed to load tree');
+            const data = await res.json();
+            
+            const root = {};
+            data.tree.forEach(item => {
+                if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
+                
+                const parts = item.path.replace('question-banks/', '').split('/');
+                let current = root;
+                
+                parts.forEach((part, i) => {
+                    if (!current[part]) {
+                        current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
+                    }
+                    if (current[part] !== 'FILE') {
+                        current = current[part];
+                    }
+                });
+            });
+
+            ghTreeData = root;
+            B.renderGhTree(root, c, '');
+        } catch (err) { c.innerHTML = `<div class="text-red-400 text-xs mt-4">${err.message}</div>`; }
+    },
+
+    renderGhTree: function(tree, container, parentPath) {
+        if (parentPath === '') container.innerHTML = '';
+        
+        if (Object.keys(tree).length === 0 && parentPath === '') {
+            container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No files found.</div>';
+            return;
+        }
+
+        const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
+        const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
+
+        folders.forEach(folder => {
+            const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
+            const details = document.createElement('details');
+            details.className = 'mb-1';
+            const summary = document.createElement('summary');
+            summary.className = 'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] text-gray-300';
+            summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
+            details.appendChild(summary);
+            const childContainer = document.createElement('div');
+            childContainer.className = 'tree-spine';
+            details.appendChild(childContainer);
+            B.renderGhTree(tree[folder], childContainer, fullPath);
+            container.appendChild(details);
+        });
+
+        files.forEach(file => {
+            const fullPath = parentPath ? `${parentPath}/${file}` : file;
+            if (file.endsWith('.js') && !file.includes('question-loader')) {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] text-gray-400 hover:bg-[#101830] hover:text-gray-200';
+                btn.innerHTML = `<span class="w-3"></span> <i class="fab fa-js w-4 text-center text-amber-400"></i> <span class="truncate">${file}</span>`;
+                btn.onclick = () => B.importFromGitHub(fullPath);
+                container.appendChild(btn);
+            }
+        });
+    },
+
+    importFromGitHub: async function(path) {
+        B.toggleGhSidebar(false);
+        currentLoadedPath = path;
+        var o = localStorage.getItem('gh_owner');
+        var r = localStorage.getItem('gh_repo');
+        var t = localStorage.getItem('gh_token');
+        
+        B.toast('Fetching ' + path + '...', 'info');
+        try {
+            const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+            const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${encodedPath}?ref=main`, {
+                headers: { 'Authorization': `token ${t}` }
+            });
+            if (!res.ok) throw new Error('Fetch failed');
+            const data = await res.json();
+            var text = b64DecodeUnicode(data.content.replace(/\n/g, ''));
+            
+            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
+            if (Array.isArray(banks)) {
+                var qs = [];
+                banks.forEach(str => {
+                    var p = B.parseDSL(str);
+                    // FIXED: Maps subject & topic from the import properly
+                    p.subjects.forEach(s => {
+                        s.topics.forEach(t => {
+                            t.questions.forEach(q => {
+                                q.subjectName = s.name;
+                                q.topicName = t.name;
+                                qs.push(q);
+                            });
+                        });
+                    });
+                });
+                B.showImportPreview(qs);
+            }
+        } catch (err) { B.toast(err.message, 'error'); }
+    },
+
+    createNewFolder: async function() {
+        var path = prompt("Folder path (e.g., chemistry/organic):");
+        if (!path) return;
+        var o = localStorage.getItem('gh_owner'), r = localStorage.getItem('gh_repo'), t = localStorage.getItem('gh_token');
+        await fetch('/api/publish-bank', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: `question-banks/${path}/.gitkeep`, code: '', githubToken: t, repoOwner: o, repoName: r })
+        });
+        B.toast('Folder created!', 'success');
+        B.loadGitHubTree();
+    },
+
+    createNewFile: async function() {
+        var path = prompt("File path (e.g., chemistry/organic/alkanes-bank.js):");
+        if (!path) return;
+        if (!path.endsWith('.js')) path += '.js';
+        var o = localStorage.getItem('gh_owner'), r = localStorage.getItem('gh_repo'), t = localStorage.getItem('gh_token');
+        await fetch('/api/publish-bank', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: `question-banks/${path}`, code: 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];', githubToken: t, repoOwner: o, repoName: r })
+        });
+        B.toast('File created!', 'success');
+        B.loadGitHubTree();
+    },
+
+    openPublish: function() {
+        B.openModal('publish-modal');
+        document.getElementById('pub-owner').value = localStorage.getItem('gh_owner') || '';
+        document.getElementById('pub-repo').value = localStorage.getItem('gh_repo') || '';
+        document.getElementById('pub-token').value = localStorage.getItem('gh_token') || '';
+        document.getElementById('pub-filename').value = currentLoadedPath || (B.slug(currentSubject()?.name) + '/' + B.slug(currentTopic()?.name) + '/bank.js');
+    },
+
+    submitPublish: async function() {
+        var o = document.getElementById('pub-owner').value.trim();
+        var r = document.getElementById('pub-repo').value.trim();
+        var t = document.getElementById('pub-token').value.trim();
+        var f = document.getElementById('pub-filename').value.trim();
+        
+        if (!o || !r || !t || !f) return B.toast('All fields required', 'error');
+        
+        var btn = document.getElementById('pub-submit');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        btn.disabled = true;
+
+        var code = B.generateExportJSCode(false);
+        try {
+            var res = await fetch('/api/publish-bank', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: f, code: code, githubToken: t, repoOwner: o, repoName: r })
+            });
+            if (!res.ok) throw new Error('Publish failed');
+            B.toast('Published successfully!', 'success');
+            currentLoadedPath = f;
+
+            // Update index.html safely using Regex
+            B.toast('Updating index.html...', 'info');
+            try {
+                const scriptTag = `<script defer src="question-banks/${f}"><\/script>`;
+                const targetUrl = `https://api.github.com/repos/${o}/${r}/contents/index.html`;
+                
+                const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${t}` } });
+                if (!indexRes.ok) throw new Error("Could not fetch index.html");
+                const indexData = await indexRes.json();
+                const sha = indexData.sha;
+                let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
+
+                if (!content.includes(scriptTag)) {
+                    const regex = /<script[^>]*src=["']question-banks\/question-loader\.js["'][^>]*><\/script>/i;
+                    if (regex.test(content)) {
+                        content = content.replace(regex, `${scriptTag}\n  $&`);
+                    } else {
+                        content = content.replace('</body>', `  ${scriptTag}\n</body>`);
+                    }
+
+                    const encodedContent = btoa(unescape(encodeURIComponent(content)));
+                    const putRes = await fetch(targetUrl, {
+                        method: 'PUT',
+                        headers: { Authorization: `token ${t}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: `chore: auto-link ${f} to index.html`,
+                            content: encodedContent,
+                            sha: sha
+                        })
+                    });
+                    if(!putRes.ok) throw new Error("Failed to commit index.html");
+                    B.toast('Index updated successfully!', 'success');
+                }
+            } catch (indexErr) {
+                console.warn('Index update failed:', indexErr);
+                B.toast(indexErr.message, 'error');
+            }
+
+            B.closeModal('publish-modal');
+        } catch (err) { B.toast(err.message, 'error'); }
+        finally { btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; btn.disabled = false; }
+    },
+
+    slug: function(s) { return String(s || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-'); },
+
+    generateExportJSCode: function(shuffle) {
+        var blocks = [];
+        appData.subjects.forEach(s => {
+            var lines = ['Subject: ' + s.name];
+            s.topics.forEach(t => {
+                lines.push('Topic: ' + t.name);
+                t.questions.forEach((q, i) => {
+                    lines.push(`SubTopic: ${t.subTopics.find(x => x.id === q.subTopicId)?.name || 'General'}`);
+                    lines.push(`Type: ${q.type}`);
+                    lines.push(`Q${String(i+1).padStart(3,'0')}: ${q.question}`);
+                    if (q.type === 'MCQ') {
+                        q.options.forEach((opt, oi) => { if (opt) lines.push(`Option: ${'ABCD'[oi]}: ${opt}`); });
+                        lines.push(`Answer: ${q.correct}`);
+                    } else {
+                        lines.push(`Answer: ${q.correct}`);
+                    }
+                    if (q.explanation) lines.push(`Explanation: ${q.explanation}`);
+                });
+            });
+            blocks.push(lines.join('\n'));
+        });
+        return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' + blocks.map(b => `window.CBT_SUBJECT_BANKS.push(\`${b}\n\`);`).join('\n\n');
+    },
+
+    renderPreview: function() {
+        var container = document.getElementById('preview-content');
+        var s = currentSubject(), t = currentTopic();
+        if (!t) return container.innerHTML = '<div class="text-center text-slate-500 py-10">Select a topic to preview.</div>';
+        
+        var qs = t.questions;
+        if (selected.subTopicId) qs = qs.filter(q => q.subTopicId === selected.subTopicId);
+
+        var html = qs.map((q, i) => `
+            <div class="qcard p-4 mb-3">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs font-bold text-slate-500">Q${i+1}</span>
+                    <span class="chip bg-indigo-500/15 text-indigo-300">${esc(q.type)}</span>
+                </div>
+                <p class="text-sm font-medium text-slate-200 mb-3">${esc(q.question)}</p>
+                ${q.type === 'MCQ' ? q.options.map((o, oi) => `<div class="text-sm text-slate-400 mb-1"><strong class="text-slate-300">${'ABCD'[oi]})</strong> ${esc(o)}</div>`).join('') : ''}
+                <div class="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs text-emerald-300">
+                    <strong>Answer:</strong> ${esc(q.correct)}
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = `<h2 class="font-bold text-lg mb-4">Preview: ${esc(t.name)}</h2>` + (html || '<div class="text-center text-slate-500">No questions.</div>');
+    }
+  };
+
+  window.B = B;
+  B.start();
+})();
+</script>
+</body>
+</html>
