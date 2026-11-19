@@ -905,7 +905,7 @@ window.MathJax = {
             // 2. Update index.html
             B.toast('Updating index.html...', 'info');
             try {
-                const scriptTag = `<script defer src="question-banks/${f}"></script>`;
+            const scriptTag = `<script defer src="question-banks/${f}"><\/script>`;
                 const targetUrl = `https://api.github.com/repos/${o}/${r}/contents/index.html`;
                 
                 const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${t}` } });
@@ -915,7 +915,7 @@ window.MathJax = {
                 let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
 
                 if (!content.includes(scriptTag)) {
-                    const anchor = '<script defer src="question-banks/question-loader.js"></script>';
+                    const anchor = '<script defer src="question-banks/question-loader.js"><\/script>';
                     if (content.includes(anchor)) {
                         content = content.replace(anchor, `${scriptTag}\n  ${anchor}`);
                     } else {
