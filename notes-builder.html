@@ -770,19 +770,20 @@ window.MathJax = {
       document.body.appendChild(overlay);
     }
 
-    async function publishToGitHub() {
+async function publishToGitHub() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       if (!state.activePath) return toast('Select a file from the sidebar first.', 'error');
       
       const draft = state.data[state.activeSubject]?.[state.activeTopic];
       if (!draft) return toast('No data to publish.', 'error');
 
-      const subjSlug = getSlug(document.getElementById('subject-name-input').value);
-      const topicSlug = getSlug(document.getElementById('topic-name-input').value);
+      // Get the path parts, but DON'T change them based on the input names.
+      // The file stays exactly where it was loaded from.
+      const pathParts = state.activePath.split('/');
+      const filename = pathParts.pop(); 
+      const topicSlug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : 'general';
+      const subjectFolderPath = pathParts.length > 0 ? pathParts.join('/') : 'general';
       
-      const oldPath = state.originalPath;
-      state.activePath = `${subjSlug}/${topicSlug}/${topicSlug}.js`;
-
       const subj = document.getElementById('subject-name-input').value;
       const topic = document.getElementById('topic-name-input').value;
       
@@ -805,12 +806,12 @@ window.MathJax = {
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
+            imagesContent += `  { data: 'question-banks/${subjectFolderPath}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjectFolderPath}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
                if (!svgRes.ok) {
                  const err = await svgRes.json().catch(()=>({}));
@@ -822,6 +823,7 @@ window.MathJax = {
         imagesContent += `];\n`;
         const finalCode = notesContent + '\n' + imagesContent;
 
+        // 1. Publish the file to the ORIGINAL path
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: state.activePath, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
@@ -829,67 +831,29 @@ window.MathJax = {
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
-        toast('Published ' + state.activePath + ' successfully!', 'success');
+        toast('Published ' + filename + ' successfully!', 'success');
 
-        // Delete old file if renamed
-        if (oldPath && oldPath !== state.activePath) {
-            try {
-                const getOld = await fetch(`https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${oldPath}`, {
-                    headers: { 'Authorization': `token ${state.github.token}` }
-                });
-                if (getOld.ok) {
-                    const oldData = await getOld.json();
-                    await fetch(`https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${oldPath}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `token ${state.github.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: `chore: remove old ${oldPath} after rename`, sha: oldData.sha })
-                    });
-                    toast('Deleted old file path.', 'info');
-                }
-            } catch (e) { console.warn('Could not delete old file', e); }
-            state.originalPath = state.activePath;
-        }
-
-        // Update index.html safely using Regex
+        // 2. Trigger index.html update
         toast('Updating index.html...', 'info');
         try {
-            const scriptTag = `<script defer src="question-banks/${state.activePath}"><\/script>`;
-            const targetUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/index.html`;
-            
-            const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${state.github.token}` } });
-            if (!indexRes.ok) throw new Error("Could not fetch index.html");
+            const indexRes = await fetch('/api/publish-bank', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                filename: 'update-index', 
+                githubToken: state.github.token, 
+                repoOwner: state.github.owner, 
+                repoName: state.github.repo 
+              })
+            });
             const indexData = await indexRes.json();
-            const sha = indexData.sha;
-            let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
-
-            if (!content.includes(scriptTag)) {
-                // Regex to find the question-loader.js script tag
-                const regex = /<script[^>]*src=["']question-banks\/question-loader\.js["'][^>]*><\/script>/i;
-                if (regex.test(content)) {
-                    content = content.replace(regex, `${scriptTag}\n  $&`);
-                } else {
-                    content = content.replace('</body>', `  ${scriptTag}\n</body>`);
-                }
-
-                const encodedContent = btoa(unescape(encodeURIComponent(content)));
-                const putRes = await fetch(targetUrl, {
-                    method: 'PUT',
-                    headers: { Authorization: `token ${state.github.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: `chore: auto-link ${state.activePath} to index.html`,
-                        content: encodedContent,
-                        sha: sha
-                    })
-                });
-                if(!putRes.ok) throw new Error("Failed to commit index.html");
-                toast('Index updated successfully!', 'success');
-            }
+            if (!indexRes.ok) throw new Error(indexData.error || 'Failed to update index.html');
+            toast('Index updated successfully!', 'success');
         } catch (indexErr) {
             console.warn('Index update failed:', indexErr);
             toast(indexErr.message, 'error');
         }
 
-        document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
