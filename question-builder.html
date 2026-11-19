@@ -331,9 +331,13 @@ window.MathJax = {
       
       appData.subjects.forEach(s => {
         html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
+        // FIXED: Added proper editable input for Subject Name
         html += `<div class="flex justify-between items-center mb-3">
-            <input class="font-extrabold text-sm bg-transparent border-b border-transparent hover:border-gray-600 focus:border-indigo-500 outline-none w-full" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
-            <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 ml-2"><i class="fas fa-trash"></i></button>
+            <div class="flex-grow mr-2">
+                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 block">Subject Name</label>
+                <input class="font-extrabold text-sm bg-[#101830] border border-[#26314f] rounded px-3 py-2 w-full focus:border-indigo-500 outline-none" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
+            </div>
+            <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 mt-5"><i class="fas fa-trash"></i></button>
         </div>`;
         
         s.topics.forEach(t => {
@@ -568,7 +572,7 @@ window.MathJax = {
         B.renderContent();
     },
     updateSubjectName: function(sid, val) {
-        var s = getSubject(sid); if (s) s.name = val; B.scheduleSave();
+        var s = getSubject(sid); if (s) { s.name = val; B.scheduleSave(); }
     },
     deleteSubject: function(sid) {
         if (!confirm('Delete entire subject?')) return;
@@ -902,10 +906,10 @@ window.MathJax = {
             B.toast('Published successfully!', 'success');
             currentLoadedPath = f;
 
-            // 2. Update index.html
+            // 2. Update index.html with the escaped script tag
             B.toast('Updating index.html...', 'info');
             try {
-            const scriptTag = `<script defer src="question-banks/${f}"><\/script>`;
+                const scriptTag = `<script defer src="question-banks/${f}"><\/script>`;
                 const targetUrl = `https://api.github.com/repos/${o}/${r}/contents/index.html`;
                 
                 const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${t}` } });
