@@ -10,11 +10,11 @@ module.exports = async function handler(req, res) {
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch (e) { body = {}; }
     }
-    let { filename, code, repoOwner, repoName } = body;
+    let { filename, code, repoOwner, repoName, action } = body;
     const githubToken = process.env.GITHUB_TOKEN;
 
-    if (!githubToken || !repoOwner || !repoName || !filename) {
-      return res.status(400).json({ error: 'Missing required fields.' });
+    if (!githubToken || !repoOwner || !repoName) {
+      return res.status(400).json({ error: 'Missing GitHub credentials or repository config.' });
     }
 
     const headers = {
@@ -25,41 +25,36 @@ module.exports = async function handler(req, res) {
     };
 
     // ==========================================
-    // ACTION 1: UPDATE INDEX.HTML SCRIPT TAGS
+    // ACTION: AUTO-UPDATE INDEX.HTML SCRIPT TAGS
     // ==========================================
-    if (filename === 'update-index') {
-      // 1. Fetch the tree
+    if (action === 'update-index' || filename === 'update-index') {
       const treeRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`, { headers });
       if (!treeRes.ok) throw new Error('Failed to fetch repository tree.');
       const treeData = await treeRes.json();
 
-      // Separate into notes and banks
       const noteFiles = [];
       const bankFiles = [];
 
       treeData.tree.forEach(item => {
         if (item.type !== 'blob' || !item.path.startsWith('question-banks/') || !item.path.endsWith('.js')) return;
-        if (item.path === 'question-banks/question-loader.js') return;
+        if (item.path.includes('question-loader.js')) return;
 
         if (item.path.endsWith('-bank.js')) {
           bankFiles.push(item.path);
-        } else {
+        } else if (item.path.includes('notes') || item.path.endsWith('.js')) {
           noteFiles.push(item.path);
         }
       });
 
-      // 2. Fetch index.html
       const indexRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/index.html`, { headers });
       if (!indexRes.ok) throw new Error('Failed to fetch index.html.');
       const indexData = await indexRes.json();
       const indexSha = indexData.sha;
       let indexContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
-      // 3. Generate script tags with defer
       const noteTags = noteFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
       const bankTags = bankFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
 
-      // 4. Safely replace content between markers
       function replaceBlock(content, startMarker, endMarker, newTags) {
         const startIndex = content.indexOf(startMarker);
         const endIndex = content.indexOf(endMarker);
@@ -81,9 +76,8 @@ module.exports = async function handler(req, res) {
         bankTags
       );
 
-      // 5. Commit if changed
       if (updatedContent === indexContent) {
-        return res.status(200).json({ success: true, message: 'No changes needed.' });
+        return res.status(200).json({ success: true, message: 'Index.html already up to date.' });
       }
 
       const updatedBase64 = Buffer.from(updatedContent, 'utf8').toString('base64');
@@ -91,7 +85,7 @@ module.exports = async function handler(req, res) {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: `chore: auto-update scripts in index.html`,
+          message: `chore: auto-update script bundles in index.html`,
           content: updatedBase64,
           sha: indexSha,
           branch: 'main'
@@ -100,18 +94,18 @@ module.exports = async function handler(req, res) {
 
       if (!putRes.ok) {
         const errText = await putRes.text();
-        throw new Error(`GitHub commit failed (${putRes.status}): ${errText.slice(0, 100)}`);
+        throw new Error(`GitHub index commit failed (${putRes.status}): ${errText.slice(0, 100)}`);
       }
 
       return res.status(200).json({ success: true, message: 'index.html updated successfully.' });
     }
 
     // ==========================================
-    // ACTION 2: PUBLISH NORMAL FILES (NOTES/BANKS/SVGS)
+    // ACTION: PUBLISH STANDARD FILE
     // ==========================================
     const isGitkeep = filename && filename.endsWith('.gitkeep');
     if (!code && !isGitkeep) {
-      return res.status(400).json({ error: 'Missing code content.' });
+      return res.status(400).json({ error: 'Missing code content for file publication.' });
     }
 
     let cleanName = filename.replace(/^question-banks\//i, '').replace(/^\/+/, '');
@@ -146,7 +140,7 @@ module.exports = async function handler(req, res) {
     const commitData = await putRes.json();
     return res.status(200).json({
       success: true,
-      message: 'Published successfully.',
+      message: 'File published successfully.',
       commitUrl: commitData.commit ? commitData.commit.html_url : null
     });
   } catch (error) {
