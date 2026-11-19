@@ -566,6 +566,29 @@ window.MathJax = {
         B.renderAll();
     },
 
+    renameTopic: function(sid, tid) {
+    var t = getTopic(sid, tid);
+    if (!t) return;
+    var newName = prompt("Enter new Topic name:", t.name);
+    if (newName && newName.trim() !== "" && newName !== t.name) {
+        B.pushUndoState();
+        t.name = newName.trim();
+        B.renderAll();
+    }
+},
+renameSubTopic: function(sid, tid, stid) {
+    var t = getTopic(sid, tid);
+    if (!t) return;
+    var st = t.subTopics.find(x => x.id === stid);
+    if (!st) return;
+    var newName = prompt("Enter new Sub-Topic name:", st.name);
+    if (newName && newName.trim() !== "" && newName !== st.name) {
+        B.pushUndoState();
+        st.name = newName.trim();
+        B.renderAll();
+    }
+},
+
     /* ------------- IMPORT & PARSING ------------- */
     handleMdFileSelect: function(input) {
         var file = input.files[0]; if (!file) return;
