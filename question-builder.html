@@ -916,69 +916,52 @@ importFromGitHub: async function(path) {
     },
 
     submitPublish: async function() {
-        var o = document.getElementById('pub-owner').value.trim();
-        var r = document.getElementById('pub-repo').value.trim();
-        var t = document.getElementById('pub-token').value.trim();
-        var f = document.getElementById('pub-filename').value.trim();
+    var o = document.getElementById('pub-owner').value.trim();
+    var r = document.getElementById('pub-repo').value.trim();
+    var t = document.getElementById('pub-token').value.trim();
+    var f = document.getElementById('pub-filename').value.trim();
+    
+    if (!o || !r || !t || !f) return B.toast('All fields required', 'error');
+    
+    var btn = document.getElementById('pub-submit');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+    btn.disabled = true;
+
+    var code = B.generateExportJSCode(false);
+    try {
+        // 1. Publish the bank file
+        var res = await fetch('/api/publish-bank', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: f, code: code, githubToken: t, repoOwner: o, repoName: r })
+        });
+        if (!res.ok) throw new Error('Publish failed');
+        B.toast('Bank Published!', 'success');
+        currentLoadedPath = f;
+
+        // 2. Update index.html
+        B.toast('Updating index.html...', 'info');
+        var indexRes = await fetch('/api/publish-bank', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                filename: 'update-index', 
+                githubToken: t, 
+                repoOwner: o, 
+                repoName: r 
+            })
+        });
+        var indexData = await indexRes.json();
+        if (!indexRes.ok) throw new Error(indexData.error || 'Failed to update index.html');
         
-        if (!o || !r || !t || !f) return B.toast('All fields required', 'error');
-        
-        var btn = document.getElementById('pub-submit');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-        btn.disabled = true;
+        B.toast('Index updated successfully!', 'success');
+        B.closeModal('publish-modal');
 
-        var code = B.generateExportJSCode(false);
-        try {
-            var res = await fetch('/api/publish-bank', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: f, code: code, githubToken: t, repoOwner: o, repoName: r })
-            });
-            if (!res.ok) throw new Error('Publish failed');
-            B.toast('Published successfully!', 'success');
-            currentLoadedPath = f;
-
-            // Update index.html safely using Regex
-            B.toast('Updating index.html...', 'info');
-            try {
-                const scriptTag = `<script defer src="question-banks/${f}"><\/script>`;
-                const targetUrl = `https://api.github.com/repos/${o}/${r}/contents/index.html`;
-                
-                const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${t}` } });
-                if (!indexRes.ok) throw new Error("Could not fetch index.html");
-                const indexData = await indexRes.json();
-                const sha = indexData.sha;
-                let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
-
-                if (!content.includes(scriptTag)) {
-                    const regex = /<script[^>]*src=["']question-banks\/question-loader\.js["'][^>]*><\/script>/i;
-                    if (regex.test(content)) {
-                        content = content.replace(regex, `${scriptTag}\n  $&`);
-                    } else {
-                        content = content.replace('</body>', `  ${scriptTag}\n</body>`);
-                    }
-
-                    const encodedContent = btoa(unescape(encodeURIComponent(content)));
-                    const putRes = await fetch(targetUrl, {
-                        method: 'PUT',
-                        headers: { Authorization: `token ${t}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            message: `chore: auto-link ${f} to index.html`,
-                            content: encodedContent,
-                            sha: sha
-                        })
-                    });
-                    if(!putRes.ok) throw new Error("Failed to commit index.html");
-                    B.toast('Index updated successfully!', 'success');
-                }
-            } catch (indexErr) {
-                console.warn('Index update failed:', indexErr);
-                B.toast(indexErr.message, 'error');
-            }
-
-            B.closeModal('publish-modal');
-        } catch (err) { B.toast(err.message, 'error'); }
-        finally { btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; btn.disabled = false; }
-    },
+    } catch (err) { 
+        B.toast(err.message, 'error'); 
+    } finally { 
+        btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; 
+        btn.disabled = false; 
+    }
+},
 
     slug: function(s) { return String(s || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-'); },
 
