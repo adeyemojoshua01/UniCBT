@@ -33,10 +33,6 @@ window.MathJax = {
   .chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.04em; cursor:pointer; border:1px solid transparent; }
   .chip.active { background: rgba(99,102,241,.2); color: #c7d2fe; border-color: rgba(99,102,241,.5); }
   .chip.inactive { background: #111a2e; color: #8598AC; border-color: #26314f; }
-  .tree-item { display:flex; align-items:center; gap:7px; width:100%; text-align:left; padding:8px 10px; border-radius:8px; font-size:13px; color:#B7C6D4; cursor:pointer; transition:.12s; border: 1px solid transparent; }
-  .tree-item:hover { background:#111a2e; color:#fff; }
-  .tree-item.active { background:rgba(99,102,241,.15); color:#c7d2fe; border-color: rgba(99,102,241,.4); }
-  .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex:none; }
   .modal-shell { position:fixed; inset:0; z-index:80; background:rgba(2,6,15,.85); backdrop-filter:blur(6px); display:flex; align-items:flex-start; justify-content:center; padding:20px 14px; overflow-y:auto; }
   .modal-card { width:100%; max-width:720px; background:#0B1020; border:1px solid #26314f; border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.6); overflow:hidden; margin:auto; }
   .hidden { display:none !important; }
@@ -49,6 +45,13 @@ window.MathJax = {
   .pane { display: none; }
   .pane.active { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  
+  /* Tree Styles */
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
+  .folder-icon { transition: transform 0.2s; }
+  details[open] > summary .folder-icon { transform: rotate(90deg); }
 </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
@@ -169,28 +172,6 @@ window.MathJax = {
   </div>
 </div>
 
-<!-- Export Modal -->
-<div id="export-modal" class="modal-shell hidden">
-  <div class="modal-card !max-w-3xl">
-    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
-      <h2 class="font-bold text-sm"><i class="fas fa-file-export text-amber-400 mr-2"></i>Export Bank</h2>
-      <button onclick="B.closeModal('export-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="p-5 space-y-4">
-      <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
-        <div><label class="lbl">Filename (Path)</label><input id="export-filename" class="field font-mono" onchange="B.updateExportPreview()"></div>
-        <label class="flex items-center gap-2 text-xs font-semibold text-slate-300 pb-2"><input type="checkbox" id="export-shuffle" class="accent-amber-500" onchange="B.updateExportPreview()"> Shuffle</label>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="B.copyExport()" class="btn btn-ghost"><i class="fas fa-copy"></i> Copy</button>
-        <button onclick="B.downloadExport()" class="btn btn-amber"><i class="fas fa-download"></i> Download</button>
-        <button onclick="B.openPublish()" class="btn btn-indigo ml-auto"><i class="fab fa-github"></i> Publish</button>
-      </div>
-      <pre id="export-preview" class="bg-[#05080f] border border-[#1e2740] rounded-xl p-3.5 text-[11px] text-emerald-300 overflow-auto max-h-72 font-mono"></pre>
-    </div>
-  </div>
-</div>
-
 <!-- Publish Modal -->
 <div id="publish-modal" class="modal-shell hidden">
   <div class="modal-card !max-w-lg">
@@ -225,12 +206,12 @@ window.MathJax = {
   var appData = { bankName: 'Untitled Bank', subjects: [] };
   var selected = { subjectId: null, topicId: null, subTopicId: null, questionId: null };
   var activeTab = 'structure';
-  var searchQuery = '';
   var undoStack = [], redoStack = [];
   var saveTimer = null;
   var pendingImport = null;
   var currentLoadedPath = '';
   var exportCode = '';
+  var ghTreeData = null;
 
   function b64DecodeUnicode(str) {
       return decodeURIComponent(atob(str).split('').map(function(c) {
@@ -265,26 +246,6 @@ window.MathJax = {
         if (raw) {
           var parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.subjects)) appData = parsed;
-        } else {
-            var oldRaw = localStorage.getItem('cbt_bank_builder_state');
-            if (oldRaw) {
-                var oldData = JSON.parse(oldRaw);
-                if (oldData && oldData.subjects) {
-                    appData = oldData;
-                    appData.subjects.forEach(s => {
-                        s.topics.forEach(t => {
-                            if (!t.subTopics) t.subTopics = [newSubTopic('General')];
-                            t.questions.forEach(q => {
-                                if (!q.subTopicId) {
-                                    var found = t.subTopics.find(st => st.name === q.subTopic);
-                                    if (!found) { found = newSubTopic(q.subTopic || 'General'); t.subTopics.push(found); }
-                                    q.subTopicId = found.id;
-                                }
-                            });
-                        });
-                    });
-                }
-            }
         }
       } catch (e) { console.warn(e); }
 
@@ -655,7 +616,6 @@ window.MathJax = {
         reader.readAsText(file);
     },
 
-    // FIXED: Extracts SubTopic and maps to the question object
     parseMarkdownToCBT: function(raw) {
         var blocks = raw.split(/\n\s*---\s*\n/);
         var questions = [];
@@ -664,7 +624,7 @@ window.MathJax = {
             if (lines.length === 0) return;
             var q = newQuestion('MCQ');
             q.question = '';
-            q.subTopicName = null; // Temporary storage
+            q.subTopicName = null; 
             var inOptions = false;
             
             lines.forEach(line => {
@@ -673,7 +633,6 @@ window.MathJax = {
                     q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
                     return;
                 }
-                // FIXED: Detect SubTopic in markdown
                 if (/^(SubTopic|Sub-Topic|Subtopic):\s*/i.test(line)) {
                     q.subTopicName = line.replace(/^(SubTopic|Sub-Topic|Subtopic):\s*/i, '').trim();
                     return;
@@ -736,11 +695,10 @@ window.MathJax = {
         var t = currentTopic();
         var sel = document.getElementById('import-target-subtopic');
         if (t) {
-            // Add an option to auto-detect from file
             var html = `<option value="auto">Auto-detect from file</option>`;
             html += t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
             sel.innerHTML = html;
-            sel.value = 'auto'; // Default to auto-detect
+            sel.value = 'auto'; 
         }
         B.openModal('import-modal');
     },
@@ -754,7 +712,6 @@ window.MathJax = {
         if (!pendingImport || pendingImport.length === 0) return;
 
         var targetSt = document.getElementById('import-target-subtopic').value;
-        
         B.pushUndoState();
         
         var importedCount = 0;
@@ -762,7 +719,6 @@ window.MathJax = {
             q.id = uid('q');
             
             if (targetSt === 'auto') {
-                // Use the sub-topic name from the file, or "General" if missing
                 var stName = q.subTopicName || 'General';
                 var existingSt = t.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
                 if (!existingSt) {
@@ -771,11 +727,10 @@ window.MathJax = {
                 }
                 q.subTopicId = existingSt.id;
             } else {
-                // Use the manually selected sub-topic
                 q.subTopicId = targetSt;
             }
             
-            delete q.subTopicName; // Cleanup
+            delete q.subTopicName; 
             t.questions.push(q);
             importedCount++;
         });
@@ -786,7 +741,7 @@ window.MathJax = {
         pendingImport = null;
     },
 
-    /* ------------- GITHUB & PUBLISH ------------- */
+    /* ------------- GITHUB EXPLORER TREE ------------- */
     loadGitHubTree: async function() {
         var o = document.getElementById('gh-user').value.trim();
         var r = document.getElementById('gh-repo').value.trim();
@@ -803,15 +758,64 @@ window.MathJax = {
             if (!res.ok) throw new Error('Failed to load tree');
             const data = await res.json();
             
-            var html = '';
-            data.tree.filter(x => x.path.startsWith('question-banks/') && x.path.endsWith('.js') && !x.path.includes('question-loader')).forEach(x => {
-                var path = x.path.replace('question-banks/', '');
-                html += `<button onclick="B.importFromGitHub('${path}')" class="w-full text-left flex items-center gap-2 px-2 py-2 rounded hover:bg-[#101830] text-xs text-gray-300">
-                    <i class="fab fa-js text-amber-400"></i> ${esc(path)}
-                </button>`;
+            const root = {};
+            data.tree.forEach(item => {
+                if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
+                
+                const parts = item.path.replace('question-banks/', '').split('/');
+                let current = root;
+                
+                parts.forEach((part, i) => {
+                    if (!current[part]) {
+                        current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
+                    }
+                    if (current[part] !== 'FILE') {
+                        current = current[part];
+                    }
+                });
             });
-            c.innerHTML = html || '<div class="text-center text-xs text-gray-500 mt-4">No .js banks found.</div>';
+
+            ghTreeData = root;
+            B.renderGhTree(root, c, '');
         } catch (err) { c.innerHTML = `<div class="text-red-400 text-xs mt-4">${err.message}</div>`; }
+    },
+
+    renderGhTree: function(tree, container, parentPath) {
+        if (parentPath === '') container.innerHTML = '';
+        
+        if (Object.keys(tree).length === 0 && parentPath === '') {
+            container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No files found.</div>';
+            return;
+        }
+
+        const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
+        const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
+
+        folders.forEach(folder => {
+            const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
+            const details = document.createElement('details');
+            details.className = 'mb-1';
+            const summary = document.createElement('summary');
+            summary.className = 'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] text-gray-300';
+            summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
+            details.appendChild(summary);
+            const childContainer = document.createElement('div');
+            childContainer.className = 'tree-spine';
+            details.appendChild(childContainer);
+            B.renderGhTree(tree[folder], childContainer, fullPath);
+            container.appendChild(details);
+        });
+
+        files.forEach(file => {
+            const fullPath = parentPath ? `${parentPath}/${file}` : file;
+            if (file.endsWith('.js') && !file.includes('question-loader')) {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] text-gray-400 hover:bg-[#101830] hover:text-gray-200';
+                btn.innerHTML = `<span class="w-3"></span> <i class="fab fa-js w-4 text-center text-amber-400"></i> <span class="truncate">${file}</span>`;
+                btn.onclick = () => B.importFromGitHub(fullPath);
+                container.appendChild(btn);
+            }
+        });
     },
 
     importFromGitHub: async function(path) {
@@ -820,8 +824,11 @@ window.MathJax = {
         var o = localStorage.getItem('gh_owner');
         var r = localStorage.getItem('gh_repo');
         var t = localStorage.getItem('gh_token');
+        
+        B.toast('Fetching ' + path + '...', 'info');
         try {
-            const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${path}?ref=main`, {
+            const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+            const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${encodedPath}?ref=main`, {
                 headers: { 'Authorization': `token ${t}` }
             });
             if (!res.ok) throw new Error('Fetch failed');
@@ -894,6 +901,7 @@ window.MathJax = {
             if (!res.ok) throw new Error('Publish failed');
             B.toast('Published successfully!', 'success');
             currentLoadedPath = f;
+            B.closeModal('publish-modal');
         } catch (err) { B.toast(err.message, 'error'); }
         finally { btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; btn.disabled = false; }
     },
@@ -947,15 +955,7 @@ window.MathJax = {
         `).join('');
         
         container.innerHTML = `<h2 class="font-bold text-lg mb-4">Preview: ${esc(t.name)}</h2>` + (html || '<div class="text-center text-slate-500">No questions.</div>');
-    },
-
-    copyExport: function() { navigator.clipboard.writeText(exportCode); B.toast('Copied!', 'success'); },
-    downloadExport: function() {
-        var blob = new Blob([exportCode], {type: 'text/javascript'});
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'bank.js'; a.click();
-    },
-    updateExportPreview: function() { exportCode = B.generateExportJSCode(false); document.getElementById('export-preview').textContent = exportCode; }
+    }
   };
 
   window.B = B;
