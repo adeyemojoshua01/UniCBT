@@ -31,7 +31,6 @@ window.MathJax = {
   .tab-pane.active { display: flex; flex-direction: column; animation: fadeIn 0.3s ease; flex-grow: 1; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   
-  /* Markdown & LaTeX Preview Styling */
   .preview-content { font-size: 15px; line-height: 1.6; color: #cbd5e1; }
   .preview-content h1, .preview-content h2, .preview-content h3 { font-weight: 800; margin: 1.2em 0 0.5em; color: #fff; line-height: 1.3; }
   .preview-content h1 { font-size: 1.5em; border-bottom: 1px solid var(--border-dark); padding-bottom: 5px; }
@@ -46,7 +45,6 @@ window.MathJax = {
   .preview-content hr { border: 0; border-top: 1px solid var(--border-dark); margin: 1.5em 0; }
   .preview-content strong { color: #fff; font-weight: 700; }
   
-  /* Sidebar Tree - Vercel Style */
   #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
   #sidebar.open { transform: translateX(0); }
   #sidebar-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
@@ -68,7 +66,6 @@ window.MathJax = {
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
 
-  <!-- HEADER -->
   <header class="flex-none bg-[#0B1020] border-b border-[#1e2740] px-4 py-3 flex items-center justify-between z-20">
     <div class="flex items-center gap-3">
       <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95 transition-transform"><i class="fas fa-bars"></i></button>
@@ -80,10 +77,7 @@ window.MathJax = {
     <button onclick="openModal('github-modal')" class="w-10 h-10 rounded-xl bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300 active:scale-95 transition-transform"><i class="fab fa-github text-lg"></i></button>
   </header>
 
-  <!-- MAIN WORKSPACE -->
   <main class="flex-grow flex flex-col overflow-hidden relative">
-    
-    <!-- TABS -->
     <div class="flex-none flex border-b border-[#1e2740] bg-[#0B1020] z-10">
       <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn active"><i class="fas fa-file-lines mr-1.5"></i> Notes</button>
       <button onclick="switchTab('svg')" id="tab-svg" class="tab-btn"><i class="fas fa-image mr-1.5"></i> SVGs</button>
@@ -91,8 +85,6 @@ window.MathJax = {
     </div>
 
     <div class="flex-grow overflow-y-auto p-4 pb-24">
-      
-      <!-- TAB 1: NOTES -->
       <div id="pane-notes" class="tab-pane active">
         <div class="mb-3 grid grid-cols-2 gap-2">
           <div>
@@ -118,7 +110,6 @@ window.MathJax = {
         <textarea id="note-editor" class="input-dark code-editor flex-grow min-h-[400px]" placeholder="Select a topic from the sidebar to start writing..." oninput="saveDraft()"></textarea>
       </div>
 
-      <!-- TAB 2: SVG STUDIO -->
       <div id="pane-svg" class="tab-pane">
         <div class="mb-4">
           <div class="flex items-center justify-between mb-2">
@@ -155,7 +146,6 @@ window.MathJax = {
         </div>
       </div>
 
-      <!-- TAB 3: PREVIEW -->
       <div id="pane-preview" class="tab-pane">
         <div class="bg-[#0B1020] border border-[#1e2740] rounded-xl p-5 shadow-lg mb-6">
           <div class="flex items-center gap-2 mb-4 border-b border-[#1e2740] pb-3">
@@ -174,7 +164,6 @@ window.MathJax = {
     </div>
   </main>
 
-  <!-- STICKY BOTTOM ACTION BAR -->
   <div class="fixed bottom-0 left-0 w-full bg-[#0B1020] border-t border-[#1e2740] p-3 flex gap-3 z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
     <button onclick="loadFileFromPath(state.activePath)" id="btn-load" class="flex-1 bg-[#101830] border border-[#1e2740] text-[#E7EEF6] py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform" disabled>
       <i class="fas fa-download"></i> Refresh
@@ -184,7 +173,6 @@ window.MathJax = {
     </button>
   </div>
 
-  <!-- SIDEBAR (DYNAMIC GITHUB EXPLORER) -->
   <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onclick="toggleSidebar()"></div>
   <aside id="sidebar" class="fixed top-0 left-0 w-[300px] h-full bg-[#0a0f1d] border-r border-[#1e2740] z-50 flex flex-col">
     <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0B1020]">
@@ -209,7 +197,6 @@ window.MathJax = {
     </div>
   </aside>
 
-  <!-- MODALS -->
   <div id="github-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden overflow-y-auto p-4 md:p-8">
     <div class="bg-[#0B1020] border border-[#1e2740] rounded-2xl w-full max-w-sm mx-auto shadow-2xl mt-10 md:mt-20 overflow-hidden">
       <div class="p-4 border-b border-[#1e2740] flex justify-between items-center bg-[#0c1222]">
@@ -241,6 +228,7 @@ window.MathJax = {
       activeSubject: '',
       activeTopic: '',
       activePath: '',
+      originalPath: '', // Track original path to delete old file on rename
       activeSvgIndex: -1,
       data: {}, 
       github: { owner: '', repo: '', token: '' },
@@ -264,9 +252,6 @@ window.MathJax = {
         }).join(''));
     }
 
-    /* =========================================================
-       GITHUB TREE FETCHING & PARSING
-       ========================================================= */
     async function fetchGitHubTree(force = false) {
       if (!state.github.owner || !state.github.repo || !state.github.token) {
         document.getElementById('sidebar-tree').innerHTML = '<div class="text-center text-xs text-red-400 mt-4">Set GitHub settings first.</div>';
@@ -359,13 +344,11 @@ window.MathJax = {
       });
     }
 
-    /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION
-       ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
       
       state.activePath = path;
+      state.originalPath = path; // Save original path
       saveState();
       renderSidebarTree(state.treeData); 
       
@@ -504,11 +487,10 @@ window.MathJax = {
     }
 
     function updateSubjectName(newName) {
-      if (!newName.trim()) return;
+      if (!newName.trim() || newName === state.activeSubject) return;
       const oldName = state.activeSubject;
       state.activeSubject = newName;
       
-      // Update the path's first segment
       const parts = state.activePath.split('/');
       if (parts.length > 1) {
           parts[0] = getSlug(newName);
@@ -517,7 +499,6 @@ window.MathJax = {
       
       document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
       
-      // Migrate local data
       if (state.data[oldName] && oldName !== newName) {
         state.data[newName] = state.data[oldName];
         delete state.data[oldName];
@@ -556,9 +537,6 @@ window.MathJax = {
       saveState();
     }
 
-    /* =========================================================
-       DEEP FOLDER & FILE CREATION
-       ========================================================= */
     async function createNewFolder() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
       
@@ -643,9 +621,6 @@ window.MathJax = {
       }
     }
 
-    /* =========================================================
-       SIDEBAR UI & SVG MANAGEMENT
-       ========================================================= */
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
       const ov = document.getElementById('sidebar-overlay');
@@ -748,9 +723,6 @@ window.MathJax = {
       toast('SVG Generated!', 'success');
     }
 
-    /* =========================================================
-       PREVIEW & PUBLISHING
-       ========================================================= */
     function parseMarkdownWithMath(rawText) {
       if (!rawText) return '';
       if (!window.marked) return rawText;
@@ -813,11 +785,10 @@ window.MathJax = {
       const draft = state.data[state.activeSubject]?.[state.activeTopic];
       if (!draft) return toast('No data to publish.', 'error');
 
-      // FIXED: Construct path dynamically from input boxes to ensure rename overwrites correctly
       const subjSlug = getSlug(document.getElementById('subject-name-input').value);
       const topicSlug = getSlug(document.getElementById('topic-name-input').value);
       
-      // Update activePath in case the user changed the names
+      const oldPath = state.originalPath;
       state.activePath = `${subjSlug}/${topicSlug}/${topicSlug}.js`;
 
       const subj = document.getElementById('subject-name-input').value;
@@ -868,7 +839,26 @@ window.MathJax = {
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
         toast('Published ' + state.activePath + ' successfully!', 'success');
 
-        // Update index.html
+        // Delete old file if renamed
+        if (oldPath && oldPath !== state.activePath) {
+            try {
+                const getOld = await fetch(`https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${oldPath}`, {
+                    headers: { 'Authorization': `token ${state.github.token}` }
+                });
+                if (getOld.ok) {
+                    const oldData = await getOld.json();
+                    await fetch(`https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/question-banks/${oldPath}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `token ${state.github.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: `chore: remove old ${oldPath} after rename`, sha: oldData.sha })
+                    });
+                    toast('Deleted old file path.', 'info');
+                }
+            } catch (e) { console.warn('Could not delete old file', e); }
+            state.originalPath = state.activePath;
+        }
+
+        // Update index.html safely using Regex
         toast('Updating index.html...', 'info');
         try {
             const scriptTag = `<script defer src="question-banks/${state.activePath}"><\/script>`;
@@ -881,9 +871,10 @@ window.MathJax = {
             let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
 
             if (!content.includes(scriptTag)) {
-                const anchor = '<script defer src="question-banks/question-loader.js"><\/script>';
-                if (content.includes(anchor)) {
-                    content = content.replace(anchor, `${scriptTag}\n  ${anchor}`);
+                // Regex to find the question-loader.js script tag
+                const regex = /<script[^>]*src=["']question-banks\/question-loader\.js["'][^>]*><\/script>/i;
+                if (regex.test(content)) {
+                    content = content.replace(regex, `${scriptTag}\n  $&`);
                 } else {
                     content = content.replace('</body>', `  ${scriptTag}\n</body>`);
                 }
@@ -915,9 +906,6 @@ window.MathJax = {
       }
     }
 
-    /* =========================================================
-       MODALS & TOASTS
-       ========================================================= */
     function openModal(id) { 
       if (!state.github) state.github = { owner: '', repo: '', token: '' };
       if (id === 'github-modal') {
