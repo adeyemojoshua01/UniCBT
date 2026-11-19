@@ -94,9 +94,15 @@ window.MathJax = {
       
       <!-- TAB 1: NOTES -->
       <div id="pane-notes" class="tab-pane active">
-        <div class="mb-3">
-          <label class="text-xs font-bold text-[#8598AC] uppercase">Topic Name (Editable)</label>
-          <input type="text" id="topic-name-input" class="input-dark mt-1 font-bold" oninput="updateTopicName(this.value)">
+        <div class="mb-3 grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-bold text-[#8598AC] uppercase">Subject Name</label>
+            <input type="text" id="subject-name-input" class="input-dark mt-1 font-bold" oninput="updateSubjectName(this.value)">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-[#8598AC] uppercase">Topic Name</label>
+            <input type="text" id="topic-name-input" class="input-dark mt-1 font-bold" oninput="updateTopicName(this.value)">
+          </div>
         </div>
         <div class="mb-2 flex items-center justify-between flex-wrap gap-2">
           <label class="text-xs font-bold text-[#8598AC] uppercase">Markdown & LaTeX Editor</label>
@@ -354,7 +360,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING & DYNAMIC PATH RESOLUTION
+       FILE LOADING
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -375,6 +381,7 @@ window.MathJax = {
       state.activeTopic = formatName(topicSlug);
       
       document.getElementById('current-path-label').textContent = `question-banks / ${path}`;
+      document.getElementById('subject-name-input').value = state.activeSubject;
       document.getElementById('topic-name-input').value = state.activeTopic;
       
       toast('Fetching ' + path + '...', 'info');
@@ -488,9 +495,34 @@ window.MathJax = {
       if (!draft) return;
       
       document.getElementById('note-editor').value = draft.notes || '';
+      document.getElementById('subject-name-input').value = state.activeSubject;
+      document.getElementById('topic-name-input').value = state.activeTopic;
+      
       renderSVGList();
       closeSVGEditor();
       updatePreview();
+    }
+
+    function updateSubjectName(newName) {
+      if (!newName.trim() || newName === state.activeSubject) return;
+      const oldName = state.activeSubject;
+      state.activeSubject = newName;
+      
+      // Update the path's first segment
+      const parts = state.activePath.split('/');
+      if (parts.length > 1) {
+          parts[0] = getSlug(newName);
+          state.activePath = parts.join('/');
+      }
+      
+      document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
+      
+      // Migrate local data
+      if (state.data[oldName]) {
+        state.data[newName] = state.data[oldName];
+        delete state.data[oldName];
+      }
+      saveState();
     }
 
     function updateTopicName(newName) {
@@ -525,7 +557,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       DEEP FOLDER & FILE CREATION
+       FOLDER & FILE CREATION
        ========================================================= */
     async function createNewFolder() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
@@ -807,7 +839,6 @@ window.MathJax = {
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            // FIX: SVGs ALWAYS go to subject/svg/ folder
             imagesContent += `  { data: 'question-banks/${subjectSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
@@ -832,8 +863,46 @@ window.MathJax = {
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
-        
         toast('Published ' + filename + ' successfully!', 'success');
+
+        // 2. Update index.html
+        toast('Updating index.html...', 'info');
+        try {
+            const scriptTag = `<script defer src="question-banks/${state.activePath}"></script>`;
+            const targetUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/index.html`;
+            
+            const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${state.github.token}` } });
+            if (!indexRes.ok) throw new Error("Could not fetch index.html");
+            const indexData = await indexRes.json();
+            const sha = indexData.sha;
+            let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
+
+            if (!content.includes(scriptTag)) {
+                const anchor = '<script defer src="question-banks/question-loader.js"></script>';
+                if (content.includes(anchor)) {
+                    content = content.replace(anchor, `${scriptTag}\n  ${anchor}`);
+                } else {
+                    content = content.replace('</body>', `  ${scriptTag}\n</body>`);
+                }
+
+                const encodedContent = btoa(unescape(encodeURIComponent(content)));
+                const putRes = await fetch(targetUrl, {
+                    method: 'PUT',
+                    headers: { Authorization: `token ${state.github.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: `chore: auto-link ${state.activePath} to index.html`,
+                        content: encodedContent,
+                        sha: sha
+                    })
+                });
+                if(!putRes.ok) throw new Error("Failed to commit index.html");
+                toast('Index updated successfully!', 'success');
+            }
+        } catch (indexErr) {
+            console.warn('Index update failed:', indexErr);
+            toast(indexErr.message, 'error');
+        }
+
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
