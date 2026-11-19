@@ -487,24 +487,19 @@ window.MathJax = {
     }
 
     function updateSubjectName(newName) {
-      if (!newName.trim() || newName === state.activeSubject) return;
-      const oldName = state.activeSubject;
-      state.activeSubject = newName;
-      
-      const parts = state.activePath.split('/');
-      if (parts.length > 1) {
-          parts[0] = getSlug(newName);
-          state.activePath = parts.join('/');
-      }
-      
-      document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
-      
-      if (state.data[oldName] && oldName !== newName) {
-        state.data[newName] = state.data[oldName];
-        delete state.data[oldName];
-      }
-      saveState();
-    }
+  if (!newName.trim() || newName === state.activeSubject) return;
+  const oldName = state.activeSubject;
+  state.activeSubject = newName;
+  
+  // We ONLY change the display name inside the file. 
+  // We DO NOT change state.activePath so the file stays in its original folder.
+  
+  if (state.data[oldName] && oldName !== newName) {
+    state.data[newName] = state.data[oldName];
+    delete state.data[oldName];
+  }
+  saveState();
+}
 
     function updateTopicName(newName) {
       if (!newName.trim() || newName === state.activeTopic) return;
