@@ -676,60 +676,72 @@ window.MathJax = {
         return { subjects: subjects };
     },
 
-    showImportPreview: function(questions) {
-        pendingImport = questions;
-        document.getElementById('import-preview').classList.remove('hidden');
-        document.getElementById('import-summary').innerHTML = `<i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${questions.length}</strong> questions.`;
-        
-        var t = currentTopic();
-        var sel = document.getElementById('import-target-subtopic');
-        if (t) {
-            var html = `<option value="auto">Auto-detect from file</option>`;
-            html += t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
-            sel.innerHTML = html;
-            sel.value = 'auto'; 
-        }
-        B.openModal('import-modal');
-    },
+showImportPreview: function(questions) {
+    pendingImport = questions;
+    document.getElementById('import-preview').classList.remove('hidden');
+    
+    // Count unique subjects and topics found in the file
+    var subjs = [...new Set(questions.map(q => q._importSubjName || 'Unknown'))];
+    var tops = [...new Set(questions.map(q => q._importTopicName || 'Unknown'))];
+    
+    document.getElementById('import-summary').innerHTML = `
+        <i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${questions.length}</strong> questions.<br>
+        <span class="text-xs text-slate-400 mt-1 block">Subjects: ${subjs.join(', ')}<br>Topics: ${tops.join(', ')}</span>
+    `;
+    
+    // Hide the sub-topic dropdown since we are auto-detecting the hierarchy
+    document.getElementById('import-target-subtopic').classList.add('hidden');
+    
+    B.openModal('import-modal');
+},
 
     applyImport: function() {
-        var t = currentTopic();
-        if (!t) {
-            B.toast('Please select a Topic first in the Structure tab.', 'error');
-            return;
+    if (!pendingImport || pendingImport.length === 0) return;
+
+    B.pushUndoState();
+    var importedCount = 0;
+    
+    pendingImport.forEach(q => {
+        q.id = uid('q');
+        
+        // 1. Find or Create the Subject
+        var sName = q._importSubjName || 'Imported Subject';
+        var subject = appData.subjects.find(s => s.name.toLowerCase() === sName.toLowerCase());
+        if (!subject) {
+            subject = newSubject(sName);
+            appData.subjects.push(subject);
         }
-        if (!pendingImport || pendingImport.length === 0) return;
 
-        var targetSt = document.getElementById('import-target-subtopic').value;
-        B.pushUndoState();
-        
-        var importedCount = 0;
-        pendingImport.forEach(q => {
-            q.id = uid('q');
-            
-            if (targetSt === 'auto') {
-                var stName = q.subTopicName || 'General';
-                var existingSt = t.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
-                if (!existingSt) {
-                    existingSt = newSubTopic(stName);
-                    t.subTopics.push(existingSt);
-                }
-                q.subTopicId = existingSt.id;
-            } else {
-                q.subTopicId = targetSt;
-            }
-            
-            delete q.subTopicName; 
-            t.questions.push(q);
-            importedCount++;
-        });
-        
-        B.closeModal('import-modal');
-        B.renderAll();
-        B.toast(`Imported ${importedCount} questions!`, 'success');
-        pendingImport = null;
-    },
+        // 2. Find or Create the Topic within the Subject
+        var tName = q._importTopicName || 'General';
+        var topic = subject.topics.find(t => t.name.toLowerCase() === tName.toLowerCase());
+        if (!topic) {
+            topic = newTopic(tName);
+            subject.topics.push(topic);
+        }
 
+        // 3. Find or Create the Sub-Topic
+        var stName = q.subTopicName || 'General';
+        var subTopic = topic.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
+        if (!subTopic) {
+            subTopic = newSubTopic(stName);
+            topic.subTopics.push(subTopic);
+        }
+
+        q.subTopicId = subTopic.id;
+        delete q._importSubjName;
+        delete q._importTopicName;
+        delete q.subTopicName;
+        
+        topic.questions.push(q);
+        importedCount++;
+    });
+    
+    B.closeModal('import-modal');
+    B.renderAll();
+    B.toast(`Imported ${importedCount} questions successfully!`, 'success');
+    pendingImport = null;
+},
     /* ------------- GITHUB EXPLORER TREE ------------- */
     loadGitHubTree: async function() {
         var o = document.getElementById('gh-user').value.trim();
