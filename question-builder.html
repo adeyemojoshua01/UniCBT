@@ -578,32 +578,32 @@ window.MathJax = {
         reader.readAsText(file);
     },
     handleJsFileSelect: function(input) {
-        var file = input.files[0]; if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
-                var parsed = [];
-                if (Array.isArray(banks)) {
-                    banks.forEach(str => {
-                        var p = B.parseDSL(str);
-                        // FIXED: Properly maps subject and topics from import
-                        p.subjects.forEach(s => {
-                            s.topics.forEach(t => {
-                                t.questions.forEach(q => {
-                                    q.subjectName = s.name;
-                                    q.topicName = t.name;
-                                    parsed.push(q);
-                                });
+    var file = input.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
+            var parsed = [];
+            if (Array.isArray(banks)) {
+                banks.forEach(str => {
+                    var p = B.parseDSL(str);
+                    // FIXED: Map subject and topic names to the question objects
+                    p.subjects.forEach(s => {
+                        s.topics.forEach(t => {
+                            t.questions.forEach(q => {
+                                q._importSubjName = s.name;
+                                q._importTopicName = t.name;
+                                parsed.push(q);
                             });
                         });
                     });
-                }
-                B.showImportPreview(parsed);
-            } catch(err) { B.toast('Invalid JS file', 'error'); }
-        };
-        reader.readAsText(file);
-    },
+                });
+            }
+            B.showImportPreview(parsed);
+        } catch(err) { B.toast('Invalid JS file', 'error'); }
+    };
+    reader.readAsText(file);
+},
 
     parseMarkdownToCBT: function(raw) {
         var blocks = raw.split(/\n\s*---\s*\n/);
@@ -807,43 +807,43 @@ window.MathJax = {
         });
     },
 
-    importFromGitHub: async function(path) {
-        B.toggleGhSidebar(false);
-        currentLoadedPath = path;
-        var o = localStorage.getItem('gh_owner');
-        var r = localStorage.getItem('gh_repo');
-        var t = localStorage.getItem('gh_token');
+importFromGitHub: async function(path) {
+    B.toggleGhSidebar(false);
+    currentLoadedPath = path;
+    var o = localStorage.getItem('gh_owner');
+    var r = localStorage.getItem('gh_repo');
+    var t = localStorage.getItem('gh_token');
+    
+    B.toast('Fetching ' + path + '...', 'info');
+    try {
+        const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+        const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${encodedPath}?ref=main`, {
+            headers: { 'Authorization': `token ${t}` }
+        });
+        if (!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
+        var text = b64DecodeUnicode(data.content.replace(/\n/g, ''));
         
-        B.toast('Fetching ' + path + '...', 'info');
-        try {
-            const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-            const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${encodedPath}?ref=main`, {
-                headers: { 'Authorization': `token ${t}` }
-            });
-            if (!res.ok) throw new Error('Fetch failed');
-            const data = await res.json();
-            var text = b64DecodeUnicode(data.content.replace(/\n/g, ''));
-            
-            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
-            if (Array.isArray(banks)) {
-                var qs = [];
-                banks.forEach(str => {
-                    var p = B.parseDSL(str);
-                    // FIXED: Maps subject & topic from the import properly
-                    p.subjects.forEach(s => {
-                        s.topics.forEach(t => {
-                            t.questions.forEach(q => {
-                                q.subjectName = s.name;
-                                q.topicName = t.name;
-                                qs.push(q);
-                            });
+        var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
+        if (Array.isArray(banks)) {
+            var qs = [];
+            banks.forEach(str => {
+                var p = B.parseDSL(str);
+                // FIXED: Map subject and topic names to the question objects
+                p.subjects.forEach(s => {
+                    s.topics.forEach(t => {
+                        t.questions.forEach(q => {
+                            q._importSubjName = s.name;
+                            q._importTopicName = t.name;
+                            qs.push(q);
                         });
                     });
                 });
-                B.showImportPreview(qs);
-            }
-        } catch (err) { B.toast(err.message, 'error'); }
-    },
+            });
+            B.showImportPreview(qs);
+        }
+    } catch (err) { B.toast(err.message, 'error'); }
+},
 
     createNewFolder: async function() {
         var path = prompt("Folder path (e.g., chemistry/organic):");
