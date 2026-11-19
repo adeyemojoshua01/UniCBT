@@ -868,7 +868,7 @@ window.MathJax = {
         // 2. Update index.html
         toast('Updating index.html...', 'info');
         try {
-            const scriptTag = `<script defer src="question-banks/${state.activePath}"></script>`;
+            const scriptTag = `<script defer src="question-banks/${state.activePath}"><\/script>`;
             const targetUrl = `https://api.github.com/repos/${state.github.owner}/${state.github.repo}/contents/index.html`;
             
             const indexRes = await fetch(targetUrl, { headers: { Authorization: `token ${state.github.token}` } });
@@ -878,8 +878,8 @@ window.MathJax = {
             let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
 
             if (!content.includes(scriptTag)) {
-                const anchor = '<script defer src="question-banks/question-loader.js"></script>';
-                if (content.includes(anchor)) {
+            const anchor = '<script defer src="question-banks/question-loader.js"><\/script>';
+              if (content.includes(anchor)) {
                     content = content.replace(anchor, `${scriptTag}\n  ${anchor}`);
                 } else {
                     content = content.replace('</body>', `  ${scriptTag}\n</body>`);
