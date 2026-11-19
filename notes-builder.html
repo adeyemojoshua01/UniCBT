@@ -360,7 +360,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FILE LOADING
+       FILE LOADING & DYNAMIC PATH RESOLUTION
        ========================================================= */
     async function loadFileFromPath(path) {
       if (!path) return toast('No file selected.', 'error');
@@ -504,7 +504,7 @@ window.MathJax = {
     }
 
     function updateSubjectName(newName) {
-      if (!newName.trim() || newName === state.activeSubject) return;
+      if (!newName.trim()) return;
       const oldName = state.activeSubject;
       state.activeSubject = newName;
       
@@ -518,7 +518,7 @@ window.MathJax = {
       document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
       
       // Migrate local data
-      if (state.data[oldName]) {
+      if (state.data[oldName] && oldName !== newName) {
         state.data[newName] = state.data[oldName];
         delete state.data[oldName];
       }
@@ -557,7 +557,7 @@ window.MathJax = {
     }
 
     /* =========================================================
-       FOLDER & FILE CREATION
+       DEEP FOLDER & FILE CREATION
        ========================================================= */
     async function createNewFolder() {
       if (!state.github.owner || !state.github.repo || !state.github.token) return toast('Set GitHub settings first', 'error');
@@ -813,13 +813,16 @@ window.MathJax = {
       const draft = state.data[state.activeSubject]?.[state.activeTopic];
       if (!draft) return toast('No data to publish.', 'error');
 
-      const pathParts = state.activePath.split('/');
-      const filename = pathParts.pop(); 
-      const subjectSlug = pathParts.length > 0 ? pathParts[0] : 'general';
+      // FIXED: Construct path dynamically from input boxes to ensure rename overwrites correctly
+      const subjSlug = getSlug(document.getElementById('subject-name-input').value);
+      const topicSlug = getSlug(document.getElementById('topic-name-input').value);
       
-      const subj = state.activeSubject;
-      const topic = state.activeTopic;
+      // Update activePath in case the user changed the names
+      state.activePath = `${subjSlug}/${topicSlug}/${topicSlug}.js`;
 
+      const subj = document.getElementById('subject-name-input').value;
+      const topic = document.getElementById('topic-name-input').value;
+      
       const btn = document.getElementById('btn-publish');
       const originalHTML = btn.innerHTML;
       btn.innerHTML = '<span class="spinner"></span> Publishing...';
@@ -839,12 +842,12 @@ window.MathJax = {
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            imagesContent += `  { data: 'question-banks/${subjectSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
+            imagesContent += `  { data: 'question-banks/${subjSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjectSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
                if (!svgRes.ok) {
                  const err = await svgRes.json().catch(()=>({}));
@@ -863,9 +866,9 @@ window.MathJax = {
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
-        toast('Published ' + filename + ' successfully!', 'success');
+        toast('Published ' + state.activePath + ' successfully!', 'success');
 
-        // 2. Update index.html
+        // Update index.html
         toast('Updating index.html...', 'info');
         try {
             const scriptTag = `<script defer src="question-banks/${state.activePath}"><\/script>`;
@@ -878,8 +881,8 @@ window.MathJax = {
             let content = b64DecodeUnicode(indexData.content.replace(/\n/g, ''));
 
             if (!content.includes(scriptTag)) {
-            const anchor = '<script defer src="question-banks/question-loader.js"><\/script>';
-              if (content.includes(anchor)) {
+                const anchor = '<script defer src="question-banks/question-loader.js"><\/script>';
+                if (content.includes(anchor)) {
                     content = content.replace(anchor, `${scriptTag}\n  ${anchor}`);
                 } else {
                     content = content.replace('</body>', `  ${scriptTag}\n</body>`);
@@ -903,6 +906,7 @@ window.MathJax = {
             toast(indexErr.message, 'error');
         }
 
+        document.getElementById('current-path-label').textContent = `question-banks / ${state.activePath}`;
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
