@@ -252,42 +252,10 @@ window.MathJax = {
     function saveState() { localStorage.setItem('cbt_studio_codex', JSON.stringify(state)); }
     function getSlug(str) { return String(str || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
-    // Helper to decode Base64 strings safely
     function b64DecodeUnicode(str) {
         return decodeURIComponent(atob(str).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
-    }
-
-    // Helper to convert raw HTML into Markdown
-    function convertHTMLToMarkdown(html) {
-        if (!html) return '';
-        let md = html;
-        
-        const mathBlocks = [];
-        md = md.replace(/\\\[([\s\S]*?)\\\]/g, (match) => {
-            mathBlocks.push(match);
-            return `@@MATHBLOCK${mathBlocks.length - 1}@@`;
-        });
-
-        md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '# $1\n\n');
-        md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '## $1\n\n');
-        md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '### $1\n\n');
-        md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, '#### $1\n\n');
-        md = md.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n');
-        md = md.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '$1\n');
-        md = md.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, '$1\n');
-        md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n');
-        md = md.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '**$1**');
-        md = md.replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '**$1**');
-        md = md.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '*$1*');
-        md = md.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '*$1*');
-        md = md.replace(/<br\s*\/?>/gi, '\n');
-        
-        md = md.replace(/@@MATHBLOCK(\d+)@@/g, (match, index) => mathBlocks[index]);
-        md = md.replace(/\n{3,}/g, '\n\n').trim();
-
-        return md;
     }
 
     /* =========================================================
@@ -399,7 +367,7 @@ window.MathJax = {
       const filename = parts.pop();
       
       const subjectSlug = parts.length > 0 ? parts[0] : 'general';
-      const topicSlug = parts.length > 1 ? parts[parts.length - 1] : filename.replace('.js', '');
+      const topicSlug = filename.replace('.js', '');
       
       const formatName = (str) => str.charAt(0).toUpperCase() + str.slice(1).replace(/-/g, ' ');
 
@@ -472,10 +440,6 @@ window.MathJax = {
           if (noteMatch && noteMatch[1]) {
             noteContent = noteMatch[1].replace(/\\`/g, '`').replace(/\\\\/g, '\\');
           }
-        }
-
-        if (noteContent && /<[a-z][\s\S]*>/i.test(noteContent)) {
-            noteContent = convertHTMLToMarkdown(noteContent);
         }
 
         if (!state.data[state.activeSubject]) state.data[state.activeSubject] = {};
@@ -819,8 +783,7 @@ window.MathJax = {
 
       const pathParts = state.activePath.split('/');
       const filename = pathParts.pop(); 
-      const topicSlug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : 'general';
-      const subjectFolderPath = pathParts.length > 0 ? pathParts.join('/') : 'general';
+      const subjectSlug = pathParts.length > 0 ? pathParts[0] : 'general';
       
       const subj = state.activeSubject;
       const topic = state.activeTopic;
@@ -844,12 +807,13 @@ window.MathJax = {
             if (!rawName.toLowerCase().endsWith('.svg')) rawName += '.svg';
             const safeSvgName = rawName.replace(/[^a-zA-Z0-9.\-_]/g, '-').replace(/-+/g, '-');
             
-            imagesContent += `  { data: 'question-banks/${subjectFolderPath}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
+            // FIX: SVGs ALWAYS go to subject/svg/ folder
+            imagesContent += `  { data: 'question-banks/${subjectSlug}/svg/${safeSvgName}', filename: '${safeSvgName}' },\n`;
             
             if (svg.code && svg.code.trim().length > 0) {
                const svgRes = await fetch('/api/publish-bank', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ filename: `${subjectFolderPath}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
+                  body: JSON.stringify({ filename: `${subjectSlug}/svg/${safeSvgName}`, code: svg.code, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
                });
                if (!svgRes.ok) {
                  const err = await svgRes.json().catch(()=>({}));
@@ -861,7 +825,6 @@ window.MathJax = {
         imagesContent += `];\n`;
         const finalCode = notesContent + '\n' + imagesContent;
 
-        // 1. Publish the note itself
         const res = await fetch('/api/publish-bank', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: state.activePath, code: finalCode, githubToken: state.github.token, repoOwner: state.github.owner, repoName: state.github.repo })
@@ -869,33 +832,8 @@ window.MathJax = {
         
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Publish failed');
+        
         toast('Published ' + filename + ' successfully!', 'success');
-
-        // 2. Update index.html
-        toast('Updating index.html...', 'info');
-        try {
-            const indexRes = await fetch('/api/publish-bank', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                filename: 'update-index', 
-                githubToken: state.github.token, 
-                repoOwner: state.github.owner, 
-                repoName: state.github.repo 
-              })
-            });
-            const indexData = await indexRes.json();
-            
-            if (!indexRes.ok) {
-              // Show the exact error from the backend
-              throw new Error(indexData.error || 'Failed to update index.html');
-            }
-            toast('Index updated successfully!', 'success');
-        } catch (indexErr) {
-            console.warn('Index update failed:', indexErr);
-            toast(indexErr.message, 'error'); // THIS will show the exact error
-        }
-
       } catch (err) {
         toast('Publish failed: ' + err.message, 'error');
       } finally {
@@ -903,9 +841,6 @@ window.MathJax = {
         btn.disabled = false;
       }
     }
-
-
-
 
     /* =========================================================
        MODALS & TOASTS
