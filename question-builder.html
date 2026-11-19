@@ -303,49 +303,51 @@ window.MathJax = {
 
     /* ------------- STRUCTURE RENDERER ------------- */
     renderStructure: function () {
-      var container = document.getElementById('structure-content');
-      var html = '<div class="max-w-3xl mx-auto space-y-4">';
-      
-      appData.subjects.forEach(s => {
-        html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
-        html += `<div class="flex justify-between items-center mb-3">
-            <div class="flex-grow mr-2">
-                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 block">Subject Name</label>
-                <input class="font-extrabold text-sm bg-[#101830] border border-[#26314f] rounded px-3 py-2 w-full focus:border-indigo-500 outline-none" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
-            </div>
-            <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 mt-5"><i class="fas fa-trash"></i></button>
-        </div>`;
-        
-        s.topics.forEach(t => {
-            html += `<div class="ml-2 pl-3 border-l border-[#1e2740] mb-3">
-                <div class="flex justify-between items-center mb-2">
-                    <button onclick="B.selectTopic('${s.id}','${t.id}')" class="text-sm font-bold ${selected.topicId === t.id ? 'text-amber-400' : 'text-slate-300'} hover:text-white text-left flex-grow">
-                        <i class="fas fa-folder mr-2 text-amber-500/70"></i> ${esc(t.name)}
-                    </button>
-                    <button onclick="B.deleteTopic('${s.id}','${t.id}')" class="text-rose-500 text-xs px-2"><i class="fas fa-times"></i></button>
+  var container = document.getElementById('structure-content');
+  var html = '<div class="max-w-3xl mx-auto space-y-4">';
+  
+  appData.subjects.forEach(s => {
+    html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
+    html += `<div class="flex justify-between items-center mb-3">
+        <div class="flex-grow mr-2">
+            <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 block">Subject Name</label>
+            <input class="font-extrabold text-sm bg-[#101830] border border-[#26314f] rounded px-3 py-2 w-full focus:border-indigo-500 outline-none" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
+        </div>
+        <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 mt-5"><i class="fas fa-trash"></i></button>
+    </div>`;
+    
+    s.topics.forEach(t => {
+        html += `<div class="ml-2 pl-3 border-l border-[#1e2740] mb-3">
+            <div class="flex justify-between items-center mb-2">
+                <button onclick="B.selectTopic('${s.id}','${t.id}')" class="text-sm font-bold ${selected.topicId === t.id ? 'text-amber-400' : 'text-slate-300'} hover:text-white text-left flex-grow">
+                    <i class="fas fa-folder mr-2 text-amber-500/70"></i> ${esc(t.name)}
+                </button>
+                <button onclick="B.renameTopic('${s.id}','${t.id}')" class="text-sky-400 text-xs px-2" title="Rename Topic"><i class="fas fa-pen"></i></button>
+                <button onclick="B.deleteTopic('${s.id}','${t.id}')" class="text-rose-500 text-xs px-2" title="Delete Topic"><i class="fas fa-times"></i></button>
+            </div>`;
+            
+            html += `<div class="flex flex-wrap gap-1.5 ml-4">`;
+            t.subTopics.forEach(st => {
+                var count = t.questions.filter(q => q.subTopicId === st.id).length;
+                html += `<div class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'} group flex items-center" onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')">
+                    <span>${esc(st.name)} <span class="opacity-50 text-[9px] ml-1">${count}</span></span>
+                    <button onclick="event.stopPropagation(); B.renameSubTopic('${s.id}','${t.id}','${st.id}')" class="ml-2 text-sky-300 hover:text-white" title="Rename Sub-Topic"><i class="fas fa-pen text-[9px]"></i></button>
+                    <button onclick="event.stopPropagation(); B.deleteSubTopic('${s.id}','${t.id}','${st.id}')" class="ml-1 text-rose-400 hover:text-white" title="Delete Sub-Topic"><i class="fas fa-times-circle text-[9px]"></i></button>
                 </div>`;
-                
-                html += `<div class="flex flex-wrap gap-1.5 ml-4">`;
-                t.subTopics.forEach(st => {
-                    var count = t.questions.filter(q => q.subTopicId === st.id).length;
-                    html += `<div class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'} group" onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')">
-                        ${esc(st.name)} <span class="opacity-50 text-[9px] ml-1">${count}</span>
-                        <button onclick="event.stopPropagation(); B.deleteSubTopic('${s.id}','${t.id}','${st.id}')" class="hidden group-hover:inline ml-1 text-rose-400"><i class="fas fa-times-circle"></i></button>
-                    </div>`;
-                });
-                html += `<button onclick="B.addSubTopic('${s.id}','${t.id}')" class="chip inactive text-indigo-400 border-indigo-500/30"><i class="fas fa-plus"></i> Sub</button></div>`;
-            html += `</div>`;
-        });
-        
-        html += `<div class="mt-3 flex gap-2">
-            <button onclick="B.addTopic('${s.id}')" class="btn btn-ghost !text-xs !py-1.5"><i class="fas fa-folder-plus"></i> Topic</button>
-        </div></div>`;
-      });
-      
-      html += `<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center !py-3"><i class="fas fa-plus"></i> New Subject</button>`;
-      html += '</div>';
-      container.innerHTML = html;
-    },
+            });
+            html += `<button onclick="B.addSubTopic('${s.id}','${t.id}')" class="chip inactive text-indigo-400 border-indigo-500/30"><i class="fas fa-plus"></i> Sub</button></div>`;
+        html += `</div>`;
+    });
+    
+    html += `<div class="mt-3 flex gap-2">
+        <button onclick="B.addTopic('${s.id}')" class="btn btn-ghost !text-xs !py-1.5"><i class="fas fa-folder-plus"></i> Topic</button>
+    </div></div>`;
+  });
+  
+  html += `<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center !py-3"><i class="fas fa-plus"></i> New Subject</button>`;
+  html += '</div>';
+  container.innerHTML = html;
+},
 
     /* ------------- CONTENT RENDERER ------------- */
     renderContent: function () {
