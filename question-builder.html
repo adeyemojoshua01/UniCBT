@@ -125,18 +125,34 @@ window.MathJax = {
       <button onclick="B.closeModal('import-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
     </div>
     <div class="p-5 space-y-4">
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="document.getElementById('md-file-input').click()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-file-alt"></i> Markdown (.md)</button>
-        <button onclick="document.getElementById('js-file-input').click()" class="btn btn-ghost justify-center !py-3"><i class="fab fa-js"></i> JS Bank (.js)</button>
-      </div>
-      <input type="file" id="md-file-input" accept=".md,.txt" class="hidden" onchange="B.handleMdFileSelect(this)">
-      <input type="file" id="js-file-input" accept=".js,.txt" class="hidden" onchange="B.handleJsFileSelect(this)">
-
-      <div class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="document.getElementById('md-file-input').click()">
-        <i class="fas fa-cloud-arrow-up text-2xl text-indigo-400"></i>
-        <p class="mt-2 text-sm font-semibold text-slate-200">Tap to choose a file from storage</p>
+      
+      <!-- TABS -->
+      <div class="flex gap-2 mb-2">
+          <button onclick="B.switchImportTab('paste')" id="tab-import-paste" class="flex-1 btn btn-indigo !py-2 justify-center !text-[11px]"><i class="fas fa-paste"></i> Paste Text</button>
+          <button onclick="B.switchImportTab('file')" id="tab-import-file" class="flex-1 btn btn-ghost !py-2 justify-center !text-[11px]"><i class="fas fa-upload"></i> Upload File</button>
       </div>
 
+      <!-- PASTE PANEL -->
+      <div id="pane-import-paste" class="space-y-3">
+          <textarea id="paste-textarea" rows="10" class="field font-mono !text-[11px]" placeholder="Paste Markdown questions here...&#10;&#10;Example:&#10;### Q1: What is 2+2?&#10;A) 3&#10;B) 4&#10;C) 5&#10;D) 6&#10;**Answer: B**&#10;**Explanation: Basic math.**"></textarea>
+          <button onclick="B.parsePastedText()" class="btn btn-amber w-full justify-center !py-3"><i class="fas fa-magic"></i> Parse Markdown</button>
+      </div>
+
+      <!-- FILE PANEL -->
+      <div id="pane-import-file" class="hidden space-y-3">
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="document.getElementById('md-file-input').click()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-file-alt"></i> Markdown (.md)</button>
+            <button onclick="document.getElementById('js-file-input').click()" class="btn btn-ghost justify-center !py-3"><i class="fab fa-js"></i> JS Bank (.js)</button>
+          </div>
+          <input type="file" id="md-file-input" accept=".md,.txt" class="hidden" onchange="B.handleMdFileSelect(this)">
+          <input type="file" id="js-file-input" accept=".js,.txt" class="hidden" onchange="B.handleJsFileSelect(this)">
+          <div class="rounded-xl border-2 border-dashed border-[#2b3a5e] bg-[#0a1020] p-5 text-center cursor-pointer hover:border-indigo-500 transition-colors" onclick="document.getElementById('md-file-input').click()">
+            <i class="fas fa-cloud-arrow-up text-2xl text-indigo-400"></i>
+            <p class="mt-2 text-sm font-semibold text-slate-200">Tap to choose a file from storage</p>
+          </div>
+      </div>
+
+      <!-- PREVIEW PANEL -->
       <div id="import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
         <div id="import-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
         <div id="import-warnings" class="text-[11.5px] text-amber-400 space-y-1 mb-3"></div>
