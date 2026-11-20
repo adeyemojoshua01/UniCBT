@@ -172,7 +172,36 @@ window.MathJax = {
 </div>
 
 <div id="toast-layer" class="fixed top-20 right-4 z-[90] flex flex-col gap-2 items-end pointer-events-none"></div>
+<!-- Paste Modal -->
+<div id="paste-modal" class="modal-shell hidden">
+  <div class="modal-card">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fas fa-paste text-amber-400 mr-2"></i>Paste Questions</h2>
+      <button onclick="B.closeModal('paste-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div>
+        <label class="lbl">Paste Markdown or JS Code</label>
+        <textarea id="paste-input" rows="10" class="field font-mono !text-[11.5px]" placeholder="Paste your Markdown questions or JavaScript bank code here...&#10;&#10;Example Markdown:&#10;Type: MCQ&#10;SubTopic: Fluid&#10;Question: What is the pressure?&#10;A) 10 Pa&#10;B) 20 Pa&#10;Answer: A"></textarea>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="B.parsePastedText()" class="btn btn-indigo flex-1 justify-center !py-3"><i class="fas fa-magnifying-glass"></i> Parse & Preview</button>
+        <button onclick="document.getElementById('paste-input').value=''; document.getElementById('paste-preview').classList.add('hidden');" class="btn btn-ghost"><i class="fas fa-eraser"></i> Clear</button>
+      </div>
 
+      <!-- Preview Area (Hidden by default) -->
+      <div id="paste-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
+        <div id="paste-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
+        <div class="flex items-center gap-2 mt-3">
+            <button onclick="B.applyPastedImport()" class="btn btn-amber w-full justify-center !py-2"><i class="fas fa-check"></i> Confirm Import</button>
+        </div>
+      </div>
+      <p id="paste-status" class="text-[11.5px] text-slate-400"></p>
+    </div>
+  </div>
+</div>
+
+  
 <script>
 (function () {
   'use strict';
