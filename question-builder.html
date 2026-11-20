@@ -1109,5 +1109,65 @@ importFromGitHub: async function(path) {
   B.start();
 })();
 </script>
+
+  <!-- Unified Import/Export Modal -->
+<div id="file-ops-modal" class="modal-shell hidden">
+  <div class="modal-card">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
+      <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Import / Export</h2>
+      <button onclick="B.closeModal('file-ops-modal')" class="w-8 h-8 rounded-lg bg-[#16203a]"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="p-5 space-y-6">
+      
+      <!-- IMPORT SECTION -->
+      <div>
+        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3"><i class="fas fa-download text-indigo-400 mr-1"></i> Import</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="document.getElementById('file-md-input').click()" class="btn btn-ghost justify-center !py-4 !bg-indigo-600/10 !border-indigo-500/30 !text-indigo-300 flex-col !h-auto">
+            <i class="fas fa-file-alt text-2xl mb-1"></i>
+            <span class="text-[11px] font-bold">Markdown (.md)</span>
+          </button>
+          <button onclick="document.getElementById('file-js-input').click()" class="btn btn-ghost justify-center !py-4 !bg-amber-600/10 !border-amber-500/30 !text-amber-300 flex-col !h-auto">
+            <i class="fab fa-js text-2xl mb-1"></i>
+            <span class="text-[11px] font-bold">JS Bank (.js)</span>
+          </button>
+        </div>
+        <input type="file" id="file-md-input" accept=".md,.txt" class="hidden" onchange="B.handleMdFileSelect(this)">
+        <input type="file" id="file-js-input" accept=".js,.txt" class="hidden" onchange="B.handleJsFileSelect(this)">
+      </div>
+
+      <!-- EXPORT SECTION -->
+      <div>
+        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3"><i class="fas fa-upload text-amber-400 mr-1"></i> Export</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="B.copyExport()" class="btn btn-ghost justify-center !py-4 !bg-emerald-600/10 !border-emerald-500/30 !text-emerald-300 flex-col !h-auto">
+            <i class="fas fa-copy text-2xl mb-1"></i>
+            <span class="text-[11px] font-bold">Copy JS Code</span>
+          </button>
+          <button onclick="B.downloadExport()" class="btn btn-ghost justify-center !py-4 !bg-sky-600/10 !border-sky-500/30 !text-sky-300 flex-col !h-auto">
+            <i class="fas fa-download text-2xl mb-1"></i>
+            <span class="text-[11px] font-bold">Download .js</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PREVIEW SECTION (Hidden by default) -->
+      <div id="file-import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
+        <div id="file-import-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
+        <div class="flex items-center gap-2 mt-3">
+            <button onclick="B.applyImport()" class="btn btn-amber w-full justify-center !py-2"><i class="fas fa-check"></i> Confirm Import</button>
+        </div>
+      </div>
+      
+      <p id="file-ops-status" class="text-[11.5px] text-slate-400 text-center"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Update the header button to open this modal instead of the old one -->
+
+
+  
 </body>
 </html>
