@@ -277,6 +277,31 @@ window.MathJax = {
 
     openModal: function (id) { document.getElementById(id).classList.remove('hidden'); },
     closeModal: function (id) { document.getElementById(id).classList.add('hidden'); },
+    switchImportTab: function(tab) {
+    if (tab === 'paste') {
+        document.getElementById('pane-import-paste').classList.remove('hidden');
+        document.getElementById('pane-import-file').classList.add('hidden');
+        document.getElementById('tab-import-paste').className = 'flex-1 btn btn-indigo !py-2 justify-center !text-[11px]';
+        document.getElementById('tab-import-file').className = 'flex-1 btn btn-ghost !py-2 justify-center !text-[11px]';
+    } else {
+        document.getElementById('pane-import-paste').classList.add('hidden');
+        document.getElementById('pane-import-file').classList.remove('hidden');
+        document.getElementById('tab-import-paste').className = 'flex-1 btn btn-ghost !py-2 justify-center !text-[11px]';
+        document.getElementById('tab-import-file').className = 'flex-1 btn btn-indigo !py-2 justify-center !text-[11px]';
+    }
+},
+
+parsePastedText: function() {
+    var text = document.getElementById('paste-textarea').value;
+    if (!text.trim()) return B.toast('Please paste some text first.', 'error');
+    
+    var parsed = B.parseMarkdownToCBT(text);
+    if (parsed.length === 0) {
+        return B.toast('No questions found. Please check the format.', 'error');
+    }
+    
+    B.showImportPreview(parsed);
+},
     toggleGhSidebar: function (force) {
       var sb = document.getElementById('gh-sidebar');
       var ov = document.getElementById('gh-overlay');
