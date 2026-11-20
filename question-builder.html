@@ -747,13 +747,13 @@ window.MathJax = {
                 }
 
                 if (/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                    var ans = line.replace(/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*/i, '').trim();
-                    var ansLetter = ans.match(/^([A-D])[\.\)]/i);
-                    if (ansLetter) q.correct = ansLetter[1].toUpperCase();
-                    else if (ans.length === 1) q.correct = ans.toUpperCase();
-                    else q.correct = ans;
-                    return;
-                }
+    var ans = line.replace(/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*/i, '').trim().replace(/\*\*/g, '');
+    var ansLetter = ans.match(/^([A-D])[\.\)]/i);
+    if (ansLetter) q.correct = ansLetter[1].toUpperCase();
+    else if (ans.length === 1) q.correct = ans.toUpperCase();
+    else q.correct = ans;
+    return;
+}
 
                 if (/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
                     q.explanation = line.replace(/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*/i, '').trim();
