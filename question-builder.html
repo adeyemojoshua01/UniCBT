@@ -1167,7 +1167,103 @@ importFromGitHub: async function(path) {
 
 <!-- Update the header button to open this modal instead of the old one -->
 
+<script>
+  // Override the header button to open the new modal
+  document.addEventListener('DOMContentLoaded', () => {
+      // Find the existing "Paste" button and change its onclick
+      const headerButtons = document.querySelectorAll('header button');
+      headerButtons.forEach(btn => {
+          if (btn.innerHTML.includes('Paste')) {
+              btn.setAttribute('onclick', "B.openModal('file-ops-modal')");
+              btn.innerHTML = '<i class="fas fa-file-import"></i><span class="hidden sm:inline">Import/Export</span>';
+          }
+      });
+  });
 
+  // Add the new functions to the B object
+  Object.assign(window.B, {
+    handleMdFileSelect: function(input) {
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var text = e.target.result;
+            var parsed = B.parseMarkdownToCBT(text);
+            B.showFileImportPreview(parsed, 'Markdown');
+        };
+        reader.readAsText(file);
+    },
+    
+    handleJsFileSelect: function(input) {
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
+                var parsed = [];
+                if (Array.isArray(banks)) {
+                    banks.forEach(str => {
+                        var p = B.parseDSL(str);
+                        p.subjects.forEach(s => {
+                            s.topics.forEach(t => {
+                                t.questions.forEach(q => {
+                                    q._importSubjName = s.name;
+                                    q._importTopicName = t.name;
+                                    parsed.push(q);
+                                });
+                            });
+                        });
+                    });
+                }
+                B.showFileImportPreview(parsed, 'JS Bank');
+            } catch(err) { B.toast('Invalid JS file', 'error'); }
+        };
+        reader.readAsText(file);
+    },
+
+    showFileImportPreview: function(questions, sourceName) {
+        if (!questions || questions.length === 0) return B.toast('No questions found in file.', 'error');
+        
+        pendingImport = questions;
+        document.getElementById('file-import-preview').classList.remove('hidden');
+        
+        var subjs = [...new Set(questions.map(q => q._importSubjName || 'Unknown'))];
+        var tops = [...new Set(questions.map(q => q._importTopicName || 'Unknown'))];
+        
+        document.getElementById('file-import-summary').innerHTML = `
+            <div class="flex items-center gap-2 mb-2">
+              <span class="chip bg-indigo-500/20 text-indigo-300">${sourceName}</span>
+              <span class="text-sm text-emerald-400 font-bold">${questions.length} Questions Found</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <strong>Subjects:</strong> ${subjs.join(', ')}<br>
+              <strong>Topics:</strong> ${tops.join(', ')}
+            </div>
+        `;
+        
+        document.getElementById('file-ops-status').textContent = 'Ready to import. Click Confirm to apply.';
+        B.openModal('file-ops-modal');
+    },
+
+    copyExport: function() {
+        var code = B.generateExportJSCode(false);
+        navigator.clipboard.writeText(code).then(() => {
+            B.toast('Copied to clipboard!', 'success');
+            document.getElementById('file-ops-status').textContent = 'JS Code copied successfully.';
+        }).catch(() => B.toast('Copy failed', 'error'));
+    },
+
+    downloadExport: function() {
+        var code = B.generateExportJSCode(false);
+        var blob = new Blob([code], {type: 'text/javascript'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); 
+        a.download = (B.slug(currentSubject()?.name) || 'bank') + '-' + (B.slug(currentTopic()?.name) || 'export') + '.js'; 
+        a.click();
+        B.toast('Downloaded successfully!', 'success');
+        document.getElementById('file-ops-status').textContent = 'File downloaded.';
+    }
+  });
+</script>
   
 </body>
 </html>
