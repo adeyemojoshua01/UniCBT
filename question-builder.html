@@ -490,8 +490,15 @@ window.MathJax = {
     updateQField: function (field, value) {
         var q = currentQuestion(); if (!q) return;
         B.pushUndoState();
+        
+        // Strip leading/trailing asterisks from answers (e.g., if parsed as **A**)
+        if (field === 'correct') {
+            value = value.replace(/\*\*/g, '').trim();
+        }
+        
         q[field] = value;
         B.scheduleSave();
+        
         if (field === 'question') {
             var el = document.getElementById('question-preview');
             if (el) el.innerHTML = B.renderMathText(value);
