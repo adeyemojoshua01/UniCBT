@@ -45,12 +45,6 @@ window.MathJax = {
   .pane { display: none; }
   .pane.active { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  
-  details > summary { list-style: none; cursor: pointer; }
-  details > summary::-webkit-details-marker { display: none; }
-  .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
-  .folder-icon { transition: transform 0.2s; }
-  details[open] > summary .folder-icon { transform: rotate(90deg); }
 </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
@@ -67,6 +61,7 @@ window.MathJax = {
   <div class="flex items-center gap-2">
     <span id="saved-pill" class="chip bg-emerald-500/15 text-emerald-400 hidden sm:inline-flex">Ready</span>
     <button onclick="B.undo()" class="btn btn-ghost !px-2.5" title="Undo"><i class="fas fa-rotate-left"></i></button>
+    <button onclick="B.openModal('import-modal')" class="btn btn-ghost !text-amber-300 !border-amber-500/30"><i class="fas fa-file-import"></i><span class="hidden sm:inline">Import</span></button>
     <button onclick="B.toggleGhSidebar(true)" class="btn btn-ghost !text-indigo-300 !border-indigo-500/30"><i class="fab fa-github"></i><span class="hidden sm:inline">Repo</span></button>
   </div>
 </header>
@@ -89,8 +84,8 @@ window.MathJax = {
   <button onclick="B.addQuestion('MCQ')" class="btn btn-ghost flex-1 justify-center !bg-indigo-600/20 !text-indigo-400 !border-indigo-600/30">
     <i class="fas fa-plus"></i> New Q
   </button>
-  <button onclick="B.scheduleSave()" class="btn btn-ghost flex-1 justify-center">
-    <i class="fas fa-save"></i> Save
+  <button onclick="B.openModal('import-modal')" class="btn btn-ghost flex-1 justify-center !bg-amber-600/20 !text-amber-400 !border-amber-600/30">
+    <i class="fas fa-paste"></i> Paste
   </button>
   <button onclick="B.openPublish()" class="btn btn-amber flex-[1.5] justify-center">
     <i class="fab fa-github"></i> Publish
@@ -118,6 +113,7 @@ window.MathJax = {
   </div>
 </aside>
 
+<!-- IMPORT MODAL -->
 <div id="import-modal" class="modal-shell hidden">
   <div class="modal-card">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
@@ -126,19 +122,16 @@ window.MathJax = {
     </div>
     <div class="p-5 space-y-4">
       
-      <!-- TABS -->
       <div class="flex gap-2 mb-2">
           <button onclick="B.switchImportTab('paste')" id="tab-import-paste" class="flex-1 btn btn-indigo !py-2 justify-center !text-[11px]"><i class="fas fa-paste"></i> Paste Text</button>
           <button onclick="B.switchImportTab('file')" id="tab-import-file" class="flex-1 btn btn-ghost !py-2 justify-center !text-[11px]"><i class="fas fa-upload"></i> Upload File</button>
       </div>
 
-      <!-- PASTE PANEL -->
       <div id="pane-import-paste" class="space-y-3">
           <textarea id="paste-textarea" rows="10" class="field font-mono !text-[11px]" placeholder="Paste Markdown questions here...&#10;&#10;Example:&#10;### Q1: What is 2+2?&#10;A) 3&#10;B) 4&#10;C) 5&#10;D) 6&#10;**Answer: B**&#10;**Explanation: Basic math.**"></textarea>
           <button onclick="B.parsePastedText()" class="btn btn-amber w-full justify-center !py-3"><i class="fas fa-magic"></i> Parse Markdown</button>
       </div>
 
-      <!-- FILE PANEL -->
       <div id="pane-import-file" class="hidden space-y-3">
           <div class="grid grid-cols-2 gap-2">
             <button onclick="document.getElementById('md-file-input').click()" class="btn btn-indigo justify-center !py-3"><i class="fas fa-file-alt"></i> Markdown (.md)</button>
@@ -152,8 +145,7 @@ window.MathJax = {
           </div>
       </div>
 
-      <!-- PREVIEW PANEL -->
-      <div id="import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
+      <div id="import-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4 mt-4">
         <div id="import-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
         <div id="import-warnings" class="text-[11.5px] text-amber-400 space-y-1 mb-3"></div>
         <div class="flex items-center gap-2">
@@ -166,6 +158,7 @@ window.MathJax = {
   </div>
 </div>
 
+<!-- PUBLISH MODAL -->
 <div id="publish-modal" class="modal-shell hidden">
   <div class="modal-card !max-w-lg">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
@@ -203,8 +196,6 @@ window.MathJax = {
   var saveTimer = null;
   var pendingImport = null;
   var currentLoadedPath = '';
-  var exportCode = '';
-  var ghTreeData = null;
 
   function b64DecodeUnicode(str) {
       return decodeURIComponent(atob(str).split('').map(function(c) {
@@ -291,33 +282,11 @@ window.MathJax = {
       setTimeout(() => { el.remove(); }, 3000);
     },
 
-    openModal: function (id) { document.getElementById(id).classList.remove('hidden'); },
+    openModal: function (id) { 
+        document.getElementById(id).classList.remove('hidden'); 
+        if(id === 'import-modal') B.switchImportTab('paste');
+    },
     closeModal: function (id) { document.getElementById(id).classList.add('hidden'); },
-    switchImportTab: function(tab) {
-    if (tab === 'paste') {
-        document.getElementById('pane-import-paste').classList.remove('hidden');
-        document.getElementById('pane-import-file').classList.add('hidden');
-        document.getElementById('tab-import-paste').className = 'flex-1 btn btn-indigo !py-2 justify-center !text-[11px]';
-        document.getElementById('tab-import-file').className = 'flex-1 btn btn-ghost !py-2 justify-center !text-[11px]';
-    } else {
-        document.getElementById('pane-import-paste').classList.add('hidden');
-        document.getElementById('pane-import-file').classList.remove('hidden');
-        document.getElementById('tab-import-paste').className = 'flex-1 btn btn-ghost !py-2 justify-center !text-[11px]';
-        document.getElementById('tab-import-file').className = 'flex-1 btn btn-indigo !py-2 justify-center !text-[11px]';
-    }
-},
-
-parsePastedText: function() {
-    var text = document.getElementById('paste-textarea').value;
-    if (!text.trim()) return B.toast('Please paste some text first.', 'error');
-    
-    var parsed = B.parseMarkdownToCBT(text);
-    if (parsed.length === 0) {
-        return B.toast('No questions found. Please check the format.', 'error');
-    }
-    
-    B.showImportPreview(parsed);
-},
     toggleGhSidebar: function (force) {
       var sb = document.getElementById('gh-sidebar');
       var ov = document.getElementById('gh-overlay');
@@ -335,6 +304,32 @@ parsePastedText: function() {
       if (tab === 'preview') B.renderPreview();
     },
 
+    switchImportTab: function(tab) {
+        if (tab === 'paste') {
+            document.getElementById('pane-import-paste').classList.remove('hidden');
+            document.getElementById('pane-import-file').classList.add('hidden');
+            document.getElementById('tab-import-paste').className = 'flex-1 btn btn-indigo !py-2 justify-center !text-[11px]';
+            document.getElementById('tab-import-file').className = 'flex-1 btn btn-ghost !py-2 justify-center !text-[11px]';
+        } else {
+            document.getElementById('pane-import-paste').classList.add('hidden');
+            document.getElementById('pane-import-file').classList.remove('hidden');
+            document.getElementById('tab-import-paste').className = 'flex-1 btn btn-ghost !py-2 justify-center !text-[11px]';
+            document.getElementById('tab-import-file').className = 'flex-1 btn btn-indigo !py-2 justify-center !text-[11px]';
+        }
+    },
+
+    parsePastedText: function() {
+        var text = document.getElementById('paste-textarea').value;
+        if (!text.trim()) return B.toast('Please paste some text first.', 'error');
+        
+        var parsed = B.parseMarkdownToCBT(text);
+        if (parsed.length === 0) {
+            return B.toast('No questions found. Please check the format.', 'error');
+        }
+        
+        B.showImportPreview(parsed);
+    },
+
     renderAll: function () {
       B.renderStructure();
       B.renderContent();
@@ -342,55 +337,53 @@ parsePastedText: function() {
       B.scheduleSave();
     },
 
-    /* ------------- STRUCTURE RENDERER ------------- */
     renderStructure: function () {
-  var container = document.getElementById('structure-content');
-  var html = '<div class="max-w-3xl mx-auto space-y-4">';
-  
-  appData.subjects.forEach(s => {
-    html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
-    html += `<div class="flex justify-between items-center mb-3">
-        <div class="flex-grow mr-2">
-            <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 block">Subject Name</label>
-            <input class="font-extrabold text-sm bg-[#101830] border border-[#26314f] rounded px-3 py-2 w-full focus:border-indigo-500 outline-none" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
-        </div>
-        <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 mt-5"><i class="fas fa-trash"></i></button>
-    </div>`;
-    
-    s.topics.forEach(t => {
-        html += `<div class="ml-2 pl-3 border-l border-[#1e2740] mb-3">
-            <div class="flex justify-between items-center mb-2">
-                <button onclick="B.selectTopic('${s.id}','${t.id}')" class="text-sm font-bold ${selected.topicId === t.id ? 'text-amber-400' : 'text-slate-300'} hover:text-white text-left flex-grow">
-                    <i class="fas fa-folder mr-2 text-amber-500/70"></i> ${esc(t.name)}
-                </button>
-                <button onclick="B.renameTopic('${s.id}','${t.id}')" class="text-sky-400 text-xs px-2" title="Rename Topic"><i class="fas fa-pen"></i></button>
-                <button onclick="B.deleteTopic('${s.id}','${t.id}')" class="text-rose-500 text-xs px-2" title="Delete Topic"><i class="fas fa-times"></i></button>
-            </div>`;
-            
-            html += `<div class="flex flex-wrap gap-1.5 ml-4">`;
-            t.subTopics.forEach(st => {
-                var count = t.questions.filter(q => q.subTopicId === st.id).length;
-                html += `<div class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'} group flex items-center" onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')">
-                    <span>${esc(st.name)} <span class="opacity-50 text-[9px] ml-1">${count}</span></span>
-                    <button onclick="event.stopPropagation(); B.renameSubTopic('${s.id}','${t.id}','${st.id}')" class="ml-2 text-sky-300 hover:text-white" title="Rename Sub-Topic"><i class="fas fa-pen text-[9px]"></i></button>
-                    <button onclick="event.stopPropagation(); B.deleteSubTopic('${s.id}','${t.id}','${st.id}')" class="ml-1 text-rose-400 hover:text-white" title="Delete Sub-Topic"><i class="fas fa-times-circle text-[9px]"></i></button>
+      var container = document.getElementById('structure-content');
+      var html = '<div class="max-w-3xl mx-auto space-y-4">';
+      
+      appData.subjects.forEach(s => {
+        html += `<div class="panel rounded-xl p-4 mb-3 ${selected.subjectId === s.id ? 'border-indigo-500/50' : ''}">`;
+        html += `<div class="flex justify-between items-center mb-3">
+            <div class="flex-grow mr-2">
+                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 block">Subject Name</label>
+                <input class="font-extrabold text-sm bg-[#101830] border border-[#26314f] rounded px-3 py-2 w-full focus:border-indigo-500 outline-none" value="${esc(s.name)}" onchange="B.updateSubjectName('${s.id}', this.value)">
+            </div>
+            <button onclick="B.deleteSubject('${s.id}')" class="btn btn-danger !px-2 !py-1 mt-5"><i class="fas fa-trash"></i></button>
+        </div>`;
+        
+        s.topics.forEach(t => {
+            html += `<div class="ml-2 pl-3 border-l border-[#1e2740] mb-3">
+                <div class="flex justify-between items-center mb-2">
+                    <button onclick="B.selectTopic('${s.id}','${t.id}')" class="text-sm font-bold ${selected.topicId === t.id ? 'text-amber-400' : 'text-slate-300'} hover:text-white text-left flex-grow">
+                        <i class="fas fa-folder mr-2 text-amber-500/70"></i> ${esc(t.name)}
+                    </button>
+                    <button onclick="B.renameTopic('${s.id}','${t.id}')" class="text-sky-400 text-xs px-2" title="Rename Topic"><i class="fas fa-pen"></i></button>
+                    <button onclick="B.deleteTopic('${s.id}','${t.id}')" class="text-rose-500 text-xs px-2" title="Delete Topic"><i class="fas fa-times"></i></button>
                 </div>`;
-            });
-            html += `<button onclick="B.addSubTopic('${s.id}','${t.id}')" class="chip inactive text-indigo-400 border-indigo-500/30"><i class="fas fa-plus"></i> Sub</button></div>`;
-        html += `</div>`;
-    });
-    
-    html += `<div class="mt-3 flex gap-2">
-        <button onclick="B.addTopic('${s.id}')" class="btn btn-ghost !text-xs !py-1.5"><i class="fas fa-folder-plus"></i> Topic</button>
-    </div></div>`;
-  });
-  
-  html += `<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center !py-3"><i class="fas fa-plus"></i> New Subject</button>`;
-  html += '</div>';
-  container.innerHTML = html;
-},
+                
+                html += `<div class="flex flex-wrap gap-1.5 ml-4">`;
+                t.subTopics.forEach(st => {
+                    var count = t.questions.filter(q => q.subTopicId === st.id).length;
+                    html += `<div class="chip ${selected.subTopicId === st.id ? 'active' : 'inactive'} group flex items-center" onclick="B.selectSubTopic('${s.id}','${t.id}','${st.id}')">
+                        <span>${esc(st.name)} <span class="opacity-50 text-[9px] ml-1">${count}</span></span>
+                        <button onclick="event.stopPropagation(); B.renameSubTopic('${s.id}','${t.id}','${st.id}')" class="ml-2 text-sky-300 hover:text-white" title="Rename Sub-Topic"><i class="fas fa-pen text-[9px]"></i></button>
+                        <button onclick="event.stopPropagation(); B.deleteSubTopic('${s.id}','${t.id}','${st.id}')" class="ml-1 text-rose-400 hover:text-white" title="Delete Sub-Topic"><i class="fas fa-times-circle text-[9px]"></i></button>
+                    </div>`;
+                });
+                html += `<button onclick="B.addSubTopic('${s.id}','${t.id}')" class="chip inactive text-indigo-400 border-indigo-500/30"><i class="fas fa-plus"></i> Sub</button></div>`;
+            html += `</div>`;
+        });
+        
+        html += `<div class="mt-3 flex gap-2">
+            <button onclick="B.addTopic('${s.id}')" class="btn btn-ghost !text-xs !py-1.5"><i class="fas fa-folder-plus"></i> Topic</button>
+        </div></div>`;
+      });
+      
+      html += `<button onclick="B.addSubject()" class="btn btn-indigo w-full justify-center !py-3"><i class="fas fa-plus"></i> New Subject</button>`;
+      html += '</div>';
+      container.innerHTML = html;
+    },
 
-    /* ------------- CONTENT RENDERER ------------- */
     renderContent: function () {
       var container = document.getElementById('content-body');
       var header = document.getElementById('content-header');
@@ -538,7 +531,6 @@ parsePastedText: function() {
         if (window.MathJax) MathJax.typesetPromise([document.getElementById('workspace')]).catch(()=>{});
     },
 
-    /* ------------- CRUD OPERATIONS ------------- */
     addSubject: function() {
         B.pushUndoState();
         var s = newSubject('New Subject');
@@ -593,6 +585,28 @@ parsePastedText: function() {
     updateSubjectName: function(sid, val) {
         var s = getSubject(sid); if (s) { s.name = val; B.scheduleSave(); }
     },
+    renameTopic: function(sid, tid) {
+        var t = getTopic(sid, tid);
+        if (!t) return;
+        var newName = prompt("Enter new Topic name:", t.name);
+        if (newName && newName.trim() !== "" && newName !== t.name) {
+            B.pushUndoState();
+            t.name = newName.trim();
+            B.renderAll();
+        }
+    },
+    renameSubTopic: function(sid, tid, stid) {
+        var t = getTopic(sid, tid);
+        if (!t) return;
+        var st = t.subTopics.find(x => x.id === stid);
+        if (!st) return;
+        var newName = prompt("Enter new Sub-Topic name:", st.name);
+        if (newName && newName.trim() !== "" && newName !== st.name) {
+            B.pushUndoState();
+            st.name = newName.trim();
+            B.renderAll();
+        }
+    },
     deleteSubject: function(sid) {
         if (!confirm('Delete entire subject?')) return;
         B.pushUndoState();
@@ -609,30 +623,6 @@ parsePastedText: function() {
         B.renderAll();
     },
 
-    renameTopic: function(sid, tid) {
-    var t = getTopic(sid, tid);
-    if (!t) return;
-    var newName = prompt("Enter new Topic name:", t.name);
-    if (newName && newName.trim() !== "" && newName !== t.name) {
-        B.pushUndoState();
-        t.name = newName.trim();
-        B.renderAll();
-    }
-},
-renameSubTopic: function(sid, tid, stid) {
-    var t = getTopic(sid, tid);
-    if (!t) return;
-    var st = t.subTopics.find(x => x.id === stid);
-    if (!st) return;
-    var newName = prompt("Enter new Sub-Topic name:", st.name);
-    if (newName && newName.trim() !== "" && newName !== st.name) {
-        B.pushUndoState();
-        st.name = newName.trim();
-        B.renderAll();
-    }
-},
-
-    /* ------------- IMPORT & PARSING ------------- */
     handleMdFileSelect: function(input) {
         var file = input.files[0]; if (!file) return;
         var reader = new FileReader();
@@ -644,143 +634,128 @@ renameSubTopic: function(sid, tid, stid) {
         reader.readAsText(file);
     },
     handleJsFileSelect: function(input) {
-    var file = input.files[0]; if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
-            var parsed = [];
-            if (Array.isArray(banks)) {
-                banks.forEach(str => {
-                    var p = B.parseDSL(str);
-                    // FIXED: Map subject and topic names to the question objects
-                    p.subjects.forEach(s => {
-                        s.topics.forEach(t => {
-                            t.questions.forEach(q => {
-                                q._importSubjName = s.name;
-                                q._importTopicName = t.name;
-                                parsed.push(q);
+        var file = input.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + e.target.result + '\nreturn window.CBT_SUBJECT_BANKS;')();
+                var parsed = [];
+                if (Array.isArray(banks)) {
+                    banks.forEach(str => {
+                        var p = B.parseDSL(str);
+                        p.subjects.forEach(s => {
+                            s.topics.forEach(t => {
+                                t.questions.forEach(q => {
+                                    q._importSubjName = s.name;
+                                    q._importTopicName = t.name;
+                                    parsed.push(q);
+                                });
                             });
                         });
                     });
-                });
-            }
-            B.showImportPreview(parsed);
-        } catch(err) { B.toast('Invalid JS file', 'error'); }
-    };
-    reader.readAsText(file);
-},
+                }
+                B.showImportPreview(parsed);
+            } catch(err) { B.toast('Invalid JS file', 'error'); }
+        };
+        reader.readAsText(file);
+    },
 
-parseMarkdownToCBT: function(raw) {
-    // Pre-process: Temporarily replace MathJax blocks so the parser doesn't break them
-    var mathBlocks = [];
-    var text = raw;
-    
-    // Extract $$...$$
-    text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match) {
-        mathBlocks.push(match);
-        return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
-    });
-    
-    // Extract $...$
-    text = text.replace(/\$([^\$]+)\$/g, function(match) {
-        mathBlocks.push(match);
-        return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
-    });
-
-    var blocks = text.split(/\n\s*---\s*\n/);
-    var questions = [];
-    
-    blocks.forEach(block => {
-        var lines = block.split('\n').map(l => l.trim()).filter(l => l);
-        if (lines.length === 0) return;
+    parseMarkdownToCBT: function(raw) {
+        var mathBlocks = [];
+        var text = raw;
         
-        var q = newQuestion('MCQ');
-        q.question = '';
-        q.subTopicName = null;
-        var inOptions = false;
+        text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match) {
+            mathBlocks.push(match);
+            return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+        });
         
-        lines.forEach(line => {
-            // 1. Detect Subject/Topic/SubTopic metadata
-            if (/^\*{0,2}Subject\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                q._importSubjName = line.replace(/^\*{0,2}Subject\*{0,2}\s*[:=]\s*/i, '').trim();
-                return;
-            }
-            if (/^\*{0,2}Topic\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                q._importTopicName = line.replace(/^\*{0,2}Topic\*{0,2}\s*[:=]\s*/i, '').trim();
-                return;
-            }
-            if (/^\*{0,2}Sub-?Topic\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                q.subTopicName = line.replace(/^\*{0,2}Sub-?Topic\*{0,2}\s*[:=]\s*/i, '').trim();
-                return;
-            }
-            if (/^\*{0,2}Type\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                var t = line.replace(/^\*{0,2}Type\*{0,2}\s*[:=]\s*/i, '').trim().toUpperCase();
-                q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
-                return;
-            }
-
-            // 2. Detect Checkbox Options (e.g., - [ ] or - [x])
-            var checkMatch = line.match(/^[-*]\s*\[([ xX])\]\s*(.+)$/);
-            if (checkMatch) {
-                inOptions = true;
-                var isCorrect = checkMatch[1].toLowerCase() === 'x';
-                var optText = checkMatch[2].trim();
-                var idx = q.options.findIndex(o => o === '');
-                if (idx === -1) idx = 0; // fallback
-                q.options[idx] = optText;
-                if (isCorrect) q.correct = ['A','B','C','D'][idx];
-                return;
-            }
-
-            // 3. Detect Standard Options (e.g., A) or A. or - A))
-            var optMatch = line.match(/^[-*]?\s*([A-D])[\.\)]\s*(.+)$/i);
-            if (optMatch) {
-                inOptions = true;
-                q.options['ABCD'.indexOf(optMatch[1].toUpperCase())] = optMatch[2].trim();
-                return;
-            }
-
-            // 4. Detect Answer
-            if (/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                var ans = line.replace(/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*/i, '').trim();
-                // If it's a full sentence, try to grab the first letter
-                var ansLetter = ans.match(/^([A-D])[\.\)]/i);
-                if (ansLetter) q.correct = ansLetter[1].toUpperCase();
-                else if (ans.length === 1) q.correct = ans.toUpperCase();
-                else q.correct = ans;
-                return;
-            }
-
-            // 5. Detect Explanation
-            if (/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
-                q.explanation = line.replace(/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*/i, '').trim();
-                return;
-            }
-
-            // 6. Everything else is part of the Question Text
-            // Strip Markdown headers (###, **, etc.)
-            var cleanLine = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/^Q\d*[:\.]\s*/i, '').trim();
-            
-            if (!inOptions && cleanLine) {
-                if (!q.question) q.question = cleanLine;
-                else if (!q.explanation) q.question += ' ' + cleanLine;
-            }
+        text = text.replace(/\$([^\$]+)\$/g, function(match) {
+            mathBlocks.push(match);
+            return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
         });
 
-        // Only push if we found a question text
-        if (q.question) {
-            // Restore MathJax in the question text
-            q.question = q.question.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]);
-            if (q.explanation) q.explanation = q.explanation.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]);
-            q.options = q.options.map(o => o.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]));
+        var blocks = text.split(/\n\s*---\s*\n/);
+        var questions = [];
+        
+        blocks.forEach(block => {
+            var lines = block.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length === 0) return;
             
-            questions.push(q);
-        }
-    });
-    
-    return questions;
-},
+            var q = newQuestion('MCQ');
+            q.question = '';
+            q.subTopicName = null;
+            var inOptions = false;
+            
+            lines.forEach(line => {
+                if (/^\*{0,2}Subject\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                    q._importSubjName = line.replace(/^\*{0,2}Subject\*{0,2}\s*[:=]\s*/i, '').trim();
+                    return;
+                }
+                if (/^\*{0,2}Topic\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                    q._importTopicName = line.replace(/^\*{0,2}Topic\*{0,2}\s*[:=]\s*/i, '').trim();
+                    return;
+                }
+                if (/^\*{0,2}Sub-?Topic\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                    q.subTopicName = line.replace(/^\*{0,2}Sub-?Topic\*{0,2}\s*[:=]\s*/i, '').trim();
+                    return;
+                }
+                if (/^\*{0,2}Type\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                    var t = line.replace(/^\*{0,2}Type\*{0,2}\s*[:=]\s*/i, '').trim().toUpperCase();
+                    q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
+                    return;
+                }
+
+                var checkMatch = line.match(/^[-*]\s*\[([ xX])\]\s*(.+)$/);
+                if (checkMatch) {
+                    inOptions = true;
+                    var isCorrect = checkMatch[1].toLowerCase() === 'x';
+                    var optText = checkMatch[2].trim();
+                    var idx = q.options.findIndex(o => o === '');
+                    if (idx === -1) idx = 0;
+                    q.options[idx] = optText;
+                    if (isCorrect) q.correct = ['A','B','C','D'][idx];
+                    return;
+                }
+
+                var optMatch = line.match(/^[-*]?\s*([A-D])[\.\)]\s*(.+)$/i);
+                if (optMatch) {
+                    inOptions = true;
+                    q.options['ABCD'.indexOf(optMatch[1].toUpperCase())] = optMatch[2].trim();
+                    return;
+                }
+
+                if (/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                    var ans = line.replace(/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*/i, '').trim();
+                    var ansLetter = ans.match(/^([A-D])[\.\)]/i);
+                    if (ansLetter) q.correct = ansLetter[1].toUpperCase();
+                    else if (ans.length === 1) q.correct = ans.toUpperCase();
+                    else q.correct = ans;
+                    return;
+                }
+
+                if (/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                    q.explanation = line.replace(/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*/i, '').trim();
+                    return;
+                }
+
+                var cleanLine = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/^Q\d*[:\.]\s*/i, '').trim();
+                
+                if (!inOptions && cleanLine) {
+                    if (!q.question) q.question = cleanLine;
+                    else if (!q.explanation) q.question += ' ' + cleanLine;
+                }
+            });
+
+            if (q.question) {
+                q.question = q.question.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]);
+                if (q.explanation) q.explanation = q.explanation.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]);
+                q.options = q.options.map(o => o.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]));
+                questions.push(q);
+            }
+        });
+        
+        return questions;
+    },
 
     parseDSL: function(text) {
         var subjects = [];
@@ -809,73 +784,82 @@ parseMarkdownToCBT: function(raw) {
         return { subjects: subjects };
     },
 
-showImportPreview: function(questions) {
-    pendingImport = questions;
-    document.getElementById('import-preview').classList.remove('hidden');
-    
-    // Count unique subjects and topics found in the file
-    var subjs = [...new Set(questions.map(q => q._importSubjName || 'Unknown'))];
-    var tops = [...new Set(questions.map(q => q._importTopicName || 'Unknown'))];
-    
-    document.getElementById('import-summary').innerHTML = `
-        <i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${questions.length}</strong> questions.<br>
-        <span class="text-xs text-slate-400 mt-1 block">Subjects: ${subjs.join(', ')}<br>Topics: ${tops.join(', ')}</span>
-    `;
-    
-    // Hide the sub-topic dropdown since we are auto-detecting the hierarchy
-    document.getElementById('import-target-subtopic').classList.add('hidden');
-    
-    B.openModal('import-modal');
-},
+    showImportPreview: function(questions) {
+        pendingImport = questions;
+        document.getElementById('import-preview').classList.remove('hidden');
+        
+        var subjs = [...new Set(questions.map(q => q._importSubjName || 'Unknown'))];
+        var tops = [...new Set(questions.map(q => q._importTopicName || 'Unknown'))];
+        
+        document.getElementById('import-summary').innerHTML = `
+            <i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${questions.length}</strong> questions.<br>
+            <span class="text-xs text-slate-400 mt-1 block">Subjects: ${subjs.join(', ')}<br>Topics: ${tops.join(', ')}</span>
+        `;
+        
+        var t = currentTopic();
+        var sel = document.getElementById('import-target-subtopic');
+        if (t) {
+            var html = `<option value="auto">Auto-detect from file</option>`;
+            html += t.subTopics.map(st => `<option value="${st.id}">${esc(st.name)}</option>`).join('');
+            sel.innerHTML = html;
+            sel.value = 'auto'; 
+        }
+    },
 
     applyImport: function() {
-    if (!pendingImport || pendingImport.length === 0) return;
+        if (!pendingImport || pendingImport.length === 0) return;
 
-    B.pushUndoState();
-    var importedCount = 0;
-    
-    pendingImport.forEach(q => {
-        q.id = uid('q');
+        B.pushUndoState();
+        var importedCount = 0;
         
-        // 1. Find or Create the Subject
-        var sName = q._importSubjName || 'Imported Subject';
-        var subject = appData.subjects.find(s => s.name.toLowerCase() === sName.toLowerCase());
-        if (!subject) {
-            subject = newSubject(sName);
-            appData.subjects.push(subject);
-        }
+        pendingImport.forEach(q => {
+            q.id = uid('q');
+            
+            // If no subject/topic was detected (plain paste), use current context
+            var sName = q._importSubjName || (currentSubject() ? currentSubject().name : 'Imported Subject');
+            var subject = appData.subjects.find(s => s.name.toLowerCase() === sName.toLowerCase());
+            if (!subject) {
+                subject = newSubject(sName);
+                appData.subjects.push(subject);
+            }
 
-        // 2. Find or Create the Topic within the Subject
-        var tName = q._importTopicName || 'General';
-        var topic = subject.topics.find(t => t.name.toLowerCase() === tName.toLowerCase());
-        if (!topic) {
-            topic = newTopic(tName);
-            subject.topics.push(topic);
-        }
+            var tName = q._importTopicName || (currentTopic() ? currentTopic().name : 'General');
+            var topic = subject.topics.find(t => t.name.toLowerCase() === tName.toLowerCase());
+            if (!topic) {
+                topic = newTopic(tName);
+                subject.topics.push(topic);
+            }
 
-        // 3. Find or Create the Sub-Topic
-        var stName = q.subTopicName || 'General';
-        var subTopic = topic.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
-        if (!subTopic) {
-            subTopic = newSubTopic(stName);
-            topic.subTopics.push(subTopic);
-        }
+            var stName = q.subTopicName || 'General';
+            var targetSt = document.getElementById('import-target-subtopic').value;
+            
+            // If user selected a specific sub-topic in the dropdown, use it.
+            // Otherwise auto-detect from file.
+            if (targetSt && targetSt !== 'auto') {
+                q.subTopicId = targetSt;
+            } else {
+                var subTopic = topic.subTopics.find(st => st.name.toLowerCase() === stName.toLowerCase());
+                if (!subTopic) {
+                    subTopic = newSubTopic(stName);
+                    topic.subTopics.push(subTopic);
+                }
+                q.subTopicId = subTopic.id;
+            }
 
-        q.subTopicId = subTopic.id;
-        delete q._importSubjName;
-        delete q._importTopicName;
-        delete q.subTopicName;
+            delete q._importSubjName;
+            delete q._importTopicName;
+            delete q.subTopicName;
+            
+            topic.questions.push(q);
+            importedCount++;
+        });
         
-        topic.questions.push(q);
-        importedCount++;
-    });
-    
-    B.closeModal('import-modal');
-    B.renderAll();
-    B.toast(`Imported ${importedCount} questions successfully!`, 'success');
-    pendingImport = null;
-},
-    /* ------------- GITHUB EXPLORER TREE ------------- */
+        B.closeModal('import-modal');
+        B.renderAll();
+        B.toast(`Imported ${importedCount} questions successfully!`, 'success');
+        pendingImport = null;
+    },
+
     loadGitHubTree: async function() {
         var o = document.getElementById('gh-user').value.trim();
         var r = document.getElementById('gh-repo').value.trim();
@@ -892,103 +876,53 @@ showImportPreview: function(questions) {
             if (!res.ok) throw new Error('Failed to load tree');
             const data = await res.json();
             
-            const root = {};
-            data.tree.forEach(item => {
-                if (!item.path.startsWith('question-banks/') || item.path === 'question-banks/') return;
-                
-                const parts = item.path.replace('question-banks/', '').split('/');
-                let current = root;
-                
-                parts.forEach((part, i) => {
-                    if (!current[part]) {
-                        current[part] = (i === parts.length - 1 && item.type === 'blob') ? 'FILE' : {};
-                    }
-                    if (current[part] !== 'FILE') {
-                        current = current[part];
-                    }
-                });
+            var html = '';
+            data.tree.filter(x => x.path.startsWith('question-banks/') && x.path.endsWith('.js') && !x.path.includes('question-loader')).forEach(x => {
+                var path = x.path.replace('question-banks/', '');
+                html += `<button onclick="B.importFromGitHub('${path}')" class="w-full text-left flex items-center gap-2 px-2 py-2 rounded hover:bg-[#101830] text-xs text-gray-300">
+                    <i class="fab fa-js text-amber-400"></i> ${esc(path)}
+                </button>`;
             });
-
-            ghTreeData = root;
-            B.renderGhTree(root, c, '');
+            c.innerHTML = html || '<div class="text-center text-xs text-gray-500 mt-4">No .js banks found.</div>';
         } catch (err) { c.innerHTML = `<div class="text-red-400 text-xs mt-4">${err.message}</div>`; }
     },
 
-    renderGhTree: function(tree, container, parentPath) {
-        if (parentPath === '') container.innerHTML = '';
+    importFromGitHub: async function(path) {
+        B.toggleGhSidebar(false);
+        currentLoadedPath = path;
+        var o = localStorage.getItem('gh_owner');
+        var r = localStorage.getItem('gh_repo');
+        var t = localStorage.getItem('gh_token');
         
-        if (Object.keys(tree).length === 0 && parentPath === '') {
-            container.innerHTML = '<div class="text-center text-xs text-gray-500 mt-4">No files found.</div>';
-            return;
-        }
-
-        const folders = Object.keys(tree).filter(k => tree[k] !== 'FILE').sort();
-        const files = Object.keys(tree).filter(k => tree[k] === 'FILE').sort();
-
-        folders.forEach(folder => {
-            const fullPath = parentPath ? `${parentPath}/${folder}` : folder;
-            const details = document.createElement('details');
-            details.className = 'mb-1';
-            const summary = document.createElement('summary');
-            summary.className = 'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[#101830] transition-colors text-[13px] text-gray-300';
-            summary.innerHTML = `<i class="fas fa-chevron-right folder-icon text-[10px] text-gray-500 w-3"></i> <i class="fas fa-folder text-amber-500/70 w-4 text-center"></i> <span class="truncate">${folder}</span>`;
-            details.appendChild(summary);
-            const childContainer = document.createElement('div');
-            childContainer.className = 'tree-spine';
-            details.appendChild(childContainer);
-            B.renderGhTree(tree[folder], childContainer, fullPath);
-            container.appendChild(details);
-        });
-
-        files.forEach(file => {
-            const fullPath = parentPath ? `${parentPath}/${file}` : file;
-            if (file.endsWith('.js') && !file.includes('question-loader')) {
-                const btn = document.createElement('button');
-                btn.className = 'w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-[13px] text-gray-400 hover:bg-[#101830] hover:text-gray-200';
-                btn.innerHTML = `<span class="w-3"></span> <i class="fab fa-js w-4 text-center text-amber-400"></i> <span class="truncate">${file}</span>`;
-                btn.onclick = () => B.importFromGitHub(fullPath);
-                container.appendChild(btn);
-            }
-        });
-    },
-
-importFromGitHub: async function(path) {
-    B.toggleGhSidebar(false);
-    currentLoadedPath = path;
-    var o = localStorage.getItem('gh_owner');
-    var r = localStorage.getItem('gh_repo');
-    var t = localStorage.getItem('gh_token');
-    
-    B.toast('Fetching ' + path + '...', 'info');
-    try {
-        const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-        const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${encodedPath}?ref=main`, {
-            headers: { 'Authorization': `token ${t}` }
-        });
-        if (!res.ok) throw new Error('Fetch failed');
-        const data = await res.json();
-        var text = b64DecodeUnicode(data.content.replace(/\n/g, ''));
-        
-        var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
-        if (Array.isArray(banks)) {
-            var qs = [];
-            banks.forEach(str => {
-                var p = B.parseDSL(str);
-                // FIXED: Map subject and topic names to the question objects
-                p.subjects.forEach(s => {
-                    s.topics.forEach(t => {
-                        t.questions.forEach(q => {
-                            q._importSubjName = s.name;
-                            q._importTopicName = t.name;
-                            qs.push(q);
+        B.toast('Fetching ' + path + '...', 'info');
+        try {
+            const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+            const res = await fetch(`https://api.github.com/repos/${o}/${r}/contents/question-banks/${encodedPath}?ref=main`, {
+                headers: { 'Authorization': `token ${t}` }
+            });
+            if (!res.ok) throw new Error('Fetch failed');
+            const data = await res.json();
+            var text = b64DecodeUnicode(data.content.replace(/\n/g, ''));
+            
+            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
+            if (Array.isArray(banks)) {
+                var qs = [];
+                banks.forEach(str => {
+                    var p = B.parseDSL(str);
+                    p.subjects.forEach(s => {
+                        s.topics.forEach(t => {
+                            t.questions.forEach(q => {
+                                q._importSubjName = s.name;
+                                q._importTopicName = t.name;
+                                qs.push(q);
+                            });
                         });
                     });
                 });
-            });
-            B.showImportPreview(qs);
-        }
-    } catch (err) { B.toast(err.message, 'error'); }
-},
+                B.showImportPreview(qs);
+            }
+        } catch (err) { B.toast(err.message, 'error'); }
+    },
 
     createNewFolder: async function() {
         var path = prompt("Folder path (e.g., chemistry/organic):");
@@ -1024,52 +958,45 @@ importFromGitHub: async function(path) {
     },
 
     submitPublish: async function() {
-    var o = document.getElementById('pub-owner').value.trim();
-    var r = document.getElementById('pub-repo').value.trim();
-    var t = document.getElementById('pub-token').value.trim();
-    var f = document.getElementById('pub-filename').value.trim();
-    
-    if (!o || !r || !t || !f) return B.toast('All fields required', 'error');
-    
-    var btn = document.getElementById('pub-submit');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-    btn.disabled = true;
-
-    var code = B.generateExportJSCode(false);
-    try {
-        // 1. Publish the bank file
-        var res = await fetch('/api/publish-bank', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: f, code: code, githubToken: t, repoOwner: o, repoName: r })
-        });
-        if (!res.ok) throw new Error('Publish failed');
-        B.toast('Bank Published!', 'success');
-        currentLoadedPath = f;
-
-        // 2. Update index.html
-        B.toast('Updating index.html...', 'info');
-        var indexRes = await fetch('/api/publish-bank', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                filename: 'update-index', 
-                githubToken: t, 
-                repoOwner: o, 
-                repoName: r 
-            })
-        });
-        var indexData = await indexRes.json();
-        if (!indexRes.ok) throw new Error(indexData.error || 'Failed to update index.html');
+        var o = document.getElementById('pub-owner').value.trim();
+        var r = document.getElementById('pub-repo').value.trim();
+        var t = document.getElementById('pub-token').value.trim();
+        var f = document.getElementById('pub-filename').value.trim();
         
-        B.toast('Index updated successfully!', 'success');
-        B.closeModal('publish-modal');
+        if (!o || !r || !t || !f) return B.toast('All fields required', 'error');
+        
+        var btn = document.getElementById('pub-submit');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+        btn.disabled = true;
 
-    } catch (err) { 
-        B.toast(err.message, 'error'); 
-    } finally { 
-        btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; 
-        btn.disabled = false; 
-    }
-},
+        var code = B.generateExportJSCode(false);
+        try {
+            var res = await fetch('/api/publish-bank', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: f, code: code, githubToken: t, repoOwner: o, repoName: r })
+            });
+            if (!res.ok) throw new Error('Publish failed');
+            B.toast('Bank Published!', 'success');
+            currentLoadedPath = f;
+
+            B.toast('Updating index.html...', 'info');
+            var indexRes = await fetch('/api/publish-bank', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: 'update-index', githubToken: t, repoOwner: o, repoName: r })
+            });
+            var indexData = await indexRes.json();
+            if (!indexRes.ok) throw new Error(indexData.error || 'Failed to update index.html');
+            
+            B.toast('Index updated successfully!', 'success');
+            B.closeModal('publish-modal');
+
+        } catch (err) { 
+            B.toast(err.message, 'error'); 
+        } finally { 
+            btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Publish'; 
+            btn.disabled = false; 
+        }
+    },
 
     slug: function(s) { return String(s || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-'); },
 
