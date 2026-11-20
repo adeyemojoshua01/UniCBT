@@ -459,9 +459,16 @@ window.MathJax = {
             </div>
 
             <div class="p-3 bg-[#080d18] rounded-lg border border-[#1e2740]">
-                <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Answer Configuration</h3>
-                ${B.answerConfigHTML(q)}
-            </div>
+    <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Answer Configuration</h3>
+    ${B.answerConfigHTML(q)}
+    <div class="mt-2 rounded-lg bg-[#0B1020] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300">
+        <div class="lbl !mb-1 !text-[9.5px]">Options Preview</div>
+        ${['A','B','C','D'].map((l, i) => {
+            if (!q.options[i]) return '';
+            return `<div class="flex gap-2 mb-1"><span class="font-bold text-slate-500">${l})</span> <span class="fmt" id="opt-preview-${i}">${B.renderMathText(q.options[i])}</span></div>`;
+        }).join('')}
+    </div>
+</div>
         </div>
 
         <div class="panel rounded-xl p-4">
@@ -506,11 +513,16 @@ window.MathJax = {
         }
     },
     updateOption: function (i, val) {
-        var q = currentQuestion(); if (!q) return;
-        B.pushUndoState();
-        q.options[i] = val;
-        B.scheduleSave();
-    },
+    var q = currentQuestion(); if (!q) return;
+    B.pushUndoState();
+    q.options[i] = val;
+    B.scheduleSave();
+    
+    var el = document.getElementById('opt-preview-' + i);
+    if (el) el.innerHTML = B.renderMathText(val);
+    B.typeset();
+},
+    
     changeType: function(type) {
         var q = currentQuestion(); if (!q) return;
         B.pushUndoState();
