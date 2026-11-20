@@ -797,6 +797,66 @@ showImportPreview: function(questions) {
     B.toast(`Imported ${importedCount} questions successfully!`, 'success');
     pendingImport = null;
 },
+
+            parsePastedText: function() {
+    var text = document.getElementById('paste-input').value.trim();
+    if (!text) return B.toast('Please paste some text first.', 'error');
+    
+    var parsed = [];
+    try {
+        // Check if it's JavaScript code
+        if (text.includes('CBT_SUBJECT_BANKS')) {
+            var banks = new Function('var window = {CBT_SUBJECT_BANKS: []};\n' + text + '\nreturn window.CBT_SUBJECT_BANKS;')();
+            if (Array.isArray(banks)) {
+                banks.forEach(str => {
+                    var p = B.parseDSL(str);
+                    p.subjects.forEach(s => {
+                        s.topics.forEach(t => {
+                            t.questions.forEach(q => {
+                                q._importSubjName = s.name;
+                                q._importTopicName = t.name;
+                                parsed.push(q);
+                            });
+                        });
+                    });
+                });
+            }
+        } else {
+            // Treat as Markdown
+            parsed = B.parseMarkdownToCBT(text);
+        }
+    } catch (e) {
+        return B.toast('Failed to parse: ' + e.message, 'error');
+    }
+
+    if (parsed.length === 0) {
+        return B.toast('No questions could be parsed from the text.', 'error');
+    }
+
+    pendingImport = parsed;
+    document.getElementById('paste-preview').classList.remove('hidden');
+    
+    var subjs = [...new Set(parsed.map(q => q._importSubjName || 'Markdown Import'))];
+    var tops = [...new Set(parsed.map(q => q._importTopicName || 'General'))];
+    
+    document.getElementById('paste-summary').innerHTML = `
+        <i class="fas fa-check-circle text-emerald-400"></i> Found <strong>${parsed.length}</strong> questions.<br>
+        <span class="text-xs text-slate-400 mt-1 block">Subjects: ${subjs.join(', ')}<br>Topics: ${tops.join(', ')}</span>
+    `;
+    document.getElementById('paste-status').textContent = 'Ready to import. Click "Confirm Import" to apply.';
+},
+
+applyPastedImport: function() {
+    if (!pendingImport || pendingImport.length === 0) return;
+    
+    B.applyImport(); // Reuse the existing import logic!
+    
+    document.getElementById('paste-input').value = '';
+    document.getElementById('paste-preview').classList.add('hidden');
+    document.getElementById('paste-status').textContent = '';
+    B.closeModal('paste-modal');
+},
+    
     /* ------------- GITHUB EXPLORER TREE ------------- */
     loadGitHubTree: async function() {
         var o = document.getElementById('gh-user').value.trim();
