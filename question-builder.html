@@ -630,49 +630,116 @@ renameSubTopic: function(sid, tid, stid) {
     reader.readAsText(file);
 },
 
-    parseMarkdownToCBT: function(raw) {
-        var blocks = raw.split(/\n\s*---\s*\n/);
-        var questions = [];
-        blocks.forEach(block => {
-            var lines = block.split('\n').map(l => l.trim()).filter(l => l);
-            if (lines.length === 0) return;
-            var q = newQuestion('MCQ');
-            q.question = '';
-            q.subTopicName = null; 
-            var inOptions = false;
+parseMarkdownToCBT: function(raw) {
+    // Pre-process: Temporarily replace MathJax blocks so the parser doesn't break them
+    var mathBlocks = [];
+    var text = raw;
+    
+    // Extract $$...$$
+    text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match) {
+        mathBlocks.push(match);
+        return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+    });
+    
+    // Extract $...$
+    text = text.replace(/\$([^\$]+)\$/g, function(match) {
+        mathBlocks.push(match);
+        return `@@MATH_BLOCK_${mathBlocks.length - 1}@@`;
+    });
+
+    var blocks = text.split(/\n\s*---\s*\n/);
+    var questions = [];
+    
+    blocks.forEach(block => {
+        var lines = block.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length === 0) return;
+        
+        var q = newQuestion('MCQ');
+        q.question = '';
+        q.subTopicName = null;
+        var inOptions = false;
+        
+        lines.forEach(line => {
+            // 1. Detect Subject/Topic/SubTopic metadata
+            if (/^\*{0,2}Subject\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                q._importSubjName = line.replace(/^\*{0,2}Subject\*{0,2}\s*[:=]\s*/i, '').trim();
+                return;
+            }
+            if (/^\*{0,2}Topic\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                q._importTopicName = line.replace(/^\*{0,2}Topic\*{0,2}\s*[:=]\s*/i, '').trim();
+                return;
+            }
+            if (/^\*{0,2}Sub-?Topic\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                q.subTopicName = line.replace(/^\*{0,2}Sub-?Topic\*{0,2}\s*[:=]\s*/i, '').trim();
+                return;
+            }
+            if (/^\*{0,2}Type\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                var t = line.replace(/^\*{0,2}Type\*{0,2}\s*[:=]\s*/i, '').trim().toUpperCase();
+                q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
+                return;
+            }
+
+            // 2. Detect Checkbox Options (e.g., - [ ] or - [x])
+            var checkMatch = line.match(/^[-*]\s*\[([ xX])\]\s*(.+)$/);
+            if (checkMatch) {
+                inOptions = true;
+                var isCorrect = checkMatch[1].toLowerCase() === 'x';
+                var optText = checkMatch[2].trim();
+                var idx = q.options.findIndex(o => o === '');
+                if (idx === -1) idx = 0; // fallback
+                q.options[idx] = optText;
+                if (isCorrect) q.correct = ['A','B','C','D'][idx];
+                return;
+            }
+
+            // 3. Detect Standard Options (e.g., A) or A. or - A))
+            var optMatch = line.match(/^[-*]?\s*([A-D])[\.\)]\s*(.+)$/i);
+            if (optMatch) {
+                inOptions = true;
+                q.options['ABCD'.indexOf(optMatch[1].toUpperCase())] = optMatch[2].trim();
+                return;
+            }
+
+            // 4. Detect Answer
+            if (/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                var ans = line.replace(/^\*{0,2}(Answer|Ans|Correct)\*{0,2}\s*[:=]\s*/i, '').trim();
+                // If it's a full sentence, try to grab the first letter
+                var ansLetter = ans.match(/^([A-D])[\.\)]/i);
+                if (ansLetter) q.correct = ansLetter[1].toUpperCase();
+                else if (ans.length === 1) q.correct = ans.toUpperCase();
+                else q.correct = ans;
+                return;
+            }
+
+            // 5. Detect Explanation
+            if (/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*(.+)$/i.test(line)) {
+                q.explanation = line.replace(/^\*{0,2}(Explanation|Reasoning|Why)\*{0,2}\s*[:=]\s*/i, '').trim();
+                return;
+            }
+
+            // 6. Everything else is part of the Question Text
+            // Strip Markdown headers (###, **, etc.)
+            var cleanLine = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/^Q\d*[:\.]\s*/i, '').trim();
             
-            lines.forEach(line => {
-                if (/^Type:\s*/i.test(line)) {
-                    var t = line.replace(/^Type:\s*/i, '').trim().toUpperCase();
-                    q.type = t.includes('THEORY') ? 'Theory' : (t.includes('FILL') ? 'Fill' : 'MCQ');
-                    return;
-                }
-                if (/^(SubTopic|Sub-Topic|Subtopic):\s*/i.test(line)) {
-                    q.subTopicName = line.replace(/^(SubTopic|Sub-Topic|Subtopic):\s*/i, '').trim();
-                    return;
-                }
-                var optMatch = line.match(/^([A-Da-d])[\.\)]\s*(.+)$/);
-                if (optMatch) {
-                    inOptions = true;
-                    q.options['ABCD'.indexOf(optMatch[1].toUpperCase())] = optMatch[2].trim();
-                    return;
-                }
-                if (/^(Answer|Ans):\s*/i.test(line)) {
-                    var ans = line.replace(/^(Answer|Ans):\s*/i, '').trim();
-                    q.correct = q.type === 'MCQ' ? ans.charAt(0).toUpperCase() : ans;
-                    return;
-                }
-                if (/^Explanation:\s*/i.test(line)) {
-                    q.explanation = line.replace(/^Explanation:\s*/i, '').trim();
-                    return;
-                }
-                if (!inOptions && !q.question) q.question = line;
-                else if (!inOptions && q.question && !q.explanation) q.question += ' ' + line;
-            });
-            if (q.question) questions.push(q);
+            if (!inOptions && cleanLine) {
+                if (!q.question) q.question = cleanLine;
+                else if (!q.explanation) q.question += ' ' + cleanLine;
+            }
         });
-        return questions;
-    },
+
+        // Only push if we found a question text
+        if (q.question) {
+            // Restore MathJax in the question text
+            q.question = q.question.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]);
+            if (q.explanation) q.explanation = q.explanation.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]);
+            q.options = q.options.map(o => o.replace(/@@MATH_BLOCK_(\d+)@@/g, (m, idx) => mathBlocks[idx]));
+            
+            questions.push(q);
+        }
+    });
+    
+    return questions;
+},
 
     parseDSL: function(text) {
         var subjects = [];
