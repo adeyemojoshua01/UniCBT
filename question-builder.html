@@ -526,9 +526,12 @@ window.MathJax = {
         B.renderStructure(); B.renderContent();
     },
 
-    renderMathText: function (t) { return esc(t).replace(/\n/g, '<br>'); },
-    typeset: function () {
-        if (window.MathJax) MathJax.typesetPromise([document.getElementById('workspace')]).catch(()=>{});
+    renderMathText: function (t) { 
+        if (!t) return '';
+        // 1. Strip asterisks used for bold/italic Markdown
+        var clean = esc(t).replace(/\*\*/g, '').replace(/\*/g, '');
+        // 2. Convert newlines to <br>
+        return clean.replace(/\n/g, '<br>'); 
     },
 
     addSubject: function() {
