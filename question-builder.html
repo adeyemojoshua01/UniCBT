@@ -431,69 +431,109 @@ window.MathJax = {
     },
 
     questionEditorHTML: function () {
-      var s = currentSubject(), t = currentTopic(), q = currentQuestion();
-      var typeBtn = (type, icon) => `<button onclick="B.changeType('${type}')" class="btn ${q.type === type ? 'btn-indigo' : 'btn-ghost'} !py-1.5 flex-1 justify-center"><i class="${icon}"></i>${type}</button>`;
-      
-      var stOptions = t.subTopics.map(st => `<option value="${st.id}" ${q.subTopicId === st.id ? 'selected' : ''}>${esc(st.name)}</option>`).join('');
+  var s = currentSubject(), t = currentTopic(), q = currentQuestion();
+  var typeBtn = (type, icon) => `<button onclick="B.changeType('${type}')" class="btn ${q.type === type ? 'btn-indigo' : 'btn-ghost'} !py-1.5 flex-1 justify-center"><i class="${icon}"></i>${type}</button>`;
+  
+  var stOptions = t.subTopics.map(st => `<option value="${st.id}" ${q.subTopicId === st.id ? 'selected' : ''}>${esc(st.name)}</option>`).join('');
 
-      return `<div class="max-w-3xl mx-auto space-y-4">
-        <div class="flex justify-between items-center">
-            <button onclick="B.selectQuestion(null,null,null)" class="btn btn-ghost !py-1.5 !px-2"><i class="fas fa-arrow-left"></i> Back to List</button>
-            <button onclick="B.deleteQuestion()" class="btn btn-danger !py-1.5 !px-2"><i class="fas fa-trash"></i></button>
-        </div>
+  return `<div class="max-w-3xl mx-auto space-y-4">
+    <div class="flex justify-between items-center">
+        <button onclick="B.selectQuestion(null,null,null)" class="btn btn-ghost !py-1.5 !px-2"><i class="fas fa-arrow-left"></i> Back to List</button>
+        <button onclick="B.deleteQuestion()" class="btn btn-danger !py-1.5 !px-2"><i class="fas fa-trash"></i></button>
+    </div>
+    
+    <div class="panel rounded-xl p-4">
+        <div class="flex gap-2 mb-4">${typeBtn('MCQ','fas fa-list-check')} ${typeBtn('Fill','fas fa-keyboard')} ${typeBtn('Theory','fas fa-pen-nib')}</div>
         
-        <div class="panel rounded-xl p-4">
-            <div class="flex gap-2 mb-4">${typeBtn('MCQ','fas fa-list-check')} ${typeBtn('Fill','fas fa-keyboard')} ${typeBtn('Theory','fas fa-pen-nib')}</div>
-            
-            <label class="lbl">Question Text</label>
-            <textarea rows="4" class="field mb-2" oninput="B.updateQField('question', this.value)" placeholder="Type the question...">${esc(q.question)}</textarea>
-            <div class="rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300 mb-4"><div class="fmt" id="question-preview">${B.renderMathText(q.question) || '<span class="text-slate-500 italic">Preview appears here…</span>'}</div></div>
-
-            <div class="mb-4">
-                <label class="lbl">Sub-Topic</label>
-                <select class="field" onchange="B.updateQField('subTopicId', this.value)">${stOptions}</select>
-            </div>
-
-            <div class="p-3 bg-[#080d18] rounded-lg border border-[#1e2740]">
-                <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Answer Configuration</h3>
-                ${B.answerConfigHTML(q)}
-            </div>
+        <label class="lbl">Question Text</label>
+        <textarea rows="4" class="field mb-2" oninput="B.updateQField('question', this.value)" placeholder="Type the question...">${esc(q.question)}</textarea>
+        <div class="rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300 mb-4">
+            <div class="lbl !mb-1 !text-[9.5px]">LaTeX live preview</div>
+            <div class="fmt" id="question-preview">${q.question ? B.renderMathText(q.question) : '<span class="text-slate-500 italic">Preview appears here…</span>'}</div>
         </div>
 
-        <div class="panel rounded-xl p-4">
-            <label class="lbl">Explanation / Model Answer</label>
-            <textarea rows="4" class="field mb-2" oninput="B.updateQField('explanation', this.value)" placeholder="Explain the reasoning...">${esc(q.explanation)}</textarea>
+        <div class="mb-4">
+            <label class="lbl">Sub-Topic</label>
+            <select class="field" onchange="B.updateQField('subTopicId', this.value)">${stOptions}</select>
         </div>
-      </div>`;
-    },
+
+                <div class="p-3 bg-[#080d18] rounded-lg border border-[#1e2740]">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Answer Configuration</h3>
+            <div id="answer-config-container">${B.answerConfigHTML(q)}</div>
+        </div>
+    </div>
+
+    <div class="panel rounded-xl p-4">
+        <label class="lbl">Explanation / Model Answer</label>
+        <textarea rows="4" class="field mb-2" oninput="B.updateQField('explanation', this.value)" placeholder="Explain the reasoning...">${esc(q.explanation)}</textarea>
+        <div class="rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300">
+            <div class="lbl !mb-1 !text-[9.5px]">Preview</div>
+            <div class="fmt" id="explanation-preview">${q.explanation ? B.renderMathText(q.explanation) : '<span class="text-slate-500 italic">Explanation preview appears here…</span>'}</div>
+        </div>
+    </div>
+  </div>`;
+},
 
     answerConfigHTML: function (q) {
-        if (q.type === 'MCQ') {
-            return ['A','B','C','D'].map((l, i) => `
-                <div class="flex items-center gap-2 mb-2">
+    if (q.type === 'MCQ') {
+        return ['A','B','C','D'].map((l, i) => `
+            <div class="mb-3">
+                <div class="flex items-center gap-2">
                     <input type="radio" name="correct" value="${l}" ${q.correct === l ? 'checked' : ''} onchange="B.updateQField('correct', this.value)" class="accent-amber-500">
-                    <span class="text-xs font-bold text-slate-500 w-4">${l}</span>
+                    <span class="text-xs font-bold ${q.correct === l ? 'text-amber-400' : 'text-slate-500'} w-4">${l}</span>
                     <input class="field" value="${esc(q.options[i] || '')}" oninput="B.updateOption(${i}, this.value)" placeholder="Option ${l}">
                 </div>
-            `).join('');
-        } else if (q.type === 'Fill') {
-            return `<label class="lbl">Exact Answer</label><input class="field" value="${esc(q.correct)}" oninput="B.updateQField('correct', this.value)" placeholder="e.g. 42">`;
-        } else {
-            return `<label class="lbl">Max Marks</label><input type="number" class="field !w-24" value="${q.maxMarks || 10}" oninput="B.updateQField('maxMarks', this.value)">`;
-        }
-    },
-
+                <div class="ml-10 mt-1 rounded-md bg-[#05080f] border border-[#1a2339] px-2.5 py-1.5 text-[12px] text-slate-300">
+                    <div class="fmt" id="option-preview-${i}">${q.options[i] ? B.renderMathText(q.options[i]) : '<span class="text-slate-600 italic text-[11px]">Option preview…</span>'}</div>
+                </div>
+            </div>
+        `).join('');
+    } else if (q.type === 'Fill') {
+        return `<label class="lbl">Exact Answer</label>
+            <input class="field mb-2" value="${esc(q.correct)}" oninput="B.updateQField('correct', this.value)" placeholder="e.g. 42">
+            <div class="rounded-lg bg-[#080d18] border border-[#1e2740] p-2.5 text-[12.5px] text-slate-300">
+                <div class="lbl !mb-1 !text-[9.5px]">Preview</div>
+                <div class="fmt" id="fill-preview">${q.correct ? B.renderMathText(q.correct) : '<span class="text-slate-500 italic">Answer preview appears here…</span>'}</div>
+            </div>`;
+    } else {
+        return `<label class="lbl">Max Marks</label><input type="number" class="field !w-24" value="${q.maxMarks || 10}" oninput="B.updateQField('maxMarks', this.value)">`;
+    }
+},
     updateQField: function (field, value) {
-        var q = currentQuestion(); if (!q) return;
-        B.pushUndoState();
-        q[field] = value;
-        B.scheduleSave();
-        if (field === 'question') {
-            var el = document.getElementById('question-preview');
-            if (el) el.innerHTML = B.renderMathText(value);
-            B.typeset();
-        }
-    },
+    var q = currentQuestion(); if (!q) return;
+    B.pushUndoState();
+    q[field] = value;
+    B.scheduleSave();
+    
+    if (field === 'question') {
+        var el = document.getElementById('question-preview');
+        if (el) el.innerHTML = value ? B.renderMathText(value) : '<span class="text-slate-500 italic">Preview appears here…</span>';
+        B.typeset();
+    } else if (field === 'explanation') {
+        var el = document.getElementById('explanation-preview');
+        if (el) el.innerHTML = value ? B.renderMathText(value) : '<span class="text-slate-500 italic">Explanation preview appears here…</span>';
+        B.typeset();
+    } else if (field === 'correct' && q.type === 'Fill') {
+        var el = document.getElementById('fill-preview');
+        if (el) el.innerHTML = value ? B.renderMathText(value) : '<span class="text-slate-500 italic">Answer preview appears here…</span>';
+        B.typeset();
+    } else if (field === 'correct' && q.type === 'MCQ') {
+        // Re-render answer config to update the highlighted correct letter and radio state
+        var cfg = document.getElementById('answer-config-container');
+        if (cfg) cfg.innerHTML = B.answerConfigHTML(q);
+        B.typeset();
+    }
+},
+updateOption: function (i, val) {
+    var q = currentQuestion(); if (!q) return;
+    B.pushUndoState();
+    q.options[i] = val;
+    B.scheduleSave();
+    var el = document.getElementById('option-preview-' + i);
+    if (el) el.innerHTML = val ? B.renderMathText(val) : '<span class="text-slate-600 italic text-[11px]">Option preview…</span>';
+    B.typeset();
+},
+    
     updateOption: function (i, val) {
         var q = currentQuestion(); if (!q) return;
         B.pushUndoState();
