@@ -2,6 +2,10 @@
 window.CBT_SUBJECT_NOTES = window.CBT_SUBJECT_NOTES || {};
 window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics'] || {};
 window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid mechanics'] = `
+
+@[svg](diagram.svg)
+
+
 ## **Definitions of Fluid:**
 *   Fluid is a substance that deforms under the influence of Shear Stress at any magnitude.
 
