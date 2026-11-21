@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <!-- Background wall gradient -->
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c8d0d8"/>
+      <stop offset="100%" stop-color="#9aa5b0"/>
+    </linearGradient>
+
+    <!-- Table gradient -->
+    <linearGradient id="table" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a4a28"/>
+      <stop offset="100%" stop-color="#4a2a14"/>
+    </linearGradient>
+
+    <!-- Apple main form gradient (off-center focal for realism) -->
+    <radialGradient id="appleForm" cx="0.38" cy="0.32" r="0.85" fx="0.32" fy="0.26">
+      <stop offset="0%" stop-color="#e8503a"/>
+      <stop offset="35%" stop-color="#c0392b"/>
+      <stop offset="70%" stop-color="#8b1a1a"/>
+      <stop offset="100%" stop-color="#4a0a0a"/>
+    </radialGradient>
+
+    <!-- Green shoulder tint near stem -->
+    <radialGradient id="appleGreen" cx="0.5" cy="0.05" r="0.55">
+      <stop offset="0%" stop-color="#a8b545" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#a8b545" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Broad soft highlight -->
+    <radialGradient id="softHighlight" cx="0.35" cy="0.28" r="0.35">
+      <stop offset="0%" stop-color="#fff6e9" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#fff6e9" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Sharp specular -->
+    <radialGradient id="specular" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Reflected light at bottom -->
+    <radialGradient id="reflected" cx="0.5" cy="1" r="0.6">
+      <stop offset="0%" stop-color="#ffb08a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffb08a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Stem gradient -->
+    <linearGradient id="stemGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3a2410"/>
+      <stop offset="50%" stop-color="#6b4a22"/>
+      <stop offset="100%" stop-color="#2a1808"/>
+    </linearGradient>
+
+    <!-- Leaf gradient -->
+    <linearGradient id="leafGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6f9a2e"/>
+      <stop offset="100%" stop-color="#3d5e14"/>
+    </linearGradient>
+
+    <!-- Blur filters -->
+    <filter id="blurSoft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <filter id="blurMed" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="blurTight" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5"/>
+    </filter>
+
+    <!-- Grain / photographic noise -->
+    <filter id="grain" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.08"/>
+      </feComponentTransfer>
+      <feComposite in2="SourceGraphic" operator="over"/>
+    </filter>
+
+    <!-- Apple silhouette path (asymmetric, lobed) -->
+    <path id="appleBody" d="
+      M 400 170
+      C 445 168, 500 200, 520 260
+      C 540 320, 535 380, 500 425
+      C 470 462, 430 478, 400 478
+      C 370 478, 330 462, 300 425
+      C 265 380, 260 320, 280 260
+      C 300 200, 355 172, 400 170 Z"/>
+
+    <!-- Texture clip = apple body -->
+    <clipPath id="appleClip">
+      <use href="#appleBody"/>
+    </clipPath>
+  </defs>
+
+  <!-- WALL -->
+  <rect width="800" height="600" fill="url(#wall)"/>
+
+  <!-- TABLE -->
+  <rect y="440" width="800" height="160" fill="url(#table)"/>
+  <!-- Wood grain lines -->
+  <g opacity="0.35" stroke="#3a2010" stroke-width="1.2" fill="none">
+    <path d="M0 460 Q 200 452, 400 462 T 800 458"/>
+    <path d="M0 490 Q 220 484, 420 494 T 800 488"/>
+    <path d="M0 525 Q 180 518, 400 528 T 800 520"/>
+    <path d="M0 560 Q 250 552, 450 562 T 800 556"/>
+  </g>
+  <!-- Table front edge shadow -->
+  <rect y="440" width="800" height="10" fill="#2a1508" opacity="0.6" filter="url(#blurTight)"/>
+
+  <!-- CAST SHADOW -->
+  <ellipse cx="470" cy="470" rx="190" ry="38" fill="#1a0a04" opacity="0.55" filter="url(#blurSoft)"/>
+
+  <!-- CONTACT SHADOW (tight, dark) -->
+  <ellipse cx="400" cy="470" rx="115" ry="20" fill="#0d0502" opacity="0.75" filter="url(#blurMed)"/>
+
+  <!-- APPLE BODY -->
+  <g>
+    <!-- Base form -->
+    <use href="#appleBody" fill="url(#appleForm)"/>
+
+    <!-- Green shoulder overlay -->
+    <g clip-path="url(#appleClip)">
+      <rect x="250" y="160" width="300" height="120" fill="url(#appleGreen)"/>
+    </g>
+
+    <!-- Soft broad highlight -->
+    <g clip-path="url(#appleClip)">
+      <ellipse cx="345" cy="255" rx="95" ry="110" fill="url(#softHighlight)"/>
+    </g>
+
+    <!-- Reflected bounce light at bottom -->
+    <g clip-path="url(#appleClip)">
+      <ellipse cx="400" cy="470" rx="120" ry="45" fill="url(#reflected)"/>
+    </g>
+
+    <!-- Texture: lenticel speckles -->
+    <g clip-path="url(#appleClip)" opacity="0.35">
+      <g fill="#3a0808">
+        <circle cx="330" cy="230" r="1.4"/>
+        <circle cx="360" cy="210" r="1.1"/>
+        <circle cx="390" cy="200" r="1.3"/>
+        <circle cx="420" cy="215" r="1"/>
+        <circle cx="450" cy="235" r="1.4"/>
+        <circle cx="475" cy="260" r="1.1"/>
+        <circle cx="315" cy="270" r="1.2"/>
+        <circle cx="340" cy="300" r="1.3"/>
+        <circle cx="370" cy="330" r="1"/>
+        <circle cx="405" cy="350" r="1.4"/>
+        <circle cx="440" cy="330" r="1.1"/>
+        <circle cx="470" cy="300" r="1.2"/>
+        <circle cx="500" cy="340" r="1"/>
+        <circle cx="320" cy="360" r="1.3"/>
+        <circle cx="355" cy="390" r="1.1"/>
+        <circle cx="390" cy="410" r="1.4"/>
+        <circle cx="430" cy="400" r="1"/>
+        <circle cx="465" cy="380" r="1.2"/>
+        <circle cx="490" cy="410" r="1.1"/>
+        <circle cx="300" cy="320" r="1"/>
+        <circle cx="515" cy="290" r="1.3"/>
+        <circle cx="380" cy="250" r="0.9"/>
+        <circle cx="410" cy="280" r="1.2"/>
+        <circle cx="345" cy="345" r="0.9"/>
+      </g>
+    </g>
+
+    <!-- Faint vertical striations (natural apple streaks) -->
+    <g clip-path="url(#appleClip)" opacity="0.12" stroke="#5a0e0e" stroke-width="1.5" fill="none">
+      <path d="M340 180 Q 335 300, 345 460"/>
+      <path d="M370 175 Q 365 300, 372 470"/>
+      <path d="M405 172 Q 402 300, 408 475"/>
+      <path d="M440 178 Q 445 300, 438 465"/>
+      <path d="M470 195 Q 478 300, 468 450"/>
+      <path d="M310 210 Q 300 320, 315 430"/>
+      <path d="M500 230 Q 512 320, 498 420"/>
+    </g>
+
+    <!-- Sharp specular highlight -->
+    <ellipse cx="335" cy="240" rx="22" ry="16" fill="url(#specular)" transform="rotate(-20 335 240)"/>
+
+    <!-- Small secondary specular -->
+    <ellipse cx="360" cy="215" rx="7" ry="5" fill="#ffffff" opacity="0.7"/>
+
+    <!-- Rim light on right edge -->
+    <g clip-path="url(#appleClip)">
+      <path d="M 500 250 C 525 300, 520 380, 495 430" stroke="#ff9a7a" stroke-width="4" fill="none" opacity="0.35" filter="url(#blurTight)"/>
+    </g>
+  </g>
+
+  <!-- STEM -->
+  <path d="M 400 172 C 398 150, 392 130, 385 118 C 380 110, 372 108, 368 114 C 365 120, 372 126, 380 130 C 390 136, 398 148, 402 168"
+        fill="url(#stemGrad)" stroke="#1a0e04" stroke-width="0.8"/>
+
+  <!-- LEAF -->
+  <g transform="translate(398,130) rotate(25)">
+    <path d="M 0 0 C 20 -12, 55 -10, 70 5 C 55 18, 20 20, 0 0 Z" fill="url(#leafGrad)" stroke="#2a4008" stroke-width="0.8"/>
+    <!-- Leaf vein -->
+    <path d="M 5 2 Q 35 3, 65 5" stroke="#9ac050" stroke-width="1" fill="none" opacity="0.7"/>
+    <path d="M 25 1 Q 30 8, 28 14" stroke="#9ac050" stroke-width="0.6" fill="none" opacity="0.5"/>
+    <path d="M 45 3 Q 50 10, 48 16" stroke="#9ac050" stroke-width="0.6" fill="none" opacity="0.5"/>
+  </g>
+
+  <!-- OCCLUSION RING under apple (sits on table) -->
+  <ellipse cx="400" cy="472" rx="110" ry="16" fill="#0a0300" opacity="0.5" filter="url(#blurMed)"/>
+
+  <!-- VIGNETTE -->
+  <radialGradient id="vignette" cx="0.5" cy="0.45" r="0.75">
+    <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
+  </radialGradient>
+  <rect width="800" height="600" fill="url(#vignette)" pointer-events="none"/>
+
+  <!-- GLOBAL GRAIN overlay -->
+  <rect width="800" height="600" fill="none" filter="url(#grain)" opacity="0.5" pointer-events="none"/>
+</svg>
