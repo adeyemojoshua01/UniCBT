@@ -8,6 +8,12 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 
 *   Fluid is a substance that deform continuously when Shear Stress is acted upon at any magnitude.
 
+
+
+@[first principle](https://youtu.be/O_Ul5aPsKIg?si=ahFwwfBUtKLTGXHX)
+
+
+
 ## **Types of fluid**
 1) Liquid
 2) Gas
