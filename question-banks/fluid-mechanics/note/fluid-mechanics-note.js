@@ -39,4 +39,5 @@ window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics']['Introduction to fluid mechanics'] = [
   { data: 'question-banks/fluid-mechanics/note/svg/diagram.svg', filename: 'diagram.svg' },
+  { data: 'question-banks/fluid-mechanics/note/svg/apple.svg', filename: 'apple.svg' },
 ];
