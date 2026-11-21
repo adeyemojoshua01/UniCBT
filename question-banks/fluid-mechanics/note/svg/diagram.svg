@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" width="100%" height="100%">
+  <defs>
+    <style>
+      .root-box { fill: #0f172a; stroke: #334155; stroke-width: 2px; rx: 10px; ry: 10px; filter: drop-shadow(0px 4px 6px rgba(15,23,42,0.15)); }
+      .sub-box { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2px; rx: 8px; ry: 8px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.04)); }
+      .leaf-box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5px; rx: 6px; ry: 6px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.03)); }
+      
+      .root-text { fill: #ffffff; font-family: system-ui, -apple-system, sans-serif; font-size: 16px; font-weight: bold; text-anchor: middle; }
+      .sub-text { fill: #166534; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 700; text-anchor: middle; }
+      .leaf-title { fill: #0f172a; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 600; text-anchor: middle; }
+      .leaf-desc { fill: #64748b; font-family: system-ui, -apple-system, sans-serif; font-size: 11px; text-anchor: middle; }
+      
+      .link { fill: none; stroke: #94a3b8; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  
+  <rect width="100%" height="100%" fill="#f8fafc" rx="12" />
+
+  
+  
+  <path class="link" d="M 420 80 L 420 125" />
+  <path class="link" d="M 220 125 L 620 125" />
+  <path class="link" d="M 220 125 L 220 165" />
+  <path class="link" d="M 620 125 L 620 165" />
+
+  
+  <path class="link" d="M 220 220 L 220 265" />
+  <path class="link" d="M 120 265 L 320 265" />
+  <path class="link" d="M 120 265 L 120 305" />
+  <path class="link" d="M 320 265 L 320 305" />
+
+  
+  <path class="link" d="M 620 220 L 620 265" />
+  <path class="link" d="M 520 265 L 720 265" />
+  <path class="link" d="M 520 265 L 520 305" />
+  <path class="link" d="M 720 265 L 720 305" />
+
+  
+
+  
+  <g transform="translate(310, 35)">
+    <rect class="root-box" width="220" height="45" />
+    <text class="root-text" x="110" y="28">Fluid Mechanics</text>
+  </g>
+
+  
+  <g transform="translate(115, 165)">
+    <rect class="sub-box" width="210" height="55" />
+    <text class="sub-text" x="105" y="25">Fluid Statics</text>
+    <text class="leaf-desc" x="105" y="42">(Fluids at Rest)</text>
+  </g>
+
+  
+  <g transform="translate(515, 165)">
+    <rect class="sub-box" width="210" height="55" />
+    <text class="sub-text" x="105" y="25">Fluid Dynamics</text>
+    <text class="leaf-desc" x="105" y="42">(Fluids in Motion)</text>
+  </g>
+
+  
+  <g transform="translate(35, 305)">
+    <rect class="leaf-box" width="170" height="60" />
+    <text class="leaf-title" x="85" y="26">Hydrostatics</text>
+    <text class="leaf-desc" x="85" y="44">Liquids at rest</text>
+  </g>
+
+  
+  <g transform="translate(235, 305)">
+    <rect class="leaf-box" width="170" height="60" />
+    <text class="leaf-title" x="85" y="26">Aerostatics</text>
+    <text class="leaf-desc" x="85" y="44">Gases at rest</text>
+  </g>
+
+  
+  <g transform="translate(435, 305)">
+    <rect class="leaf-box" width="170" height="60" />
+    <text class="leaf-title" x="85" y="26">Fluid Kinematics</text>
+    <text class="leaf-desc" x="85" y="44">Geometry of motion</text>
+  </g>
+
+  
+  <g transform="translate(635, 305)">
+    <rect class="leaf-box" width="170" height="60" />
+    <text class="leaf-title" x="85" y="26">Fluid Kinetics</text>
+    <text class="leaf-desc" x="85" y="44">Forces behind motion</text>
+  </g>
+</svg>
