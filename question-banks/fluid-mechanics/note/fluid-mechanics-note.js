@@ -36,6 +36,10 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 
 https://youtu.be/ZVQXXtAywyU?si=DuDSeDt8fBg5c1vl
 
+@[svg](apple.svg)
+
+
+
 **The Correction:**
 In the sentence *"Fluid mechanics is the study of fluid at rest and fluid in motion with the... of Pressure, force and acceleration/velocity"*, the word is **consideration**, not "conscience". 
 
@@ -44,4 +48,5 @@ Everything else in the previous transcription accurately reflects the text in th
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics']['Introduction to fluid mechanics'] = [
+  { data: 'question-banks/fluid-mechanics/note/svg/apple.svg', filename: 'apple.svg' },
 ];
