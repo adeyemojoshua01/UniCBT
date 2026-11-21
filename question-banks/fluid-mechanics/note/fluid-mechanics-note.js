@@ -34,6 +34,7 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 2) Fluid dynamics -> Fluid kinematics, Fluid kinetics
 
 
+https://youtu.be/ZVQXXtAywyU?si=DuDSeDt8fBg5c1vl
 
 **The Correction:**
 In the sentence *"Fluid mechanics is the study of fluid at rest and fluid in motion with the... of Pressure, force and acceleration/velocity"*, the word is **consideration**, not "conscience". 
