@@ -4,22 +4,6 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_NOT
 window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid mechanics'] = `
 
 @[svg](diagram.svg)
-@[svg](apple.svg)
-
-## **Definitions of Fluid:**
-*   Fluid is a substance that deforms under the influence of Shear Stress at any magnitude.
-
-*   Fluid is a substance that when Shear Stress is applied, the fluid tends to deform at any pressure/magnitude.
-
-*   Fluid is a substance that deform continuously when Shear Stress is acted upon at any magnitude.
-
-## **Types of fluid**
-1) Liquid
-2) Gas
-
-1) Liquid is a fluid that has a fixed Volume, has no fixed Shape but takes the Shape of any container it fills.
-
-2) Gas is a fluid that has no fixed Volume has no fixed Shape but tends to occupy any given space in a medium [container is crossed out] it's filled in.
 
 
 ## **Fluid Mechanics Definitions:**
@@ -36,7 +20,23 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 |----------|----------|
 | Hydrostatic   | Fluid kinematics   | 
 | Aerostatic  | Fluid Kinetics  |
-__________`;
+__________
+
+
+## **Definitions of Fluid:**
+*   Fluid is a substance that deforms under the influence of Shear Stress at any magnitude.
+
+*   Fluid is a substance that when Shear Stress is applied, the fluid tends to deform at any pressure/magnitude.
+
+*   Fluid is a substance that deform continuously when Shear Stress is acted upon at any magnitude.
+
+## **Types of fluid**
+1) Liquid
+2) Gas
+
+1) Liquid is a fluid that has a fixed Volume, has no fixed Shape but takes the Shape of any container it fills.
+
+2) Gas is a fluid that has no fixed Volume has no fixed Shape but tends to occupy any given space in a medium [container is crossed out] it's filled in.`;
 
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] || {};
