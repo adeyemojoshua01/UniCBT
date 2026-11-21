@@ -5,6 +5,7 @@
          @[video](https://youtu.be/xxxx)         <- explicit
          @[Title of video](https://youtu.be/xxx) <- explicit with caption
          https://www.youtube.com/watch?v=xxxx    <- a bare video link on its own line
+       SVG from a saved file:  @[svg](filename.svg)
        Supports YouTube, Vimeo, Google Drive and direct .mp4/.webm/.ogg links. */
     function videoEmbedHtml(url, title) {
       var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
@@ -31,10 +32,43 @@
       return null;
     }
 
+    var vEsc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    function isSvgRef(url, title) { return /\.svg(\?[^\s]*)?$/i.test(url) || String(title || '').toLowerCase() === 'svg'; }
+    function svgSrc(ref) {
+      ref = String(ref || '').trim();
+      if (typeof window.CBT_SVG_RESOLVER === 'function') { var r = window.CBT_SVG_RESOLVER(ref); if (r) return r; }
+      if (/^(https?:)?\/\//i.test(ref) || ref.indexOf('/') > -1) return ref;
+      var all = window.CBT_SUBJECT_IMAGES || {}, want = ref.toLowerCase();
+      for (var subj in all) for (var topic in all[subj]) {
+        var list = all[subj][topic] || [];
+        for (var i = 0; i < list.length; i++) if (list[i].filename && String(list[i].filename).toLowerCase() === want) return list[i].data;
+      }
+      return null;
+    }
+    function svgEmbedHtml(ref, title) {
+      var src = svgSrc(ref);
+      if (!src) return '<p class="no-mathjax" style="opacity:.6;font-style:italic">SVG not found: ' + vEsc(ref) + '</p>';
+      var cap = (title && title.toLowerCase() !== 'svg') ? '<figcaption style="font-size:.8em;opacity:.7;margin-top:6px">' + vEsc(title) + '</figcaption>' : '';
+      return '<figure class="svg-embed no-mathjax" style="margin:1.2em 0;text-align:center"><img src="' + vEsc(src) + '" alt="' + vEsc(title || ref) + '" style="max-width:100%;background:#fff;border-radius:12px;padding:8px;cursor:zoom-in" onclick="window.open(this.src,\'_blank\')">' + cap + '</figure>';
+    }
+    function collectVideos(text) {
+      var out = [];
+      String(text || '').split(/\r?\n/).forEach(function (line) {
+        var m = line.match(/^[ \t]*@\[([^\]]*)\]\(\s*([^)\s]+)\s*\)[ \t]*$/), title = '', url = '';
+        if (m) { title = m[1].trim(); url = m[2]; if (isSvgRef(url, title)) return; if (title.toLowerCase() === 'video') title = ''; }
+        else { m = line.match(/^[ \t]*(https?:\/\/[^\s<>]+)[ \t]*$/); if (!m) return; url = m[1]; }
+        if (videoEmbedHtml(url, '')) out.push({ title: title, url: url });
+      });
+      return out;
+    }
+    function videoListHtml(list) {
+      return list.map(function (v, i) { return '<div style="margin-bottom:18px">' + videoEmbedHtml(v.url, v.title || ('Video ' + (i + 1))) + '</div>'; }).join('');
+    }
+
     function extractVideoEmbeds(text, store) {
       // explicit form: @[title](url)
       text = text.replace(/^[ \t]*@\[([^\]]*)\]\(\s*([^)\s]+)\s*\)[ \t]*$/gm, function (match, title, url) {
-        var html = videoEmbedHtml(url, title.trim());
+        var html = isSvgRef(url, title) ? svgEmbedHtml(url, title.trim()) : videoEmbedHtml(url, title.trim());
         if (!html) html = '<p><a href="' + url + '" target="_blank" rel="noopener">' + (title || url) + '</a></p>';
         store.push(html);
         return '\n\n@@VIDEOEMBED' + (store.length - 1) + '@@\n\n';
@@ -53,7 +87,7 @@
       return html.replace(/(?:<p>\s*)?@@VIDEOEMBED(\d+)@@(?:\s*<\/p>)?/g, function (m, i) { return store[i]; });
     }
 
-    window.CBTVideo = { embed: videoEmbedHtml, extract: extractVideoEmbeds, restore: restoreVideoEmbeds };
+    window.CBTVideo = { collect: collectVideos, listHtml: videoListHtml, embed: videoEmbedHtml, extract: extractVideoEmbeds, restore: restoreVideoEmbeds };
 })();
 /* ============================================================
    app-core.js — window.app: state, persistence, landing,
@@ -264,7 +298,8 @@
             id: topic.id,
             name: topic.name,
             hasNotes: !!(note && String(note).trim() !== ''),
-            images: imgs.length
+            images: imgs.length,
+            videos: window.CBTVideo.collect(note).length
           });
         }
       });
@@ -406,6 +441,7 @@
           '<div class="flex flex-wrap gap-2 mt-4">' +
           (t.hasNotes ? '<button onclick="app.viewTopicNote(\'' + subjectId + '\',\'' + t.id + '\')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"><i class="fas fa-file-lines"></i>Read Notes</button>' : '') +
           (t.images ? '<button onclick="app.viewTopicImages(\'' + subjectId + '\',\'' + t.id + '\')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold"><i class="fas fa-images"></i>View Images (' + t.images + ')</button>' : '') +
+          (t.videos ? '<button onclick="app.viewTopicVideos(\'' + subjectId + '\',\'' + t.id + '\')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"><i class="fas fa-circle-play"></i>Videos (' + t.videos + ')</button>' : '') +
           '</div></div>';
       }).join('');
 
@@ -556,6 +592,7 @@
         }));
       } catch(e) {}
 
+      this._currentNote = { text: String(note), name: resolvedName || 'Topic' };
       var titleEl = document.getElementById('note-viewer-title');
       if (titleEl) titleEl.textContent = (resolvedName || 'Topic') + ' · Notes';
       
@@ -590,6 +627,27 @@
 
      
     
+   openVideoPanel: function (title, text) {
+      var list = window.CBTVideo.collect(text);
+      if (!list.length) { this.toast('No videos in this note.', 'error'); return; }
+      var t = document.getElementById('note-video-title'); if (t) t.textContent = title + ' · Videos (' + list.length + ')';
+      var body = document.getElementById('note-video-body'); if (body) body.innerHTML = window.CBTVideo.listHtml(list);
+      var modal = document.getElementById('note-video-modal'); if (modal) modal.classList.remove('hidden');
+    },
+    closeVideoPanel: function () {
+      var modal = document.getElementById('note-video-modal'); if (modal) modal.classList.add('hidden');
+      var body = document.getElementById('note-video-body'); if (body) body.innerHTML = ''; // stops playback
+    },
+    viewNoteVideos: function () {
+      var c = this._currentNote; if (!c) return;
+      this.openVideoPanel(c.name, c.text);
+    },
+    viewTopicVideos: function (subjectId, topicId) {
+      var subject = this.data.subjects[subjectId]; if (!subject || !subject.notes) return;
+      var topic = (subject.topics || []).find(function (t) { return t.id === topicId; });
+      this.openVideoPanel(topic ? topic.name : 'Topic', subject.notes[topicId] || '');
+    },
+
    viewTopicImages: function (subjectId, topicId) {
        
       var subject = this.data.subjects[subjectId];
@@ -850,6 +908,7 @@
             '<div class="flex flex-col gap-2 shrink-0">' +
             (t.hasNotes ? '<button onclick="app.viewTopicNote(\'' + s.id + '\',\'' + t.id + '\',\'' + self.esc(t.name) + '\')" class="hub-action-btn hub-btn-notes"><i class="fas fa-book-open"></i> Read Notes</button>' : '') +
             (t.images > 0 ? '<button onclick="app.viewTopicImages(\'' + s.id + '\',\'' + t.id + '\')" class="hub-action-btn hub-btn-images"><i class="fas fa-images"></i> Images (' + t.images + ')</button>' : '') +
+            (t.videos > 0 ? '<button onclick="app.viewTopicVideos(\'' + s.id + '\',\'' + t.id + '\')" class="hub-action-btn hub-btn-images"><i class="fas fa-circle-play"></i> Videos (' + t.videos + ')</button>' : '') +
             '</div></div></div>';
         }).join('');
 
