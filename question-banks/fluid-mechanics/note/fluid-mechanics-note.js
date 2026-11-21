@@ -8,11 +8,14 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 
 ## **Fluid Mechanics Definitions:**
 
- *Fluid mechanics is the branch of physics and engineering that studies the behavior of fluids—which include both liquids and gases—and the forces acting upon them.*
+ ### *Fluid mechanics is the branch of physics and engineering that studies the behavior of fluids—which include both liquids and gases—and the forces acting upon them.*
 
 *   Fluid mechanics is the study of fluid at rest and fluid in motion with the consideration of Pressure, force and acceleration/velocity.
 
 *   Fluid mechanics is the Science that Studies on how fluid behaves in a static state and also in a dynamic State.
+
+- Fluid mechanics is the study of how liquids and gases behave, whether they are at rest or in motion.
+
 
 ## **Branch of fluid mechanics**
 
@@ -21,6 +24,36 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 | Hydrostatic   | Fluid kinematics   | 
 | Aerostatic  | Fluid Kinetics  |
 __________
+
+## Definition of FluId Statics
+
+### *Fluid statics is the branch of fluid mechanics that studies liquids and gases when they are completely at rest, focusing on pressure and forces in stationary systems.*
+
+- It is the branch of mechanics that deals with fluids at rest where all forces are in complete equilibrium and there is no relative motion or shearing stress between fluid particles.
+
+- It is the study of how pressure and forces behave in non-moving liquids and gases.
+
+|Examples|
+|--------|
+|1. Water Towers: Elevated tanks use still water pressure daily |
+|2. Swimming Pools: Deep water pushes heavily on your ears.|
+|3. Floating Boats: Motionless water lifts ships to the surface.|
+|4. Dams: Heavy walls block massive stationary water reservoirs.|
+|5. Ice Floating in a Drink: Motionless liquid supports the floating ice cube.|
+
+
+## Fluid Dynamics
+
+### *Fluid dynamics is the branch of fluid mechanics that studies liquids and gases when they are in motion, along with the forces that cause or affect that motion.*
+
+- It is the study of how fluids flow and swirl.
+
+- It is the study of how fluids behave when forces are unbalanced, resulting in acceleration, flow, turbulence, and energy transfer between different parts of the fluid.
+
+- It is the science of moving fluids—tracking how liquids and gases flow, swirl, and interact with the objects around them (like wind blowing past a car or blood pumping through your veins).
+
+
+
 
 
 ## **Definitions of Fluid:**
