@@ -4,7 +4,7 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_NOT
 window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid mechanics'] = `
 
 @[svg](diagram.svg)
-
+@[svg](apple.svg)
 
 ## **Definitions of Fluid:**
 *   Fluid is a substance that deforms under the influence of Shear Stress at any magnitude.
@@ -23,6 +23,9 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 
 
 ## **Fluid Mechanics Definitions:**
+
+ *Fluid mechanics is the branch of physics and engineering that studies the behavior of fluids—which include both liquids and gases—and the forces acting upon them.*
+
 *   Fluid mechanics is the study of fluid at rest and fluid in motion with the consideration of Pressure, force and acceleration/velocity.
 
 *   Fluid mechanics is the Science that Studies on how fluid behaves in a static state and also in a dynamic State.
