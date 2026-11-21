@@ -25,7 +25,7 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 | Aerostatic  | Fluid Kinetics  |
 __________
 
-## Definition of FluId Statics
+## **FluId Statics**
 
 ### *Fluid statics is the branch of fluid mechanics that studies liquids and gases when they are completely at rest, focusing on pressure and forces in stationary systems.*
 
@@ -42,7 +42,7 @@ __________
 |5. Ice Floating in a Drink: Motionless liquid supports the floating ice cube.|
 
 
-## Fluid Dynamics
+## **Fluid Dynamics**
 
 ### *Fluid dynamics is the branch of fluid mechanics that studies liquids and gases when they are in motion, along with the forces that cause or affect that motion.*
 
