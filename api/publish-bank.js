@@ -55,20 +55,14 @@ module.exports = async function handler(req, res) {
       const noteTags = noteFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
       const bankTags = bankFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
 
-      function replaceBlock(content, startMarker, endMarker, newTags, fallbackAnchor = '</body>') {
-  const startIndex = content.indexOf(startMarker);
-  const endIndex = content.indexOf(endMarker);
-  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-    const before = content.substring(0, startIndex + startMarker.length);
-    const after = content.substring(endIndex);
-    return `${before}\n${newTags}\n${after}`;
-  }
-  // Fallback: drop the tags just before </body>
-  if (content.includes(fallbackAnchor)) {
-    return content.replace(fallbackAnchor, `  ${newTags}\n${fallbackAnchor}`);
-  }
-  return content;
-}
+      function replaceBlock(content, startMarker, endMarker, newTags) {
+        const startIndex = content.indexOf(startMarker);
+        const endIndex = content.indexOf(endMarker);
+        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) return content;
+        const before = content.substring(0, startIndex + startMarker.length);
+        const after = content.substring(endIndex);
+        return `${before}\n${newTags}\n${after}`;
+      }
 
       const updatedContent = replaceBlock(
         replaceBlock(
@@ -82,11 +76,23 @@ module.exports = async function handler(req, res) {
         bankTags
       );
 
-      if (updatedContent === indexContent) {
+      // ⚠️ FIX: Force an update if the specific file we just published isn't in the index
+      // The old code just checked if updatedContent === indexContent
+      
+      let forceUpdate = false;
+      // If the file we just published isn't already in the index.html, force it
+      if (filename !== 'update-index' && !indexContent.includes(filename)) {
+          forceUpdate = true;
+      }
+
+      if (updatedContent === indexContent && !forceUpdate) {
         return res.status(200).json({ success: true, message: 'Index.html already up to date.' });
       }
 
-      const updatedBase64 = Buffer.from(updatedContent, 'utf8').toString('base64');
+      // Add a trailing comment with the timestamp so it ALWAYS creates a new commit
+      const finalContent = updatedContent + `\n<!-- Last updated: ${new Date().toISOString()} -->`;
+
+      const updatedBase64 = Buffer.from(finalContent, 'utf8').toString('base64');
       const putRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/index.html`, {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
