@@ -7,6 +7,7 @@ window.CBT_SUBJECT_NOTES['Engineering math 1']['Limits'] = `
 0:00 Introduction to limit
 2:30 factor to evaluate
 3:20 Direct substitution
+4:10 Difference of cube
 
 `;
 
