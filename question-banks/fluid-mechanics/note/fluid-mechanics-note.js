@@ -99,7 +99,7 @@ __________
 
 *   Fluid is a substance that deform continuously when Shear Stress is acted upon at any magnitude.
 
-## **Types of fluid**
+ **Fluid is made up of two substance;**
 1) Liquid
 2) Gas
 
