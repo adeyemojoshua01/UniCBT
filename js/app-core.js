@@ -1,94 +1,263 @@
-(function(){
+/* ===== VIDEO + SVG EMBEDS (shared by the note builder and the website) =====
+       Syntax inside notes:
+         @[Title](https://youtu.be/xxxx)        video with caption
+         https://www.youtube.com/watch?v=xxxx   bare link on its own line
+         @[svg](filename.svg)                   SVG from its saved file
+       Chapters: lines directly under a video, e.g.
+         @[Fluid statics](https://youtu.be/xxxx)
+         0:00 Introduction
+         2:15 Bernoulli's equation
+         1:05:30 Worked examples
+       Playlists: paste a YouTube playlist link; the note builder lists its videos under it:
+         @[Fluid Mechanics course](https://www.youtube.com/playlist?list=PLxxxx)
+         dQw4w9WgXcQ | Lecture 1: Introduction
+         9bZkp7q19f0 | Lecture 2: Pressure
+       Students pick any video from the list on the website.
+       Supports YouTube, Vimeo, Google Drive (no seeking) and direct .mp4/.webm/.ogg */
+    (function () {
+      if (window.CBTVideo) return;
+      var POS_KEY = 'cbt_video_pos';
+      var EXPL = /^[ \t]*@\[([^\]]*)\]\(\s*([^)\s]+)\s*\)[ \t]*$/;
+      var BARE = /^[ \t]*(https?:\/\/[^\s<>]+)[ \t]*$/;
+      var PLITEM = /^[ \t]*(?:[-*][ \t]+)?([A-Za-z0-9_-]{11})[ \t]*\|[ \t]*(\S.*?)[ \t]*$/;
+      var CHAP = /^[ \t]*(?:[-*][ \t]+)?(\d{1,2}(?::\d{2}){1,2})[ \t]*[-\u2013\u2014:.)]*[ \t]+(\S.*?)[ \t]*$/;
 
-    /* ===== VIDEO EMBEDS =====
-       Syntax in notes:
-         @[video](https://youtu.be/xxxx)         <- explicit
-         @[Title of video](https://youtu.be/xxx) <- explicit with caption
-         https://www.youtube.com/watch?v=xxxx    <- a bare video link on its own line
-       SVG from a saved file:  @[svg](filename.svg)
-       Supports YouTube, Vimeo, Google Drive and direct .mp4/.webm/.ogg links. */
-    function videoEmbedHtml(url, title) {
-      var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
-      url = String(url || '').trim();
-      var cap = (title && title.toLowerCase() !== 'video') ? '<div style="font-size:.8em;opacity:.7;margin-top:6px;text-align:center">' + esc(title) + '</div>' : '';
-      var wrap = function (inner) { return '<div class="video-embed no-mathjax" style="margin:1.2em 0">' + inner + cap + '</div>'; };
-      var frame = function (src) {
-        return wrap('<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000">' +
-          '<iframe src="' + esc(src) + '" title="' + esc(title || 'Video') + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0" ' +
-          'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>');
+      var vEsc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+      function parseTime(s) { return s.split(':').reduce(function (a, p) { return a * 60 + Number(p); }, 0); }
+      function fmt(sec) {
+        sec = Math.max(0, Math.floor(sec)); var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+        return (h ? h + ':' + (m < 10 ? '0' : '') + m : m) + ':' + (s < 10 ? '0' : '') + s;
+      }
+
+      /* ---- one-time CSS (self-contained, works on dark and light reading themes) ---- */
+      if (!document.getElementById('cbt-video-css')) {
+        var st = document.createElement('style'); st.id = 'cbt-video-css';
+        st.textContent = '.video-chapters{display:flex;flex-direction:column;gap:4px;margin-top:10px}' +
+          '.vid-chapter{display:flex;gap:10px;align-items:baseline;text-align:left;padding:7px 10px;border-radius:9px;background:rgba(127,127,127,.12);border:1px solid rgba(127,127,127,.18);font-size:.88em;color:inherit;cursor:pointer;transition:background .15s}' +
+          '.vid-chapter:hover:not(:disabled){background:rgba(207,166,70,.2)}.vid-chapter:disabled{opacity:.5;cursor:not-allowed}' +
+          '.vid-time{font-variant-numeric:tabular-nums;font-weight:700;color:#c9a23f;min-width:3.4em}' +
+          '.vid-playlist{margin-top:12px;border:1px solid rgba(127,127,127,.25);border-radius:12px;overflow:hidden}' +
+          '.vid-pl-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;font-size:.8em;font-weight:700;background:rgba(127,127,127,.12)}' +
+          '.vid-now{font-weight:600;opacity:.75;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+          '.vid-pl-items{position:relative;max-height:340px;overflow-y:auto}' +
+          '.vid-pl-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border:0;border-bottom:1px solid rgba(127,127,127,.15);background:transparent;color:inherit;cursor:pointer;transition:background .15s}' +
+          '.vid-pl-item:hover{background:rgba(207,166,70,.12)}.vid-pl-item.active{background:rgba(207,166,70,.2);box-shadow:inset 3px 0 0 #c9a23f}' +
+          '.vid-pl-num{width:1.8em;flex:none;text-align:center;font-size:.75em;opacity:.6;font-variant-numeric:tabular-nums}' +
+          '.vid-pl-item img{width:96px;height:54px;flex:none;object-fit:cover;border-radius:6px;background:#000}' +
+          '.vid-pl-title{font-size:.88em;line-height:1.35;min-width:0}' +
+          '.vid-bar{margin-top:8px}.vid-resume{padding:6px 12px;border-radius:9px;font-size:.82em;font-weight:700;background:rgba(207,166,70,.16);border:1px solid rgba(207,166,70,.45);color:#c9a23f;cursor:pointer}';
+        (document.head || document.documentElement).appendChild(st);
+      }
+
+      /* ---- watch position memory ---- */
+      function loadPos() { try { return JSON.parse(localStorage.getItem(POS_KEY) || '{}') || {}; } catch (e) { return {}; } }
+      var lastSave = {};
+      function savePos(url, sec, dur, lastKey, vid) {
+        if (!url || typeof sec !== 'number' || !isFinite(sec)) return;
+        var now = Date.now(); if (now - (lastSave[url] || 0) < 3000) return; lastSave[url] = now;
+        var p = loadPos();
+        if (sec < 5 || (dur && sec > dur - 8)) delete p[url];
+        else { p[url] = Math.floor(sec); if (lastKey && vid) p[lastKey] = vid; }
+        try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch (e) {}
+      }
+      function post(f, o) { try { f.contentWindow.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
+
+      function plSrc(vid, list, start, auto) {
+        return 'https://www.youtube-nocookie.com/embed/' + vid + '?rel=0&enablejsapi=1&list=' + encodeURIComponent(list) + (start ? '&start=' + Math.floor(start) : '') + (auto ? '&autoplay=1' : '');
+      }
+      function setActive(box, vid) {
+        box.setAttribute('data-vcur', vid);
+        var items = box.querySelectorAll('.vid-pl-item'), title = '', wrap = box.querySelector('.vid-pl-items');
+        for (var i = 0; i < items.length; i++) {
+          var on = items[i].getAttribute('data-vid') === vid;
+          items[i].classList.toggle('active', on);
+          if (on) {
+            title = items[i].querySelector('.vid-pl-title').textContent;
+            if (wrap) wrap.scrollTop = items[i].offsetTop - (wrap.clientHeight - items[i].clientHeight) / 2;
+          }
+        }
+        var now = box.querySelector('.vid-now'); if (now && title) now.textContent = 'Now playing: ' + title;
+      }
+      /* choose a video from the playlist list (optionally from a saved time) */
+      window.CBT_PLAY = function (btn, vid, start) {
+        var box = btn.closest ? btn.closest('.video-embed') : null; if (!box) return;
+        var f = box.querySelector('iframe'), list = box.getAttribute('data-list'); if (!f || !list) return;
+        f.src = plSrc(vid, list, start, true);
+        setActive(box, vid);
+        if (f.scrollIntoView) f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
-      var m = url.match(/(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i);
-      if (m) {
-        var t = url.match(/[?&#](?:t|start)=(\d+)/i);
-        return frame('https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0' + (t ? '&start=' + t[1] : ''));
-      }
-      m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-      if (m) return frame('https://player.vimeo.com/video/' + m[1]);
-      m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/i);
-      if (m) return frame('https://drive.google.com/file/d/' + m[1] + '/preview');
-      if (/^https?:\/\/\S+\.(mp4|webm|ogg|mov)(\?\S*)?$/i.test(url)) {
-        return wrap('<video controls preload="metadata" playsinline style="width:100%;border-radius:12px;background:#000"><source src="' + esc(url) + '"></video>');
-      }
-      return null;
-    }
 
-    var vEsc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
-    function isSvgRef(url, title) { return /\.svg(\?[^\s]*)?$/i.test(url) || String(title || '').toLowerCase() === 'svg'; }
-    function svgSrc(ref) {
-      ref = String(ref || '').trim();
-      if (typeof window.CBT_SVG_RESOLVER === 'function') { var r = window.CBT_SVG_RESOLVER(ref); if (r) return r; }
-      if (/^(https?:)?\/\//i.test(ref) || ref.indexOf('/') > -1) return ref;
-      var all = window.CBT_SUBJECT_IMAGES || {}, want = ref.toLowerCase();
-      for (var subj in all) for (var topic in all[subj]) {
-        var list = all[subj][topic] || [];
-        for (var i = 0; i < list.length; i++) if (list[i].filename && String(list[i].filename).toLowerCase() === want) return list[i].data;
-      }
-      return null;
-    }
-    function svgEmbedHtml(ref, title) {
-      var src = svgSrc(ref);
-      if (!src) return '<p class="no-mathjax" style="opacity:.6;font-style:italic">SVG not found: ' + vEsc(ref) + '</p>';
-      var cap = (title && title.toLowerCase() !== 'svg') ? '<figcaption style="font-size:.8em;opacity:.7;margin-top:6px">' + vEsc(title) + '</figcaption>' : '';
-      return '<figure class="svg-embed no-mathjax" style="margin:1.2em 0;text-align:center"><img src="' + vEsc(src) + '" alt="' + vEsc(title || ref) + '" style="max-width:100%;background:#fff;border-radius:12px;padding:8px;cursor:zoom-in" onclick="window.open(this.src,\'_blank\')">' + cap + '</figure>';
-    }
-    function collectVideos(text) {
-      var out = [];
-      String(text || '').split(/\r?\n/).forEach(function (line) {
-        var m = line.match(/^[ \t]*@\[([^\]]*)\]\(\s*([^)\s]+)\s*\)[ \t]*$/), title = '', url = '';
-        if (m) { title = m[1].trim(); url = m[2]; if (isSvgRef(url, title)) return; if (title.toLowerCase() === 'video') title = ''; }
-        else { m = line.match(/^[ \t]*(https?:\/\/[^\s<>]+)[ \t]*$/); if (!m) return; url = m[1]; }
-        if (videoEmbedHtml(url, '')) out.push({ title: title, url: url });
+      window.CBT_SEEK = function (btn, sec) {
+        var box = btn.closest ? btn.closest('.video-embed') : null; if (!box) return;
+        var v = box.querySelector('video');
+        if (v) { v.currentTime = sec; var pr = v.play && v.play(); if (pr && pr.catch) pr.catch(function () {}); return; }
+        var f = box.querySelector('iframe'); if (!f) return;
+        var t = f.getAttribute('data-vtype');
+        if (t === 'yt') { post(f, { event: 'command', func: 'seekTo', args: [sec, true] }); post(f, { event: 'command', func: 'playVideo', args: [] }); }
+        else if (t === 'vimeo') { post(f, { method: 'setCurrentTime', value: sec }); post(f, { method: 'play' }); }
+      };
+      window.CBT_VID_INIT = function (f) {
+        var t = f.getAttribute('data-vtype');
+        if (t === 'yt') post(f, { event: 'listening', id: 1, channel: 'widget' });
+        else if (t === 'vimeo') post(f, { method: 'addEventListener', value: 'timeupdate' });
+      };
+      window.CBT_VID_TICK = function (v) {
+        var box = v.closest('.video-embed'); if (box) savePos(box.getAttribute('data-vurl'), v.currentTime, v.duration);
+      };
+      window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
+        if (!d || typeof d !== 'object') return;
+        var frames = document.querySelectorAll('.video-embed iframe'), f = null;
+        for (var i = 0; i < frames.length; i++) if (frames[i].contentWindow === e.source) { f = frames[i]; break; }
+        if (!f) return;
+        var box = f.closest('.video-embed'), url = box.getAttribute('data-vurl'), isPl = box.hasAttribute('data-list');
+        if (d.event === 'infoDelivery' && d.info) {
+          var info = d.info;
+          if (isPl) {                                   // keep the list highlight in step with auto-advance
+            var vid = (info.videoData && info.videoData.video_id) || '';
+            if (!vid && typeof info.playlistIndex === 'number') { var it = box.querySelectorAll('.vid-pl-item')[info.playlistIndex]; if (it) vid = it.getAttribute('data-vid'); }
+            if (vid && vid !== box.getAttribute('data-vcur')) setActive(box, vid);
+          }
+          if (typeof info.currentTime === 'number') {
+            if (isPl) { var cur = box.getAttribute('data-vcur'); savePos(url + '#' + cur, info.currentTime, info.duration, url + '#last', cur); }
+            else savePos(url, info.currentTime, info.duration);
+          }
+        } else if (d.event === 'timeupdate' && d.data) savePos(url, d.data.seconds, d.data.duration);
       });
-      return out;
-    }
-    function videoListHtml(list) {
-      return list.map(function (v, i) { return '<div style="margin-bottom:18px">' + videoEmbedHtml(v.url, v.title || ('Video ' + (i + 1))) + '</div>'; }).join('');
-    }
 
-    function extractVideoEmbeds(text, store) {
-      // explicit form: @[title](url)
-      text = text.replace(/^[ \t]*@\[([^\]]*)\]\(\s*([^)\s]+)\s*\)[ \t]*$/gm, function (match, title, url) {
-        var html = isSvgRef(url, title) ? svgEmbedHtml(url, title.trim()) : videoEmbedHtml(url, title.trim());
-        if (!html) html = '<p><a href="' + url + '" target="_blank" rel="noopener">' + (title || url) + '</a></p>';
-        store.push(html);
-        return '\n\n@@VIDEOEMBED' + (store.length - 1) + '@@\n\n';
-      });
-      // bare URL alone on a line
-      text = text.replace(/^[ \t]*(https?:\/\/[^\s<>]+)[ \t]*$/gm, function (match, url) {
-        var html = videoEmbedHtml(url, '');
-        if (!html) return match;
-        store.push(html);
-        return '\n\n@@VIDEOEMBED' + (store.length - 1) + '@@\n\n';
-      });
-      return text;
-    }
+      /* ---- recognising links ---- */
+      function kindOf(url) {
+        url = String(url || '').trim();
+        var pl = url.match(/[?&]list=([\w-]+)/i);
+        if (pl && /(?:youtube\.com|youtu\.be)\//i.test(url)) {
+          var sv = url.match(/[?&]v=([\w-]{11})/i) || url.match(/youtu\.be\/([\w-]{11})/i);
+          return { t: 'ytpl', list: pl[1], id: sv ? sv[1] : '' };
+        }
+        var m = url.match(/(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i);
+        if (m) { var t = url.match(/[?&#](?:t|start)=(\d+)/i); return { t: 'yt', id: m[1], start: t ? +t[1] : 0 }; }
+        m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i); if (m) return { t: 'vimeo', id: m[1] };
+        m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/i); if (m) return { t: 'drive', id: m[1] };
+        if (/^https?:\/\/\S+\.(mp4|webm|ogg|mov)(\?\S*)?$/i.test(url)) return { t: 'file' };
+        return null;
+      }
 
-    function restoreVideoEmbeds(html, store) {
-      return html.replace(/(?:<p>\s*)?@@VIDEOEMBED(\d+)@@(?:\s*<\/p>)?/g, function (m, i) { return store[i]; });
-    }
+      /* ---- video player markup ---- */
+      function playlistEmbed(url, title, k, items, compact) {
+        if (compact) {
+          return '<div class="video-embed no-mathjax" style="margin:1em 0;padding:12px 14px;border-radius:12px;border:1px dashed rgba(127,127,127,.5);font-size:.9em">' +
+            '<i class="fas fa-list-ul"></i> <strong>' + vEsc(title || 'Playlist') + '</strong> &middot; ' + (items.length ? items.length + ' videos' : 'playlist') +
+            ' <span style="opacity:.6">(plays in the Preview tab)</span></div>';
+        }
+        var first = (k.id && items.some(function (i) { return i.id === k.id; })) ? k.id : (items[0] ? items[0].id : k.id);
+        var src = first ? plSrc(first, k.list, 0, false) : 'https://www.youtube-nocookie.com/embed/videoseries?list=' + encodeURIComponent(k.list) + '&rel=0&enablejsapi=1';
+        var player = '<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000">' +
+          '<iframe src="' + vEsc(src) + '" data-vtype="yt" onload="CBT_VID_INIT(this)" title="' + vEsc(title || 'Playlist') + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0" ' +
+          'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+        var pos = loadPos(), last = pos[url + '#last'], lt = last ? pos[url + '#' + last] : 0;
+        var lastItem = items.filter(function (i) { return i.id === last; })[0];
+        var resume = (lastItem && lt >= 10 && last !== first) || (lastItem && lt >= 10)
+          ? '<div class="vid-bar"><button type="button" class="vid-resume" onclick="CBT_PLAY(this,\'' + last + '\',' + lt + ')"><i class="fas fa-rotate-left"></i> Resume “' + vEsc(lastItem.title.length > 48 ? lastItem.title.slice(0, 48) + '…' : lastItem.title) + '” from ' + fmt(lt) + '</button></div>' : '';
+        var firstItem = items.filter(function (i) { return i.id === first; })[0];
+        var list = items.length ? '<div class="vid-playlist"><div class="vid-pl-head"><span><i class="fas fa-list-ul"></i> Playlist · ' + items.length + ' videos</span>' +
+          '<span class="vid-now">' + (firstItem ? 'Now playing: ' + vEsc(firstItem.title) : '') + '</span></div><div class="vid-pl-items">' +
+          items.map(function (it, i) {
+            return '<button type="button" class="vid-pl-item' + (it.id === first ? ' active' : '') + '" data-vid="' + it.id + '" onclick="CBT_PLAY(this,\'' + it.id + '\')">' +
+              '<span class="vid-pl-num">' + (i + 1) + '</span><img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + it.id + '/mqdefault.jpg"><span class="vid-pl-title">' + vEsc(it.title) + '</span></button>';
+          }).join('') + '</div></div>' : '';
+        var cap = title ? '<div style="font-size:.85em;opacity:.75;margin-top:6px;text-align:center;font-style:italic">' + vEsc(title) + '</div>' : '';
+        return '<div class="video-embed no-mathjax" data-vurl="' + vEsc(url) + '" data-list="' + vEsc(k.list) + '" data-vcur="' + first + '" style="margin:1.2em 0">' + player + resume + list + cap + '</div>';
+      }
 
-    window.CBTVideo = { collect: collectVideos, listHtml: videoListHtml, embed: videoEmbedHtml, extract: extractVideoEmbeds, restore: restoreVideoEmbeds };
-})();
+      function embed(url, title, chapters, compact, items) {
+        var k = kindOf(url); if (!k) return null;
+        if (k.t === 'ytpl') return playlistEmbed(url, title, k, items || [], compact);
+        chapters = chapters || [];
+        if (compact) {
+          return '<div class="video-embed no-mathjax" style="margin:1em 0;padding:12px 14px;border-radius:12px;border:1px dashed rgba(127,127,127,.5);font-size:.9em">' +
+            '<i class="fas fa-circle-play"></i> <strong>' + vEsc(title || 'Video') + '</strong>' + (chapters.length ? ' &middot; ' + chapters.length + ' chapters' : '') +
+            ' <span style="opacity:.6">(plays in the Preview tab)</span></div>';
+        }
+        var player;
+        if (k.t === 'file') {
+          player = '<video controls preload="metadata" playsinline data-vtype="file" ontimeupdate="CBT_VID_TICK(this)" style="width:100%;border-radius:12px;background:#000"><source src="' + vEsc(url) + '"></video>';
+        } else {
+          var src = k.t === 'yt' ? 'https://www.youtube-nocookie.com/embed/' + k.id + '?rel=0&enablejsapi=1' + (k.start ? '&start=' + k.start : '')
+                  : k.t === 'vimeo' ? 'https://player.vimeo.com/video/' + k.id
+                  : 'https://drive.google.com/file/d/' + k.id + '/preview';
+          player = '<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000">' +
+            '<iframe src="' + vEsc(src) + '" data-vtype="' + k.t + '" onload="CBT_VID_INIT(this)" title="' + vEsc(title || 'Video') + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0" ' +
+            'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+        }
+        var canSeek = k.t !== 'drive';
+        var pos = loadPos()[url];
+        var resume = (canSeek && pos >= 10) ? '<div class="vid-bar"><button type="button" class="vid-resume" onclick="CBT_SEEK(this,' + pos + ')"><i class="fas fa-rotate-left"></i> Resume from ' + fmt(pos) + '</button></div>' : '';
+        var chap = chapters.length ? '<div class="video-chapters">' + chapters.map(function (c) {
+          return '<button type="button" class="vid-chapter"' + (canSeek ? ' onclick="CBT_SEEK(this,' + c.t + ')"' : ' disabled title="Seeking is not available for Google Drive videos"') + '>' +
+            '<span class="vid-time">' + fmt(c.t) + '</span><span>' + vEsc(c.label) + '</span></button>';
+        }).join('') + '</div>' : '';
+        var cap = title ? '<div style="font-size:.85em;opacity:.75;margin-top:6px;text-align:center;font-style:italic">' + vEsc(title) + '</div>' : '';
+        return '<div class="video-embed no-mathjax" data-vurl="' + vEsc(url) + '" style="margin:1.2em 0">' + player + resume + chap + cap + '</div>';
+      }
+
+      /* ---- SVG from a saved file ---- */
+      function isSvgRef(url, title) { return /\.svg(\?[^\s]*)?$/i.test(url) || String(title || '').toLowerCase() === 'svg'; }
+      function svgSrc(ref) {
+        ref = String(ref || '').trim();
+        if (typeof window.CBT_SVG_RESOLVER === 'function') { var r = window.CBT_SVG_RESOLVER(ref); if (r) return r; }
+        if (/^(https?:)?\/\//i.test(ref) || ref.indexOf('/') > -1) return ref;
+        var all = window.CBT_SUBJECT_IMAGES || {}, want = ref.toLowerCase();
+        for (var subj in all) for (var topic in all[subj]) {
+          var list = all[subj][topic] || [];
+          for (var i = 0; i < list.length; i++) if (list[i].filename && String(list[i].filename).toLowerCase() === want) return list[i].data;
+        }
+        return null;
+      }
+      function svgEmbedHtml(ref, title) {
+        var src = svgSrc(ref);
+        if (!src) return '<p class="no-mathjax" style="opacity:.6;font-style:italic">SVG not found: ' + vEsc(ref) + '</p>';
+        var cap = (title && title.toLowerCase() !== 'svg') ? '<figcaption style="font-size:.8em;opacity:.7;margin-top:6px">' + vEsc(title) + '</figcaption>' : '';
+        return '<figure class="svg-embed no-mathjax" style="margin:1.2em 0;text-align:center"><img src="' + vEsc(src) + '" alt="' + vEsc(title || ref) + '" style="max-width:100%;background:#fff;border-radius:12px;padding:8px;cursor:zoom-in" onclick="window.open(this.src,\'_blank\')">' + cap + '</figure>';
+      }
+
+      /* ---- scanning a note ---- */
+      function scan(text, compact) {
+        var lines = String(text || '').split(/\r?\n/), out = [], store = [], meta = [], i = 0;
+        while (i < lines.length) {
+          var line = lines[i], m = line.match(EXPL), title = '', url = '', kind = '';
+          if (m) { title = m[1].trim(); url = m[2]; kind = isSvgRef(url, title) ? 'svg' : 'video'; }
+          else { m = line.match(BARE); if (m && kindOf(m[1])) { url = m[1]; kind = 'video'; } }
+          if (!kind) { out.push(line); i++; continue; }
+          var html, next = i + 1;
+          if (kind === 'svg') html = svgEmbedHtml(url, title);
+          else if (!kindOf(url)) html = '<p><a href="' + vEsc(url) + '" target="_blank" rel="noopener">' + vEsc(title || url) + '</a></p>';
+          else {
+            var ch = [], items = [], isPl = kindOf(url).t === 'ytpl';
+            if (isPl) { while (next < lines.length) { var pm = lines[next].match(PLITEM); if (!pm) break; items.push({ id: pm[1], title: pm[2] }); next++; } }
+            else { while (next < lines.length) { var c = lines[next].match(CHAP); if (!c) break; ch.push({ t: parseTime(c[1]), label: c[2] }); next++; } }
+            var clean = title.toLowerCase() === 'video' ? '' : title;
+            meta.push({ title: clean, url: url, chapters: ch, items: items });
+            html = embed(url, clean, ch, compact, items);
+          }
+          store.push(html);
+          out.push('', '@@VIDEOEMBED' + (store.length - 1) + '@@', '');
+          i = next;
+        }
+        return { text: out.join('\n'), store: store, meta: meta };
+      }
+
+      window.CBTVideo = {
+        kindOf: kindOf,
+        PLITEM: PLITEM,
+        embed: embed,
+        collect: function (text) { return scan(text).meta; },
+        listHtml: function (list) {
+          return list.map(function (v, i) { return '<div style="margin-bottom:18px">' + embed(v.url, v.title || ('Video ' + (i + 1)), v.chapters, false, v.items) + '</div>'; }).join('');
+        },
+        extract: function (text, store, compact) { var r = scan(text, compact); Array.prototype.push.apply(store, r.store); return r.text; },
+        restore: function (html, store) { return html.replace(/(?:<p>\s*)?@@VIDEOEMBED(\d+)@@(?:\s*<\/p>)?/g, function (m, i) { return store[i]; }); }
+      };
+    })();
 /* ============================================================
    app-core.js — window.app: state, persistence, landing,
    study materials, candidate flow, resume prompt, header
@@ -417,6 +586,7 @@
 
     /* ---------------- study materials browser ---------------- */
     showSubjectNotes: function (subjectId) {
+      if (this._needMaterials('showSubjectNotes', arguments)) return;
       var subject = this.data.subjects[subjectId];
       this.data.currentSubjectId = subjectId;
       this.data.mode = 'notes-browser';
@@ -437,7 +607,7 @@
           (t.hasNotes ? '<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold uppercase">Notes</span>' : '') +
           (t.images ? '<span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold uppercase">' + t.images + ' images</span>' : '') +
           '</div></div>' +
-          '<h3 class="mt-3 font-bold text-gray-800 leading-snug">' + self.esc(t.name) + '</h3>' +
+          '<h3 class="mt-3 font-bold text-gray-800 leading-snug">' + self.esc(t.name) + self.readBadge(subject, t.id) + '</h3>' +
           '<div class="flex flex-wrap gap-2 mt-4">' +
           (t.hasNotes ? '<button onclick="app.viewTopicNote(\'' + subjectId + '\',\'' + t.id + '\')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"><i class="fas fa-file-lines"></i>Read Notes</button>' : '') +
           (t.images ? '<button onclick="app.viewTopicImages(\'' + subjectId + '\',\'' + t.id + '\')" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold"><i class="fas fa-images"></i>View Images (' + t.images + ')</button>' : '') +
@@ -508,6 +678,7 @@
       var scrollHeight = el.scrollHeight - el.clientHeight;
       var scrolled = (scrollTop / scrollHeight) * 100;
       progress.style.width = scrolled + '%';
+      if (scrollHeight > 200 && scrollTop / scrollHeight >= 0.92) this.autoMarkRead();
     },
 
     generateNoteTOC: function() {
@@ -568,6 +739,7 @@
 
      
       viewTopicNote: function (subjectId, topicId, topicName) {
+      if (this._needMaterials('viewTopicNote', arguments)) return;
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.notes) return;
       var note = subject.notes[topicId];
@@ -592,7 +764,7 @@
         }));
       } catch(e) {}
 
-      this._currentNote = { text: String(note), name: resolvedName || 'Topic' };
+      this._currentNote = { text: String(note), name: resolvedName || 'Topic', sid: subjectId, tid: topicId, sname: subject.name };
       var titleEl = document.getElementById('note-viewer-title');
       if (titleEl) titleEl.textContent = (resolvedName || 'Topic') + ' · Notes';
       
@@ -623,10 +795,319 @@
       
       this.typeset('#note-viewer-content');
       this.triggerMathJax();
+      this.afterNoteTypeset();
     },
 
      
     
+
+    /* ================= DEFERRED NOTES / IMAGES ================= */
+    _needMaterials: function (fnName, args) {
+      if (!window.cbtMaterialsReady || window.cbtMaterialsReady()) return false;
+      var self = this;
+      this.toast('Loading study materials…');
+      window.cbtEnsureMaterials().then(function () { self[fnName].apply(self, args); });
+      return true;
+    },
+
+    /* ================= STUDY FEATURES ================= */
+    lsGet: function (k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } },
+    lsSet: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    topicKey: function (subject, topicId) { return (subject ? subject.name : '') + '::' + topicId; },
+    findSubjectByName: function (name) { return Object.values(this.data.subjects).find(function (s) { return s.name === name; }) || null; },
+
+    /* --- read progress --- */
+    isRead: function (subject, topicId) { return !!this.lsGet('cbt_read', {})[this.topicKey(subject, topicId)]; },
+    setRead: function (subject, topicId, on) {
+      var r = this.lsGet('cbt_read', {}), k = this.topicKey(subject, topicId);
+      if (on) r[k] = Date.now(); else delete r[k];
+      this.lsSet('cbt_read', r);
+    },
+    subjectProgress: function (subject) {
+      var self = this, total = 0, read = 0;
+      (subject.topics || []).forEach(function (t) {
+        var n = subject.notes && subject.notes[t.id];
+        if (n && String(n).trim()) { total++; if (self.isRead(subject, t.id)) read++; }
+      });
+      return { total: total, read: read };
+    },
+    readBadge: function (subject, topicId) {
+      return this.isRead(subject, topicId) ? '<span class="read-badge"><i class="fas fa-circle-check"></i> Read</span>' : '';
+    },
+    updateReadButton: function () {
+      var c = this._currentNote, b = document.getElementById('note-read-btn'); if (!b || !c) return;
+      var subject = this.data.subjects[c.sid]; if (!subject) return;
+      var on = this.isRead(subject, c.tid);
+      b.classList.toggle('is-read', on);
+      b.title = on ? 'Marked as read — tap to undo' : 'Mark as read';
+      b.innerHTML = on ? '<i class="fas fa-circle-check"></i>' : '<i class="far fa-circle-check"></i>';
+    },
+    toggleNoteRead: function () {
+      var c = this._currentNote; if (!c) return;
+      var subject = this.data.subjects[c.sid]; if (!subject) return;
+      var on = !this.isRead(subject, c.tid);
+      this.setRead(subject, c.tid, on); this.updateReadButton();
+      this.toast(on ? 'Marked as read' : 'Marked as unread', on ? 'success' : undefined);
+    },
+    autoMarkRead: function () {
+      var c = this._currentNote; if (!c) return;
+      var subject = this.data.subjects[c.sid]; if (!subject || this.isRead(subject, c.tid)) return;
+      this.setRead(subject, c.tid, true); this.updateReadButton();
+      this.toast('Finished reading — marked as read', 'success');
+    },
+
+    /* --- text offsets (survive MathJax, bold, lists, etc.) --- */
+    flatText: function (root) {
+      var nodes = [], parts = [], pos = 0, w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+      while ((n = w.nextNode())) { nodes.push({ node: n, start: pos }); parts.push(n.nodeValue); pos += n.nodeValue.length; }
+      return { nodes: nodes, text: parts.join('') };
+    },
+    selectionOffsets: function (root) {
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
+      var r = sel.getRangeAt(0);
+      if (!root.contains(r.commonAncestorContainer)) return null;
+      var pre = document.createRange(); pre.selectNodeContents(root); pre.setEnd(r.startContainer, r.startOffset);
+      var start = pre.toString().length, text = r.toString();
+      if (!text.trim()) return null;
+      return { start: start, end: start + text.length, text: text };
+    },
+
+    /* --- highlights --- */
+    wrapRange: function (root, h, id) {
+      var ft = this.flatText(root), s = h.s, e = h.e;
+      if (ft.text.slice(s, e) !== h.text) {            // note was edited: try to re-find the passage
+        var idx = ft.text.indexOf(h.text); if (idx < 0) return;
+        s = idx; e = idx + h.text.length;
+      }
+      var skip = 'mjx-container, .video-embed, .svg-embed, script, style';
+      var targets = ft.nodes.filter(function (t) {
+        var len = t.node.nodeValue.length, par = t.node.parentElement;
+        if (!(t.start + len > s && t.start < e) || !par || par.closest(skip)) return false;
+        if (/^\s*$/.test(t.node.nodeValue) && /^(UL|OL|TABLE|THEAD|TBODY|TR)$/.test(par.tagName)) return false;
+        return true;
+      });
+      targets.forEach(function (t) {
+        var node = t.node, len = node.nodeValue.length;
+        var a = Math.max(s, t.start) - t.start, b = Math.min(e, t.start + len) - t.start;
+        var mid = a > 0 ? node.splitText(a) : node;
+        if (b - a < mid.nodeValue.length) mid.splitText(b - a);
+        var mark = document.createElement('mark');
+        mark.className = 'note-hl hl-' + (h.c || 'y'); mark.setAttribute('data-hid', id);
+        mid.parentNode.insertBefore(mark, mid); mark.appendChild(mid);
+      });
+    },
+    rebuildHighlights: function () {
+      var root = document.getElementById('note-viewer-content'), c = this._currentNote; if (!root || !c) return;
+      root.querySelectorAll('mark.note-hl').forEach(function (m) {
+        var p = m.parentNode; while (m.firstChild) p.insertBefore(m.firstChild, m); p.removeChild(m); p.normalize();
+      });
+      var subject = this.data.subjects[c.sid]; if (!subject) return;
+      var list = this.lsGet('cbt_highlights', {})[this.topicKey(subject, c.tid)] || [], self = this;
+      list.forEach(function (h, i) { self.wrapRange(root, h, i); });
+    },
+    showHlPop: function (mode, hid) {
+      var pop = document.getElementById('note-hl-pop'); if (!pop) return;
+      this._hlMode = mode; this._hlTarget = hid;
+      document.getElementById('hl-pop-add').classList.toggle('hidden', mode !== 'add');
+      document.getElementById('hl-pop-remove').classList.toggle('hidden', mode !== 'remove');
+      pop.classList.remove('hidden');
+    },
+    hideHlPop: function () {
+      var pop = document.getElementById('note-hl-pop'); if (pop) pop.classList.add('hidden');
+      this._hlMode = null;
+    },
+    updateHlPop: function () {
+      var root = document.getElementById('note-viewer-content'); if (!root) return;
+      var off = this.selectionOffsets(root);
+      if (off) { this._pendingSel = off; this.showHlPop('add'); }
+      else if (this._hlMode === 'add') this.hideHlPop();
+    },
+    addHighlight: function (color) {
+      var c = this._currentNote, off = this._pendingSel; if (!c || !off) return;
+      if (off.text.length > 2000) { this.toast('Select a shorter passage (under 2000 characters).', 'error'); return; }
+      var subject = this.data.subjects[c.sid]; if (!subject) return;
+      var all = this.lsGet('cbt_highlights', {}), k = this.topicKey(subject, c.tid), list = all[k] || [];
+      list.push({ s: off.start, e: off.end, text: off.text, c: color || 'y', ts: Date.now() });
+      all[k] = list; this.lsSet('cbt_highlights', all);
+      this._pendingSel = null;
+      var sel = window.getSelection(); if (sel) sel.removeAllRanges();
+      this.hideHlPop(); this.rebuildHighlights();
+    },
+    removeHighlight: function () {
+      var c = this._currentNote, id = this._hlTarget; if (!c || id == null) return;
+      var subject = this.data.subjects[c.sid]; if (!subject) return;
+      var all = this.lsGet('cbt_highlights', {}), k = this.topicKey(subject, c.tid), list = all[k] || [];
+      list.splice(id, 1); all[k] = list; this.lsSet('cbt_highlights', all);
+      this.hideHlPop(); this.rebuildHighlights();
+    },
+
+    /* --- bookmarks (on headings) --- */
+    decorateHeadings: function () {
+      var root = document.getElementById('note-viewer-content'), c = this._currentNote; if (!root || !c) return;
+      var bms = this.lsGet('cbt_bookmarks', []);
+      root.querySelectorAll('h1, h2, h3').forEach(function (h, i) {
+        var old = h.querySelector('.note-bm-btn'); if (old) old.remove();
+        var on = bms.some(function (b) { return b.sname === c.sname && b.tid === c.tid && b.hIdx === i; });
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'note-bm-btn' + (on ? ' on' : ''); b.setAttribute('data-hidx', i);
+        b.setAttribute('aria-label', on ? 'Remove bookmark' : 'Bookmark this section');
+        b.innerHTML = '<i class="' + (on ? 'fas' : 'far') + ' fa-bookmark"></i>';
+        h.appendChild(b);
+      });
+    },
+    toggleBookmark: function (hIdx) {
+      var c = this._currentNote, root = document.getElementById('note-viewer-content'); if (!c || !root) return;
+      var h = root.querySelectorAll('h1, h2, h3')[hIdx]; if (!h) return;
+      var heading = (h.cloneNode(true).textContent || '').trim();
+      var bms = this.lsGet('cbt_bookmarks', []);
+      var at = bms.findIndex(function (b) { return b.sname === c.sname && b.tid === c.tid && b.hIdx === hIdx; });
+      if (at > -1) { bms.splice(at, 1); this.toast('Bookmark removed'); }
+      else { bms.unshift({ sid: c.sid, sname: c.sname, tid: c.tid, tname: c.name, hIdx: hIdx, heading: heading, ts: Date.now() }); this.toast('Section bookmarked', 'success'); }
+      this.lsSet('cbt_bookmarks', bms); this.decorateHeadings();
+    },
+
+    /* --- saved panel --- */
+    openSaved: function (tab) {
+      this._savedTab = tab || this._savedTab || 'bookmarks';
+      this.renderSaved();
+      var m = document.getElementById('saved-modal'); if (m) m.classList.remove('hidden');
+    },
+    closeSaved: function () { var m = document.getElementById('saved-modal'); if (m) m.classList.add('hidden'); },
+    renderSaved: function () {
+      var self = this, tab = this._savedTab, body = document.getElementById('saved-body'); if (!body) return;
+      ['bookmarks', 'highlights'].forEach(function (t) { var b = document.getElementById('saved-tab-' + t); if (b) b.classList.toggle('active', t === tab); });
+      var items = [], html = '';
+      if (tab === 'bookmarks') {
+        items = this.lsGet('cbt_bookmarks', []);
+      } else {
+        var all = this.lsGet('cbt_highlights', {});
+        Object.keys(all).forEach(function (k) {
+          var parts = k.split('::'), subject = self.findSubjectByName(parts[0]); if (!subject) return;
+          var topic = (subject.topics || []).find(function (t) { return t.id === parts[1]; });
+          (all[k] || []).forEach(function (h, i) { items.push({ key: k, hid: i, sid: subject.id, sname: subject.name, tid: parts[1], tname: topic ? topic.name : 'Topic', text: h.text, c: h.c, ts: h.ts || 0 }); });
+        });
+        items.sort(function (a, b) { return b.ts - a.ts; });
+      }
+      this._savedItems = items;
+      html = items.length ? items.map(function (it, i) {
+        var title = tab === 'bookmarks' ? self.esc(it.heading || 'Section') : '<span class="saved-hl hl-' + (it.c || 'y') + '">' + self.esc(it.text.length > 140 ? it.text.slice(0, 140) + '…' : it.text) + '</span>';
+        return '<div class="saved-item"><button class="saved-open" onclick="app.openSavedItem(' + i + ')"><div class="saved-title">' + title + '</div>' +
+          '<div class="saved-sub">' + self.esc(it.sname) + ' · ' + self.esc(it.tname) + '</div></button>' +
+          '<button class="saved-del" onclick="app.deleteSaved(' + i + ')" aria-label="Remove"><i class="fas fa-trash"></i></button></div>';
+      }).join('') : '<p class="text-sm text-gray-500 text-center py-10">' + (tab === 'bookmarks'
+        ? 'No bookmarks yet. Tap the bookmark icon beside any heading while reading a note.'
+        : 'No highlights yet. Select text in a note and pick a colour.') + '</p>';
+      body.innerHTML = html;
+    },
+    openSavedItem: function (i) {
+      var it = (this._savedItems || [])[i]; if (!it) return;
+      var subject = this.findSubjectByName(it.sname); if (!subject) { this.toast('That subject is no longer available.', 'error'); return; }
+      this._pendingJump = this._savedTab === 'bookmarks' ? { type: 'bookmark', idx: it.hIdx } : { type: 'highlight', idx: it.hid };
+      this.closeSaved(); this.viewTopicNote(subject.id, it.tid, it.tname);
+    },
+    deleteSaved: function (i) {
+      var it = (this._savedItems || [])[i]; if (!it) return;
+      if (this._savedTab === 'bookmarks') {
+        var bms = this.lsGet('cbt_bookmarks', []);
+        var at = bms.findIndex(function (b) { return b.sname === it.sname && b.tid === it.tid && b.hIdx === it.hIdx; });
+        if (at > -1) bms.splice(at, 1); this.lsSet('cbt_bookmarks', bms);
+      } else {
+        var all = this.lsGet('cbt_highlights', {}); if (all[it.key]) all[it.key].splice(it.hid, 1); this.lsSet('cbt_highlights', all);
+      }
+      this.renderSaved();
+      if (this._currentNote && !document.getElementById('note-viewer-modal').classList.contains('hidden')) { this.rebuildHighlights(); this.decorateHeadings(); }
+    },
+
+    /* --- note viewer wiring --- */
+    initNoteStudyUI: function () {
+      if (this._noteUIInit) return; this._noteUIInit = true;
+      var self = this, root = document.getElementById('note-viewer-content'); if (!root) return;
+      document.addEventListener('selectionchange', function () {
+        var m = document.getElementById('note-viewer-modal');
+        if (!m || m.classList.contains('hidden')) return;
+        clearTimeout(self._selT); self._selT = setTimeout(function () { self.updateHlPop(); }, 250);
+      });
+      root.addEventListener('click', function (e) {
+        var bm = e.target.closest('.note-bm-btn'); if (bm) { self.toggleBookmark(parseInt(bm.getAttribute('data-hidx'), 10)); return; }
+        var mk = e.target.closest('mark.note-hl'), sel = window.getSelection();
+        if (mk && (!sel || sel.isCollapsed)) self.showHlPop('remove', parseInt(mk.getAttribute('data-hid'), 10));
+        else if (!mk && self._hlMode === 'remove') self.hideHlPop();
+      });
+    },
+    afterNoteTypeset: function () {
+      var self = this, root = document.getElementById('note-viewer-content'), tries = 0;
+      this.hideHlPop();
+      // bookmarks + read button don't depend on MathJax: show them straight away
+      this.initNoteStudyUI(); this.decorateHeadings(); this.updateReadButton();
+      // highlights are placed by text offset, so wait until MathJax has finished rewriting the page
+      (function go() {
+        if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+          window.MathJax.typesetPromise([root]).then(function () { self.decorateNote(); }, function () { self.decorateNote(); });
+        } else if (tries++ < 20) setTimeout(go, 300);
+        else self.decorateNote();
+      })();
+    },
+    decorateNote: function () {
+      var c = this._currentNote; if (!c) return;
+      this.initNoteStudyUI(); this.rebuildHighlights(); this.decorateHeadings(); this.updateReadButton();
+      var root = document.getElementById('note-viewer-content'), j = this._pendingJump, q = this._pendingSearch;
+      this._pendingJump = null; this._pendingSearch = null;
+      if (j && j.type === 'bookmark') {
+        var h = root.querySelectorAll('h1, h2, h3')[j.idx]; if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (j && j.type === 'highlight') {
+        var m = root.querySelector('mark.note-hl[data-hid="' + j.idx + '"]');
+        if (m) { m.scrollIntoView({ behavior: 'smooth', block: 'center' }); m.classList.add('flash'); setTimeout(function () { m.classList.remove('flash'); }, 1800); }
+      }
+      if (q) {
+        document.getElementById('note-search-bar').classList.remove('hidden');
+        document.getElementById('note-search-input').value = q;
+        this.performNoteSearch(q);
+        var first = root.querySelector('mark.note-search-hit'); if (first) first.scrollIntoView({ block: 'center' });
+      }
+    },
+
+    /* --- full-text search across every note (Study Hub) --- */
+    plainNote: function (raw) {
+      return String(raw || '')
+        .replace(/^[ \t]*@\[[^\]]*\]\([^)]*\)[ \t]*$/gm, ' ')
+        .replace(/<[^>]+>/g, ' ').replace(/https?:\/\/\S+/g, ' ')
+        .replace(/\\[()\[\]]/g, ' ').replace(/[#*_`>~|]/g, '').replace(/\s+/g, ' ').trim();
+    },
+    hubFullText: function (q, type) {
+      var box = document.getElementById('hub-fulltext'); if (!box) return;
+      if (q.length < 2 || type === 'images') { box.classList.add('hidden'); box.innerHTML = ''; return; }
+      var self = this, hits = [];
+      Object.values(this.data.subjects).forEach(function (s) {
+        (s.topics || []).forEach(function (t) {
+          var raw = s.notes && s.notes[t.id]; if (!raw) return;
+          var plain = self.plainNote(raw), low = plain.toLowerCase(), idx = low.indexOf(q), n = 0, snips = [];
+          while (idx > -1) {
+            n++;
+            if (snips.length < 2) {
+              var a = Math.max(0, idx - 45), b = Math.min(plain.length, idx + q.length + 75);
+              snips.push({ pre: plain.slice(a, idx), m: plain.slice(idx, idx + q.length), post: plain.slice(idx + q.length, b), lead: a > 0, tail: b < plain.length });
+            }
+            idx = low.indexOf(q, idx + q.length);
+          }
+          if (n) hits.push({ s: s, t: t, n: n, snips: snips });
+        });
+      });
+      hits.sort(function (a, b) { return b.n - a.n; });
+      this._lastFt = q;
+      if (!hits.length) { box.innerHTML = '<div class="ft-empty">No notes contain “' + self.esc(q) + '”.</div>'; box.classList.remove('hidden'); return; }
+      box.innerHTML = '<div class="ft-head"><i class="fas fa-magnifying-glass"></i> ' + hits.length + ' note' + (hits.length > 1 ? 's' : '') + ' mention “' + self.esc(q) + '”</div>' +
+        hits.slice(0, 20).map(function (h) {
+          return '<button class="ft-card" onclick="app.openSearchHit(\'' + h.s.id + '\',\'' + h.t.id + '\')">' +
+            '<div class="ft-title">' + self.esc(h.t.name) + '<span class="ft-count">' + h.n + ' match' + (h.n > 1 ? 'es' : '') + '</span></div>' +
+            '<div class="ft-sub">' + self.esc(h.s.name) + '</div>' +
+            h.snips.map(function (sn) { return '<div class="ft-snip">' + (sn.lead ? '…' : '') + self.esc(sn.pre) + '<mark>' + self.esc(sn.m) + '</mark>' + self.esc(sn.post) + (sn.tail ? '…' : '') + '</div>'; }).join('') +
+            '</button>';
+        }).join('');
+      box.classList.remove('hidden');
+    },
+    openSearchHit: function (sid, tid) { this._pendingSearch = this._lastFt; this.viewTopicNote(sid, tid); },
+
    openVideoPanel: function (title, text) {
       var list = window.CBTVideo.collect(text);
       if (!list.length) { this.toast('No videos in this note.', 'error'); return; }
@@ -643,12 +1124,14 @@
       this.openVideoPanel(c.name, c.text);
     },
     viewTopicVideos: function (subjectId, topicId) {
+      if (this._needMaterials('viewTopicVideos', arguments)) return;
       var subject = this.data.subjects[subjectId]; if (!subject || !subject.notes) return;
       var topic = (subject.topics || []).find(function (t) { return t.id === topicId; });
       this.openVideoPanel(topic ? topic.name : 'Topic', subject.notes[topicId] || '');
     },
 
    viewTopicImages: function (subjectId, topicId) {
+      if (this._needMaterials('viewTopicImages', arguments)) return;
        
       var subject = this.data.subjects[subjectId];
       if (!subject || !subject.topicImages) return;
@@ -697,6 +1180,7 @@
 
     filterCandidateSubjects: function(query) {
       var q = query.toLowerCase().trim();
+      this.hubFullText(q, type);
       var cards = document.querySelectorAll('.subject-card-container');
       cards.forEach(function(card) {
         var name = card.getAttribute('data-subject-name').toLowerCase();
@@ -859,6 +1343,7 @@
     },
 
        showAllNotes: function () {
+      if (this._needMaterials('showAllNotes', arguments)) return;
       this.data.mode = 'all-notes';
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
@@ -892,6 +1377,7 @@
         validSubjectsCount++;
 
         var icon = self.getSubjectIcon(s.name);
+        var prog = self.subjectProgress(s);
         var totalNotes = topics.filter(function(t){ return t.hasNotes; }).length;
         var totalImages = topics.reduce(function(acc, t){ return acc + t.images; }, 0);
 
@@ -902,7 +1388,7 @@
           return '<div class="hub-topic-card" data-has-notes="' + (t.hasNotes ? 'true' : 'false') + '" data-has-images="' + (t.images > 0 ? 'true' : 'false') + '">' +
             '<div class="flex items-start justify-between gap-3">' +
             '<div class="min-w-0 flex-grow">' +
-            '<h4 class="font-bold text-sm text-gray-200">' + self.esc(t.name) + '</h4>' +
+            '<h4 class="font-bold text-sm text-gray-200">' + self.esc(t.name) + self.readBadge(s, t.id) + '</h4>' +
             (t.hasNotes ? '<p class="hub-snippet mt-1">' + self.esc(snippet) + '</p>' : '') +
             '</div>' +
             '<div class="flex flex-col gap-2 shrink-0">' +
@@ -917,7 +1403,8 @@
           '<div class="flex items-center gap-3">' +
           '<div class="w-8 h-8 rounded-lg bg-[#101830] border border-[#1e2740] flex items-center justify-center text-gray-300"><i class="fas ' + icon + '"></i></div>' +
           '<div class="text-left"><div class="font-bold text-sm text-gray-100">' + self.esc(s.name) + '</div>' +
-          '<div class="text-[10px] text-gray-500 font-semibold">' + totalNotes + ' notes · ' + totalImages + ' images</div></div>' +
+          '<div class="text-[10px] text-gray-500 font-semibold">' + totalNotes + ' notes · ' + totalImages + ' images' + (prog.total ? ' · ' + prog.read + '/' + prog.total + ' read' : '') + '</div>' +
+          (prog.total ? '<div class="hub-progress"><span style="width:' + Math.round(prog.read / prog.total * 100) + '%"></span></div>' : '') + '</div>' +
           '</div>' +
           '<i class="fas fa-chevron-down accordion-icon text-gray-500" id="accordion-icon-' + idx + '"></i>' +
           '</button>' +
@@ -926,7 +1413,8 @@
 
       var mainHTML = '<div class="hub-header">' +
         '<button onclick="app.showLanding()" class="text-xs font-bold text-gray-400 hover:text-white mb-3 inline-flex items-center gap-1.5"><i class="fas fa-arrow-left"></i> Back to home</button>' +
-        '<h2 class="text-2xl font-extrabold text-white mb-1">Study Hub</h2>' +
+        '<div class="flex items-center justify-between gap-2 mb-1"><h2 class="text-2xl font-extrabold text-white">Study Hub</h2>' +
+        '<button onclick="app.openSaved()" class="hub-action-btn hub-btn-notes"><i class="fas fa-bookmark"></i> Saved</button></div>' +
         '<p class="text-xs text-gray-400 mb-4">Browse notes, images, and diagrams across all subjects.</p>' +
         '<div class="relative">' +
         '<i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"></i>' +
@@ -939,6 +1427,7 @@
         '</div></div>' +
         '<div class="p-4 max-w-4xl mx-auto">' +
         continueHTML +
+        '<div id="hub-fulltext" class="hidden mb-4"></div>' +
         (validSubjectsCount > 0 ? accordionsHTML : '<div class="text-center py-12"><div class="text-4xl mb-3">📭</div><p class="text-gray-500">No study materials available yet.</p></div>') +
         '</div>';
 
