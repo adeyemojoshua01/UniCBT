@@ -8,7 +8,7 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 
 ## **Fluid Mechanics Definitions:**
 
- ### *Fluid mchanics is the branch of physics and engineering that studies the behavior of fluids—which include both liquids and gases—and the forces acting upon them.*
+ ### *Fluid mechanics is the branch of physics and engineering that studies the behavior of fluids—which include both liquids and gases—and the forces acting upon them.*
 
 *   Fluid mechanics is the study of fluid at rest and fluid in motion with the consideration of Pressure, force and acceleration/velocity.
 
