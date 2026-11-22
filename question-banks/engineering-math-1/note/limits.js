@@ -6,6 +6,7 @@ window.CBT_SUBJECT_NOTES['Engineering math 1']['Limits'] = `
 @[Introduction to Limit](https://youtu.be/YNstP0ESndU?si=EH-LUA4kUIIN4XAL)
 0:00 Introduction to limit
 2:30 factor to evaluate
+3:20 Direct substitution
 
 `;
 
