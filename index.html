@@ -25,6 +25,7 @@ window.MathJax = {
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/theme-aurora.css">
+<link rel="stylesheet" href="css/study-features.css">
 </head>
 <body class="bg-gray-50">
 
@@ -47,7 +48,7 @@ window.MathJax = {
 
 <!-- ============ SCHOLAR VIEW NOTE MODAL ============ -->
 <div id="note-viewer-modal" class="hidden fixed inset-0 z-[900] bg-black/70 backdrop-blur-md p-0 md:p-8 overflow-hidden transition-opacity">
-  <div id="note-viewer-shell" class="note-theme-dark bg-[#0B1020] w-full h-full md:h-[90vh] md:max-w-4xl md:rounded-2xl shadow-2xl flex flex-col mx-auto overflow-hidden border border-[#1e2740]">
+  <div id="note-viewer-shell" class="relative note-theme-dark bg-[#0B1020] w-full h-full md:h-[90vh] md:max-w-4xl md:rounded-2xl shadow-2xl flex flex-col mx-auto overflow-hidden border border-[#1e2740]">
     
     <!-- Header -->
     <div class="flex-none flex items-center justify-between gap-3 p-4 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
@@ -82,15 +83,45 @@ window.MathJax = {
     <div id="note-viewer-content" class="mathjax note-content flex-grow p-5 md:p-8 overflow-y-auto leading-relaxed" onscroll="app.updateNoteProgress(this)"></div>
 
     <!-- Floating Toolbar (Mobile-Friendly) -->
-    <div class="flex-none p-3 bg-black/5 dark:bg-white/5 border-t border-black/10 dark:border-white/10 flex items-center justify-center gap-2 md:gap-4">
+    <!-- Highlight popover -->
+    <div id="note-hl-pop" class="hidden absolute left-1/2 -translate-x-1/2 bottom-24 z-20">
+      <div id="hl-pop-add" class="hl-pop-inner">
+        <span class="hl-pop-label">Highlight</span>
+        <button onclick="app.addHighlight('y')" class="hl-swatch hl-y" aria-label="Yellow highlight"></button>
+        <button onclick="app.addHighlight('g')" class="hl-swatch hl-g" aria-label="Green highlight"></button>
+        <button onclick="app.addHighlight('p')" class="hl-swatch hl-p" aria-label="Pink highlight"></button>
+      </div>
+      <div id="hl-pop-remove" class="hl-pop-inner hidden">
+        <button onclick="app.removeHighlight()" class="hl-remove"><i class="fas fa-eraser"></i> Remove highlight</button>
+      </div>
+    </div>
+
+    <div class="flex-none p-3 bg-black/5 dark:bg-white/5 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center justify-center gap-2 md:gap-3">
       <button onclick="app.adjustNoteFontSize(-1)" class="toolbar-btn" title="Decrease Font Size"><i class="fas fa-font"></i><span class="text-xs ml-1">-</span></button>
       <button onclick="app.adjustNoteFontSize(1)" class="toolbar-btn" title="Increase Font Size"><i class="fas fa-font"></i><span class="text-xs ml-1">+</span></button>
       <div class="w-px h-6 bg-gray-400/30 mx-1"></div>
       <button onclick="app.toggleNoteTOC()" class="toolbar-btn" title="Table of Contents"><i class="fas fa-list-ul"></i></button>
       <button onclick="app.toggleNoteSearch()" class="toolbar-btn" title="Search Notes"><i class="fas fa-search"></i></button>
       <button onclick="app.viewNoteVideos()" class="toolbar-btn" title="Videos in this note"><i class="fas fa-circle-play"></i></button>
+      <button id="note-read-btn" onclick="app.toggleNoteRead()" class="toolbar-btn" title="Mark as read"><i class="far fa-circle-check"></i></button>
+      <button onclick="app.openSaved('bookmarks')" class="toolbar-btn" title="Bookmarks &amp; highlights"><i class="fas fa-bookmark"></i></button>
       <button onclick="app.toggleNoteTheme()" class="toolbar-btn" title="Change Theme"><i class="fas fa-adjust"></i></button>
     </div>
+  </div>
+</div>
+
+<!-- ============ SAVED (BOOKMARKS & HIGHLIGHTS) MODAL ============ -->
+<div id="saved-modal" class="hidden fixed inset-0 z-[960] bg-black/75 backdrop-blur-sm p-3 md:p-8 overflow-y-auto">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl mx-auto overflow-hidden">
+    <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="font-bold text-lg text-gray-800"><i class="fas fa-bookmark text-amber-500 mr-2"></i>Saved</h2>
+      <button onclick="app.closeSaved()" class="w-9 h-9 rounded-lg bg-red-500 text-white hover:bg-red-600 shrink-0" aria-label="Close saved"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="saved-tabs">
+      <button id="saved-tab-bookmarks" onclick="app.openSaved('bookmarks')"><i class="fas fa-bookmark"></i> Bookmarks</button>
+      <button id="saved-tab-highlights" onclick="app.openSaved('highlights')"><i class="fas fa-highlighter"></i> Highlights</button>
+    </div>
+    <div id="saved-body" class="p-3 md:p-4"></div>
   </div>
 </div>
 
@@ -173,7 +204,6 @@ window.MathJax = {
 <div id="toast-layer" class="fixed top-20 right-4 z-[999999] flex flex-col gap-2 items-end pointer-events-none"></div>
 
 <!-- ============ SCRIPTS (exact deferred load order) ============ -->
-<!-- ============ SCRIPTS (exact deferred load order) ============ -->
 <script defer src="js/image-viewer.js"></script>
 <script defer src="js/app-core.js"></script>
 <script defer src="js/app-exam.js"></script>
@@ -193,16 +223,9 @@ window.MathJax = {
   <script defer src="question-banks/physics/thermodynamics/thermodynamics-bank.js"></script>
 <!-- BANKS_SCRIPTS_END -->
 
-<!-- 2. Topic Notes -->
+<!-- 2. Topic Notes (loaded on demand by question-loader.js) -->
 <!-- NOTES_SCRIPTS_START -->
-  <script defer src="question-banks/bible-studies/notes.js"></script>
-  <script defer src="question-banks/ent211-entrepreneurship and innovation/note/entrepreneurship-issues-in-nigeria.js"></script>
-  <script defer src="question-banks/ent211-entrepreneurship and innovation/note/intro-to-ent211.js"></script>
-  <script defer src="question-banks/fluid-mechanics/note/fluid-mechanics-note.js"></script>
-  <script defer src="question-banks/fluid-mechanics/note/properties-of-fluid-note.js"></script>
-  <script defer src="question-banks/physics/mechanics/mechanics.js"></script>
-  <script defer src="question-banks/physics/mechans/mechans.js"></script>
-  <script defer src="question-banks/physics/thermodynamics/thermodynamics.js"></script>
+  <script>window.CBT_NOTE_FILES = ["question-banks/bible-studies/notes.js","question-banks/ent211-entrepreneurship and innovation/note/entrepreneurship-issues-in-nigeria.js","question-banks/ent211-entrepreneurship and innovation/note/intro-to-ent211.js","question-banks/fluid-mechanics/note/fluid-mechanics-note.js","question-banks/fluid-mechanics/note/properties-of-fluid-note.js","question-banks/physics/mechanics/mechanics.js","question-banks/physics/mechans/mechans.js","question-banks/physics/thermodynamics/thermodynamics.js"];</script>
 <!-- NOTES_SCRIPTS_END -->
 
 <!-- 3. Loader -->
