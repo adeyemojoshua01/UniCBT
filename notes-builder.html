@@ -964,13 +964,14 @@ async function publishToGitHub() {
         toast('Published ' + filename + ' successfully!', 'success');
 
         // 2. Trigger index.html update
+        // 2. Trigger index.html update
         toast('Updating index.html...', 'info');
         try {
             const indexRes = await fetch('/api/publish-bank', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
-                filename: 'update-index', 
+                action: 'update-index', // <-- Make sure this is explicitly sent
                 githubToken: state.github.token, 
                 repoOwner: state.github.owner, 
                 repoName: state.github.repo 
