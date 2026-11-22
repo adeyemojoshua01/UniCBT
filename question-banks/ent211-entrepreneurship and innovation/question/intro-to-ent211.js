@@ -1,1 +1,0 @@
-window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
