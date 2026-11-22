@@ -105,7 +105,26 @@ __________
 
 1) Liquid is a fluid that has a fixed Volume, has no fixed Shape but takes the Shape of any container it fills.
 
-2) Gas is a fluid that has no fixed Volume has no fixed Shape but tends to occupy any given space in a medium [container is crossed out] it's filled in.`;
+2) Gas is a fluid that has no fixed Volume has no fixed Shape but tends to occupy any given space in a medium [container is crossed out] it's filled in.
+
+
+
+## **Application Areas of Fluid Mechanics**
+| Application Area |  Details |
+| ------ | --- |
+| **Biomechanics** |- Blood flow through arteries and veins;<br> - Airflow in the lungs;<br> - Flow of cerebral fluid |
+| **Households** |- Piping systems for cold water, natural gas, and sewage;<br> - Piping and ducting network of heating and air-conditioning systems;<br> - refrigerator, vacuum cleaner, dish washer, washing machine, water meter, natural gas meter, air conditioner, radiator, etc. |
+| **Meteorology and Ocean Engineering** |Movements of air currents and water currents |
+| **Mechanical Engineering** |- Design of pumps, turbines, air-conditioning equipment, pollution-control equipment, etc.;<br> - Design and analysis of aircraft, boats, submarines, rockets, jet engines, wind turbines, biomedical devices, the cooling of electronic components, and the transportation of water, crude oil, and natural gas. |
+| **Civil Engineering** |- Transport of river sediments; Pollution of air and water<br> - Design of piping systems <br> - Flood control systems |
+| **Chemical Engineering** |Design of chemical processing equipment |
+| **Turbomachines** | pump, turbine, fan, blower, propeller, etc. |
+| **Military** | Missile, aircraft, ship, underwater vehicle, dispersion of chemical agents, etc. |
+| **Automobile** | IC engine, air conditioning, fuel flow, external aerodynamics, etc. |
+| **Medicine** | Heart assist device, artificial heart valve, Lab-on-a-Chip device, glucose monitor, controlled drug delivery, etc. |
+| **Electronics** | Convective cooling of generated heat. |
+| **Energy** | Combuster, burner, boiler, gas, hydro and wind turbine, etc. |
+| **Oil and Gas** | Pipeline, pump, valve, offshore rig, oil spill cleanup, etc. |`;
 
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] || {};
