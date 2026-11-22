@@ -17,12 +17,10 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 - Fluid mechanics is the study of how liquids and gases behave, whether they are at rest or in motion.
 
 
-## **Branch of fluid mechanics**
-
-| Fluid Statics | Fluid Dynamics |
-|----------|----------|
-| Hydrostatic   | Fluid kinematics   | 
-| Aerostatic  | Fluid Kinetics  |
+| **Branch of fluid mechanics**|
+|-------------------|
+| Fluid Statics |
+| Fluid Dynamics |
 __________
 
 ## **FluId Statics**
@@ -33,13 +31,45 @@ __________
 
 - It is the study of how pressure and forces behave in non-moving liquids and gases.
 
-|Examples|
-|--------|
-|1. Water Towers: Elevated tanks use still water pressure daily |
-|2. Swimming Pools: Deep water pushes heavily on your ears.|
-|3. Floating Boats: Motionless water lifts ships to the surface.|
-|4. Dams: Heavy walls block massive stationary water reservoirs.|
-|5. Ice Floating in a Drink: Motionless liquid supports the floating ice cube.|
+|Sub-category of Fluid Statics | 
+|------|
+|Hydrostatics|
+|Aerostatics|
+
+
+**Hydrostatics**
+
+*Hydrostatics is the branch of fluid mechanics that studies liquids (such as water, oil, or mercury) when they are completely at rest.*
+
+- Core Focus: It examines how stationary liquids create pressure, how that pressure increases with depth, and the forces they exert on container walls or submerged objects.
+
+*Simple Definition: It is the science of still water and how it pushes against things.*
+
+
+|Real-Life Samples|Explanation|
+|--------|---|
+|1. Water Towers| Elevated tanks use still water pressure daily |
+|2. Swimming Pools| Deep water pushes heavily on your ears.|
+|3. Floating Boats| Motionless water lifts ships to the surface.|
+|4. Dams| Heavy walls block massive stationary water reservoirs.|
+|5. Ice Floating in a Drink| Motionless liquid supports the floating ice cube.|
+
+**Aerostatics**
+
+*Aerostatics is the branch of fluid mechanics (specifically under fluid statics) that studies gases at rest.*
+
+- Core Focus: It examines gases like air when they are not moving, looking closely at atmospheric pressure, how air pressure changes as you go higher in altitude (such as up a mountain), and buoyant forces in gases.
+
+*Simple Definition:The science of still air and gases.*
+
+|Real-Life Sample|Explanation|
+|------|------|
+|Hot Air Balloons| A balloon filled with heated air floats peacefully in the sky because the surrounding still air provides an upward buoyant force|
+|Car or Bicycle Tires| Air that is pumped inside a tire sits under pressure, holding its shape and supporting the weight of the vehicle while motionless.|
+|Weather Balloons| Large balloons filled with gases like helium or hydrogen sit or float in the atmosphere, balanced by the surrounding air pressure.|
+|Blimps and Airships| Huge airships hover stationary in the air because their internal gas volume creates enough buoyancy to offset gravity.|
+|Barometers| Traditional air pressure gauges use sealed chambers of air to measure atmospheric pressure changes caused by the weight of stationary air above us.|
+
 
 
 ## **Fluid Dynamics**
@@ -52,11 +82,17 @@ __________
 
 - It is the science of moving fluids—tracking how liquids and gases flow, swirl, and interact with the objects around them (like wind blowing past a car or blood pumping through your veins).
 
+|Real-Life Samples|Explanation|
+|---|---|
+|Airplane Flight| Air moving rapidly over and under an airplane's specially shaped wings creates lift, allowing heavy planes to soar through the sky.|
+|Blood Circulation| Your heart pumps blood through your veins and arteries, moving vital nutrients and oxygen continuously throughout your body.|
+|Weather Patterns and Wind| Moving air currents, breezes, and massive jet streams flow through the atmosphere, shaping global weather and storms.|
+|Car Aerodynamics| As a car drives down the highway, air flows smoothly around its sleek body to reduce drag and improve fuel efficiency.|
+|Rivers and Waterfalls| Gravity pulls water downstream through riverbeds and over cliffs, creating flowing currents, rapids, and swirling eddies.|
 
 
 
-
-## **Definitions of Fluid:**
+## **Fluid**
 *   Fluid is a substance that deforms under the influence of Shear Stress at any magnitude.
 
 *   Fluid is a substance that when Shear Stress is applied, the fluid tends to deform at any pressure/magnitude.
