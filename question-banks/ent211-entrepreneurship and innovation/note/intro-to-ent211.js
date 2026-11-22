@@ -15,7 +15,7 @@ window.CBT_SUBJECT_NOTES['ENT211: entrepreneurship and innovation']['Introductio
 ---
 
 ### **1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur**
-#### **1.1.1 Entrepreneurship**
+#### **1.2.1 Entrepreneurship**
 * **Lack of Agreement:** Putari (2006) observed that scholars had not been in agreement on a single definition.
 * **Scholarly Definitions:**
   * **Cantillon (circa 1730):** Defined it as "self-employment of any sort".
@@ -26,7 +26,7 @@ window.CBT_SUBJECT_NOTES['ENT211: entrepreneurship and innovation']['Introductio
   * **Okpara (2000):** Defined it as the willingness and ability to seek investment opportunities and establish/run an enterprise successfully based on them.
 * **Core Summary:** Entrepreneurship is a function involving the exploitation of opportunities that exist within a market, encompassing all processes of establishing, nurturing, and sustaining a business enterprise.
 
-#### **1.1.2 Entrepreneur**
+#### **1.2.2 Entrepreneur**
 * **Historical Definitions:**
   * **Say (1816):** The agent who "unites all means of production and who finds in the value of the products... the reestablishment of the entire capital he employs... as well as profits belonging to himself".
   * **Knight (1921):** Individuals who attempt to predict and act upon change within markets.
@@ -37,16 +37,16 @@ window.CBT_SUBJECT_NOTES['ENT211: entrepreneurship and innovation']['Introductio
   * **Pinson (2010):** A person who starts a business to follow a vision, make money, be the master of his/her own soul, and act as an "educated" risk-taker.
   * **Murphy (2010):** Dynamic, continuously seeking opportunities, and willing to do whatever it takes to succeed.
 
-#### **1.1.3 Intrapreneurs**
+#### **1.2.3 Intrapreneurs**
 * **Definition:** Entrepreneurs *within* an organization ("Intrepreneurs").
 * **Role:** They pursue the exploitation of business opportunities as they emerge inside an existing corporate structure. If organizations do not encourage them to manifest their abilities, they become frustrated and leave to start their own businesses.
 
-#### **1.1.4 Technopreneur**
+#### **1.2.4 Technopreneur**
 * **Definition:** A hybrid of a technological innovator and a businessman all combined into one individual, whose business realm is high technology (Ogundele, 2007).
 
 ---
 
-### **1.2 Types of Entrepreneurs (Rockstar, 2008)**
+### **1.3 Types of Entrepreneurs (Rockstar, 2008)**
 Rockstar (2008) identifies four distinct types based on how they interact with the business environment:
 1. **Innovative:** Preoccupied with introducing something new (products, technology) and invest substantially in Research & Development (R&D).
 2. **Imitating ("Copy Cats"):** Observe an existing successful system and replicate it in a better, cheaper, or improved manner.
@@ -55,7 +55,7 @@ Rockstar (2008) identifies four distinct types based on how they interact with t
 
 ---
 
-### **1.3 Characteristics of Entrepreneurship and Entrepreneurs**
+### **1.4 Characteristics of Entrepreneurship and Entrepreneurs**
 * **The Process:** 
   * **Creative Activity:** Involves product and production technique innovation.
   * **Dynamic Process:** Must account for a constantly changing business environment.
@@ -77,7 +77,7 @@ Rockstar (2008) identifies four distinct types based on how they interact with t
 
 ---
 
-### **1.4 Roles of Entrepreneurs**
+### **1.5 Roles of Entrepreneurs**
 #### **Mintzberg’s Managerial Roles (1973)**
 1. **Figure Head Role:** Performing ceremonial duties and representing the organization formally and informally.
 2. **Leader Role:** Bringing people together by hiring, firing, training, and motivating.
