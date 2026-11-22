@@ -1,6 +1,6 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Entrepreneurship
+window.CBT_SUBJECT_BANKS.push(`Subject: Ent211 entrepreneurship and innovation
 Topic: 1.1 Entrepreneurship – Origin
 SubTopic: Origin and History
 Type: MCQ
