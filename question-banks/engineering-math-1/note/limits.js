@@ -12,6 +12,11 @@ window.CBT_SUBJECT_NOTES['Engineering math 1']['Limits'] = `-------
 -----
 @[Question practice video](https://youtu.be/kG_p2vKApOE?si=SZ1SbTi1f7F-xjg_)
 
+
+
+@[Practice question](https://youtu.be/bqiY-59V0jU?si=FCISL52tgmkGr67D)
+
+
 `;
 
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
