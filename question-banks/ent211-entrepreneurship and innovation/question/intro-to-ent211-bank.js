@@ -1,746 +1,714 @@
 window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Ent211 entrepreneurship and innovation
-Topic: 1.1 Entrepreneurship – Origin
-SubTopic: Origin and History
+window.CBT_SUBJECT_BANKS.push(`Subject: ENT211: entrepreneurship and innovation
+Topic:   Introduction to ENT211
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q001: From which French word is the concept of "entrepreneur" derived?
-Option: A: Entrepreneuriat
+Q001:         The word "entrepreneur" is derived from which French concept?
+Option: A: Entreprise
 Option: B: Entreprendre
-Option: C: Entreprise
-Option: D: Enterprendre
+Option: C: Entrer
+Option: D: Entrepreneurial
 Answer: B
-Explanation: The concept is derived from the French word "entreprendre," which literally means "to undertake."
-SubTopic: Origin and History
+Explanation: The concept "entrepreneur" is derived from the French concept "entreprendre".
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q002: According to QuickMBA (2010), what does the French word "entreprendre" literally mean?
-Option: A: To manage a business
-Option: B: To innovate
+Q002:         What does the French word "entreprendre" literally translate to in English?
+Option: A: To manage
+Option: B: To organize
 Option: C: To undertake
-Option: D: To take a risk
+Option: D: To invest
 Answer: C
-Explanation: QuickMBA (2010) states that "entreprendre" literally means "to undertake."
-SubTopic: Key Scholars
+Explanation: "Entreprendre" literally translates to the English concept "to undertake" (meaning to start a business).
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q003: Which French economist was the first to introduce the concept of the "entrepreneur" in his work in 1755?
+Q003:         Who was the French economist that first introduced the concept "entrepreneur" in 1755?
 Option: A: Jean-Baptiste Say
-Option: B: Joseph Schumpeter
-Option: C: Richard Cantillon
-Option: D: Alfred Marshall
-Answer: C
-Explanation: Richard Cantillon was the first to introduce the concept in his work in 1755.
-SubTopic: Key Scholars
-Type: MCQ
-Q004: How did Richard Cantillon view the entrepreneur?
-Option: A: As an organizer
-Option: B: As a risk taker
-Option: C: As an innovator
-Option: D: As a manager
+Option: B: Richard Cantillon
+Option: C: Alfred Marshall
+Option: D: Adam Smith
 Answer: B
-Explanation: Cantillon viewed the entrepreneur as a risk taker.
-SubTopic: Key Scholars
+Explanation: Richard Cantillon was a French economist who was the first to introduce the concept "entrepreneur" in his work in 1755, viewing him as a risk-taker.
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q005: Which economist analyzed the concept of the entrepreneur in an advanced way in 1821?
-Option: A: David Ricardo
-Option: B: Adam Smith
-Option: C: Jean-Baptiste Say
-Option: D: John Stuart Mill
-Answer: C
-Explanation: Jean-Baptiste Say analyzed the concept in an advanced way in 1821.
-SubTopic: Economic Views
-Type: MCQ
-Q006: Early economists like Adam Smith and David Ricardo referred to entrepreneurship primarily as:
-Option: A: Wealth creation
-Option: B: Business management
+Q004:         Richard Cantillon (1755) viewed the entrepreneur primarily as a:
+Option: A: Business manager
+Option: B: Risk-taker
 Option: C: Factor of production
-Option: D: Risk management
+Option: D: Gap-filler
 Answer: B
-Explanation: Adam Smith and David Ricardo referred to it as "business management."
-SubTopic: Key Scholars
+Explanation: Richard Cantillon viewed the entrepreneur primarily as a risk-taker.
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q007: Which renowned economist formally recognized entrepreneurship as an important factor of production in 1890?
-Option: A: Richard Cantillon
-Option: B: Joseph Schumpeter
+Q005:         Which scholar analyzed the concept in 1821 and identified the entrepreneur as a new economic phenomenon and an agent of economic change?
+Option: A: Jean-Baptiste Say
+Option: B: David Ricardo
+Option: C: John Stuart Mill
+Option: D: Joseph Schumpeter
+Answer: A
+Explanation: Jean-Baptiste Say analyzed the concept in an advanced way in 1821, identifying the entrepreneur as a new economic phenomenon and an agent of economic change.
+
+SubTopic: 1.1 Entrepreneurship – Origin
+Type: MCQ
+Q006:         Early classical economists such as Adam Smith, David Ricardo, and John Stuart Mill often referred to entrepreneurship as:
+Option: A: Venture capitalism
+Option: B: Business management
+Option: C: Economic organization
+Option: D: Industrial coordination
+Answer: B
+Explanation: Classical economists like Adam Smith, David Ricardo, and John Stuart Mill wrote extensively on it, often referring to it as "business management".
+
+SubTopic: 1.1 Entrepreneurship – Origin
+Type: MCQ
+Q007:         Who formally recognized entrepreneurship as an important factor of production in 1890?
+Option: A: Joseph Schumpeter
+Option: B: Richard Cantillon
 Option: C: Alfred Marshall
 Option: D: Jean-Baptiste Say
 Answer: C
-Explanation: Alfred Marshall formally recognized entrepreneurship as a factor of production in 1890.
-SubTopic: Economic Views
-Type: MCQ
-Q008: Alfred Marshall believed that entrepreneurship is the driving element behind:
-Option: A: Organization creation
-Option: B: Technological change
-Option: C: Wealth distribution
-Option: D: Market competition
-Answer: A
-Explanation: Marshall viewed entrepreneurship as organization creation and believed it is the driving element behind organization.
-SubTopic: Disciplines
-Type: MCQ
-Q009: According to the text, entrepreneurship theoretical foundations extend to disciplines EXCEPT:
-Option: A: Education and networking
-Option: B: Astrology and astronomy
-Option: C: History and politics
-Option: D: Ecology and culture
-Answer: B
-Explanation: The text lists history, politics, education, ecology, culture, experience, and networking, but not astrology and astronomy.
-SubTopic: Key Scholars
-Type: MCQ
-Q010: Which of the following is NOT a characteristic of entrepreneurs listed by Schumpeter (1951)?
-Option: A: Innovators or creative imitators
-Option: B: Coordinators and organizers
-Option: C: Bureaucrats
-Option: D: Risk-bearers
-Answer: C
-Explanation: Schumpeter listed risk-bearers, coordinators, organizers, gap-fillers, leaders, and innovators/creative imitators. Bureaucrats are not on this list.
-SubTopic: Theory
-Type: MCQ
-Q011: According to Schumpeter, combining various disparate theories can develop a:
-Option: A: Financial risk assessment tool
-Option: B: Legal framework for startups
-Option: C: Generalized set of entrepreneurship qualities
-Option: D: Unified business model
-Answer: C
-Explanation: Schumpeter concluded that combining disparate theories can develop a generalized set of entrepreneurship qualities.
-SubTopic: Importance
-Type: MCQ
-Q012: Why is entrepreneurship generally agreed to be important according to scholars?
-Option: A: Because it reduces the need for government regulation
-Option: B: Because it creates utility and promotes economic growth
-Option: C: Because it guarantees immediate profit
-Option: D: Because it eliminates all business risks
-Answer: B
-Explanation: The text states it is important because it creates utility, increases society's welfare, and promotes economic growth.
-SubTopic: Key Scholars
-Type: MCQ
-Q013: "Gap-fillers" is a term used by Schumpeter to describe:
-Option: A: Consumers
-Option: B: Entrepreneurs
-Option: C: Government subsidies
-Option: D: Small business owners
-Answer: B
-Explanation: Schumpeter listed the characteristics of entrepreneurs as including "gap-fillers."
-SubTopic: History
-Type: MCQ
-Q014: The concept of the entrepreneur is considered almost as old as:
-Option: A: The barter system
-Option: B: The formal discipline of economics itself
-Option: C: The invention of the internet
-Option: D: The Industrial Revolution
-Answer: B
-Explanation: The concept is almost as old as the formal discipline of economics itself.
-SubTopic: Theory
-Type: MCQ
-Q015: How did Schumpeter's view on entrepreneurship differ from earlier economists?
-Option: A: He focused only on the financial aspects
-Option: B: He argued that entrepreneurship only exists in large corporations
-Option: C: He combined disparate theories to explain why some become entrepreneurs and others don't
-Option: D: He believed entrepreneurs did not take risks
-Answer: C
-Explanation: Schumpeter combined various disparate theories to help explain why some people become entrepreneurs while others do not.
-SubTopic: History
-Type: Theory
-Q016: Trace the historical evolution of the concept of the "entrepreneur" from its French origins to the contributions of Richard Cantillon and Alfred Marshall. How did Marshall's view differ from the earlier classical economists like Adam Smith and David Ricardo regarding the significance of entrepreneurship?
-Answer: 
-Explanation: The word comes from the French "entreprendre" (to undertake). Richard Cantillon (1755) first introduced the concept, viewing the entrepreneur as a risk taker. Jean-Baptiste Say (1821) analyzed it as a new economic phenomenon. Adam Smith and David Ricardo discussed it as "business management." Alfred Marshall (1890) elevated it, formally recognizing it as an important factor of production and the driving element behind organization creation, unlike the earlier classical economists.
-SubTopic: Theory
-Type: Theory
-Q017: Discuss Joseph Schumpeter's contribution to entrepreneurship theory. Why did he believe a generalized set of entrepreneurial qualities could be developed by combining various disparate theories, and what characteristics did he ultimately attribute to entrepreneurs?
-Answer: 
-Explanation: Schumpeter noted that while economists agree entrepreneurship is necessary for growth, they disagree on the entrepreneurs' exact role. He believed that by combining disparate theories across history, politics, education, etc., a generalized set of qualities could be developed. He attributed the following characteristics to entrepreneurs: risk-bearers, coordinators, organizers, gap-fillers, leaders, and innovators or creative imitators.
-`);
+Explanation: Alfred Marshall formally recognized entrepreneurship as an important factor of production in 1890.
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Entrepreneurship
-Topic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
-SubTopic: Definitions
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q001: According to Cantillon (circa 1730), entrepreneurship is viewed as:
-Option: A: "Self-employment of any sort"
-Option: B: Seeking investment opportunities
-Option: C: The creation of new organizations
-Option: D: The combination of resources only
-Answer: A
-Explanation: Cantillon (circa 1730) views entrepreneurship as "self-employment of any sort."
-SubTopic: Definitions
-Type: MCQ
-Q002: Which scholar equated entrepreneurship with the concept of innovation applied to a business context in 1934?
-Option: A: Gartner
-Option: B: Joseph Schumpeter
-Option: C: Penrose
-Option: D: Liebenstein
+Q008:         According to Alfred Marshall, entrepreneurship is the driving element behind:
+Option: A: Government taxation
+Option: B: Organization creation
+Option: C: Manual labor
+Option: D: Market monopoly
 Answer: B
-Explanation: In 1934, Joseph Schumpeter equated entrepreneurship with the concept of innovation applied to a business context.
-SubTopic: Definitions
-Type: MCQ
-Q003: Penrose (1963) views entrepreneurship as the activity that involves:
-Option: A: Writing business plans
-Option: B: Copying successful business models
-Option: C: Identifying opportunities within the economic system
-Option: D: Organizing labor unions
-Answer: C
-Explanation: Penrose (1963) views it as the activity that involves identifying opportunities within the economic system.
-SubTopic: Definitions
-Type: MCQ
-Q004: Gartner (1988) conceives entrepreneurship as:
-Option: A: The management of existing firms
-Option: B: The creation of new organizations
-Option: C: The exploitation of employees
-Option: D: The accumulation of wealth
-Answer: B
-Explanation: Gartner (1988) conceives entrepreneurship as the creation of new organizations.
-SubTopic: Definitions
-Type: MCQ
-Q005: According to Okpara (2000), entrepreneurship is the willingness and ability of an individual to:
-Option: A: Avoid risks at all costs
-Option: B: Invent new technologies in a laboratory
-Option: C: Seek out investment opportunities and run an enterprise successfully
-Option: D: Work for a large corporation
-Answer: C
-Explanation: Okpara defines it as seeking out investment opportunities in an environment and being able to establish and run an enterprise successfully.
-SubTopic: Key Scholars
-Type: MCQ
-Q006: Who views entrepreneurs as individuals who attempt to predict and act upon change within markets?
-Option: A: Say (1816)
-Option: B: Cantillon (1730)
-Option: C: Knight (1921)
-Option: D: Schumpeter (1934)
-Answer: C
-Explanation: Knight (1921) views entrepreneurs as individuals who attempt to predict and act upon change within markets.
-SubTopic: Definitions
-Type: MCQ
-Q007: According to Schumpeter, an entrepreneur implements change through:
-Option: A: Reducing employee wages
-Option: B: Carrying out new combinations like introducing new techniques
-Option: C: Lobbying the government for subsidies
-Option: D: Buying out competitors
-Answer: B
-Explanation: Schumpeter argues the entrepreneur implements change by carrying out new combinations, such as new techniques, reorganization, or innovation.
-SubTopic: Definitions
-Type: MCQ
-Q008: How does Quick MBA (2010) define the entrepreneur?
-Option: A: An individual who combines various input factors to generate value for the customer
-Option: B: A person who works strictly within an existing organization
-Option: C: Someone who avoids uncertainty
-Option: D: A government official who regulates businesses
-Answer: A
-Explanation: Quick MBA defines the entrepreneur as one who combines various input factors in an innovative manner to generate value to the customer.
-SubTopic: Definitions
-Type: MCQ
-Q009: According to Di-Masi (2010), the entrepreneur is the person who:
-Option: A: Manages a non-profit organization exclusively
-Option: B: Inherits a family business
-Option: C: Perceives the market opportunity and mobilizes resources to meet it
-Option: D: Invests in stocks and bonds only
-Answer: C
-Explanation: Di-Masi states the entrepreneur is the person who perceives the market opportunity and then has the motivation, drive, and ability to mobilize resources to meet it.
-SubTopic: Distinctions
-Type: MCQ
-Q010: What distinguishes successful entrepreneurs from small business owners, according to the text?
-Option: A: Small business owners are better at gathering resources
-Option: B: Successful entrepreneurs are innovative and can create massive wealth rapidly
-Option: C: Small business owners take more risks
-Option: D: Successful entrepreneurs are older
-Answer: B
-Explanation: The text notes that successful entrepreneurs, unlike small business owners, are innovative and can rapidly create a large amount of wealth while bearing very high risk.
-SubTopic: Intrapreneur
-Type: MCQ
-Q011: An "intrapreneur" is best defined as:
-Option: A: An entrepreneur who only works in technology
-Option: B: An entrepreneur who fails and tries again
-Option: C: An entrepreneur within an existing organization
-Option: D: An entrepreneur who works in a foreign country
-Answer: C
-Explanation: Intrapreneurs are entrepreneurs within an organization; individuals who pursue the exploitation of business opportunities within an existing corporate structure.
-SubTopic: Intrapreneur
-Type: MCQ
-Q012: How does an entrepreneur differ from an intrapreneur?
-Option: A: An entrepreneur works within an organization, while an intrapreneur starts a new business
-Option: B: An entrepreneur creates a new business and bears the risks, while an intrapreneur works within an existing organization
-Option: C: An intrapreneur does not care about profit
-Option: D: An entrepreneur takes more vacations
-Answer: B
-Explanation: An entrepreneur creates a venture or startup and takes risks to bring together factors of production, while an intrapreneur works within an existing organization to pursue business opportunities.
-SubTopic: Technopreneur
-Type: MCQ
-Q013: A technopreneur is an individual whose business is primarily in the realm of:
-Option: A: Real estate
-Option: B: Traditional manufacturing
-Option: C: High technology
-Option: D: Agriculture
-Answer: C
-Explanation: A technopreneur is an individual whose business is in the realm of high technology, being both a technological innovator and a business person.
-SubTopic: Definitions
-Type: MCQ
-Q014: According to Pinson (2010), an entrepreneur is someone who starts a business to:
-Option: A: Fulfill a government mandate
-Option: B: Spend investor money
-Option: C: Follow a vision, make money, and be their own master
-Option: D: Avoid working with others
-Answer: C
-Explanation: Pinson visualizes the entrepreneur as a person who starts a business to follow a vision, make money, and be the master of his/her own soul.
-SubTopic: Definitions
-Type: MCQ
-Q015: The text concludes that a unified definition of the "entrepreneur" is:
-Option: A: Only applicable to the 18th century
-Option: B: Dictated by the government
-Option: C: Impossible to find
-Option: D: Easy to find
-Answer: C
-Explanation: Given the wide range of factors and behaviors used to define the concept, the text notes the difficulty and impossibility of finding a unified definition.
-SubTopic: Definitions
-Type: Theory
-Q016: Scholars often disagree on a single, unified definition of "entrepreneurship" and the "entrepreneur." Using the definitions provided by Cantillon, Schumpeter, and modern scholars like Okpara and Di-Masi, summarize the core activities that define entrepreneurship. Furthermore, explain the crucial distinction the text makes between a successful entrepreneur and a small business owner.
-Answer: 
-Explanation: Entrepreneurship involves self-employment, creating organizations, applying innovation, combining resources, and exploiting opportunities under uncertainty. Cantillon calls it self-employment; Schumpeter equates it with innovation; Okpara focuses on seeking investment opportunities; Di-Masi emphasizes perceiving opportunities and mobilizing resources. The text distinguishes successful entrepreneurs from small business owners by noting that successful entrepreneurs are innovative and can rapidly create massive wealth, whereas small business owners may just be maintaining a steady income.
-SubTopic: Intrapreneur and Technopreneur
-Type: Theory
-Q017: Define the terms "Intrapreneur" and "Technopreneur" as presented in the text. Compare and contrast the role of an intrapreneur with that of a traditional entrepreneur, and explain why organizations should encourage intrapreneurial behavior.
-Answer: 
-Explanation: An intrapreneur is an entrepreneur within an existing organization, while a technopreneur is an individual whose business is in high technology, combining technological innovation with business. The intrapreneur differs from the traditional entrepreneur in that the traditional entrepreneur creates a new venture and bears the risks, while the intrapreneur works within an existing organization. Organizations should encourage intrapreneurial behavior because, if frustrated, these individuals may leave to start their own businesses, taking their innovative abilities elsewhere.
-`);
+Explanation: Alfred Marshall viewed entrepreneurship as the driving element behind organization creation.
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Entrepreneurship
-Topic: 1.2 Types of entrepreneur
-SubTopic: Classification
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q001: According to Rockstar (2008), the four types of entrepreneurs based on interaction with the business environment are Innovative, Imitating, Fabian, and:
-Option: A: Social
-Option: B: Technopreneur
-Option: C: Drone
-Option: D: Intrapreneur
-Answer: C
-Explanation: Rockstar (2008) identifies the four types as Innovative, Imitating, Fabian, and Drone.
-SubTopic: Innovative
-Type: MCQ
-Q002: Which type of entrepreneur is preoccupied with introducing something new into the market?
-Option: A: Fabian
-Option: B: Innovative
-Option: C: Drone
-Option: D: Imitating
+Q009:         Most scholars who wrote about the origin of entrepreneurship were either economists or:
+Option: A: Sociologists
+Option: B: Historians
+Option: C: Psychologists
+Option: D: Geographers
 Answer: B
-Explanation: Innovative entrepreneurs are preoccupied with introducing something new into the market, organization, or nation.
-SubTopic: Innovative
+Explanation: Most scholars who wrote about the origin of entrepreneurship were either economists or historians.
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q003: Innovative entrepreneurs are interested in innovations and invest substantially in:
-Option: A: Legal fees
-Option: B: Marketing
-Option: C: Research and development
-Option: D: Human resources
-Answer: C
-Explanation: Innovative entrepreneurs are interested in innovations and invest substantially in research and development.
-SubTopic: Imitating
+Q010:         Joseph Schumpeter (1951) noted that entrepreneurship theory extends from economics to other disciplines such as:
+Option: A: History, politics, education, and ecology
+Option: B: Pure mathematics and physics
+Option: C: Chemistry and astronomy
+Option: D: Medicine and anatomy
+Answer: A
+Explanation: Schumpeter noted that entrepreneurship theoretical foundations extend from economics to other disciplines like history, politics, education, ecology, culture, experience, and networking.
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q004: "Copy cats" who observe an existing system and replicate it in a better manner are known as:
-Option: A: Drone entrepreneurs
-Option: B: Innovative entrepreneurs
-Option: C: Imitating entrepreneurs
-Option: D: Fabian entrepreneurs
-Answer: C
-Explanation: Imitating entrepreneurs are also referred to as "copy cats" who observe and replicate existing systems.
-SubTopic: Imitating
-Type: MCQ
-Q005: The main goal of an imitating entrepreneur is to:
-Option: A: Sell their business to a larger corporation
-Option: B: Invent something entirely new
-Option: C: Prevent any changes in the market
-Option: D: Improve on an existing product or process to make it better
+Q011:         Which of the following is NOT among the traits Schumpeter (1951) listed for entrepreneurs?
+Option: A: Risk-bearers
+Option: B: Gap-fillers
+Option: C: Creative imitators
+Option: D: Passive bureaucrats
 Answer: D
-Explanation: Imitating entrepreneurs improve on an existing product, process, or technology to create something similar but better.
-SubTopic: Fabian
+Explanation: Schumpeter listed entrepreneurs as risk-bearers, coordinators, organizers, gap-fillers, leaders, and innovators or creative imitators, making passive bureaucrats incorrect.
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q006: Which type of entrepreneur is described as very careful, cautious, and sometimes lazy in adopting changes?
-Option: A: Fabian
-Option: B: Imitating
-Option: C: Innovative
-Option: D: Drone
+Q012:         Scholars generally agree that entrepreneurship is important because it creates utility, increases society's welfare, and promotes:
+Option: A: Economic growth and development
+Option: B: Government intervention
+Option: C: Market stagnation
+Option: D: Monopoly pricing
 Answer: A
-Explanation: Fabian entrepreneurs are very careful and cautious in adopting any changes, and apart from this, they are lazy.
-SubTopic: Fabian
+Explanation: Scholars generally agree that entrepreneurship is important because it creates utility, increases society's welfare, and promotes economic growth and development.
+
+SubTopic: 1.1 Entrepreneurship – Origin
 Type: MCQ
-Q007: Fabian entrepreneurs are known to shy away from:
-Option: A: Employees
-Option: B: Innovations
-Option: C: Technology
-Option: D: Customers
+Q013:         From a business point of view, "to undertake" simply means:
+Option: A: To start a business
+Option: B: To liquidate an enterprise
+Option: C: To audit financial records
+Option: D: To regulate trade
+Answer: A
+Explanation: From the business point of view, to undertake simply means to start a business.
+
+SubTopic: 1.1 Entrepreneurship – Origin
+Type: Theory
+Q014:         Trace the historical evolution of the concept of entrepreneurship from Richard Cantillon (1755) to Alfred Marshall (1890), highlighting the specific contributions of each scholar.
+Answer: 
+Explanation: Richard Cantillon (1755) introduced the concept as a risk-taker; Jean-Baptiste Say (1821) expanded it as an agent of economic change; classical economists like Adam Smith and David Ricardo referred to it as business management; and Alfred Marshall (1890) formally recognized entrepreneurship as a factor of production and the driving element behind organization creation.
+
+SubTopic: 1.1 Entrepreneurship – Origin
+Type: Theory
+Q015:         Discuss Joseph Schumpeter’s (1951) interdisciplinary view of entrepreneurship and explain three reasons why scholars consider entrepreneurship important to society.
+Answer: 
+Explanation: Schumpeter viewed entrepreneurship theory as extending beyond economics into history, politics, education, and networking to form a generalized set of qualities (risk-bearers, coordinators, gap-fillers, leaders, innovators). Entrepreneurship is important because it creates utility, increases society's welfare, and promotes economic growth and development.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q016:         Which scholar observed in 2006 that scholars had not been in agreement on a single definition of entrepreneurship?
+Option: A: Gartner
+Option: B: Putari
+Option: C: Penrose
+Option: D: Okpara
 Answer: B
-Explanation: The text states that Fabian entrepreneurs shy away from innovations.
-SubTopic: Drone
+Explanation: Putari (2006) observed that scholars had not been in agreement in their definitions of the concept 'entrepreneurship'.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
 Type: MCQ
-Q008: Which entrepreneurs are considered "old school" and resist change?
+Q017:         Richard Cantillon (circa 1730) defined entrepreneurship simply as:
+Option: A: Creation of new organizations
+Option: B: Self-employment of any sort
+Option: C: Innovation in business
+Option: D: Mobilizing savings
+Answer: B
+Explanation: Cantillon viewed entrepreneurship as "self-employment of any sort".
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q018:         Which scholar equated entrepreneurship with the concept of innovation applied to a business context in 1934?
+Option: A: Joseph Schumpeter
+Option: B: Leibenstein
+Option: C: Penrose
+Option: D: Knight
+Answer: A
+Explanation: Joseph Schumpeter (1934) equated entrepreneurship with the concept of innovation applied to a business context.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q019:         Penrose (1963) viewed entrepreneurship as the activity involving:
+Option: A: The identification of opportunities within the economic system
+Option: B: Buying means of production at fixed prices
+Option: C: Working inside an existing corporation
+Option: D: High-technology software development
+Answer: A
+Explanation: Penrose (1963) viewed entrepreneurship as the activity that involves identifying opportunities within the economic system.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q020:         Who conceived entrepreneurship in 1988 as "the creation of new organizations"?
+Option: A: Okpara
+Option: B: Gartner
+Option: C: Say
+Option: D: Murphy
+Answer: B
+Explanation: Gartner (1988) conceived entrepreneurship as the creation of new organizations.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q021:         Leibenstein (1968, 1979) perceived entrepreneurship as activities necessary to create or carry on an enterprise where:
+Option: A: All market risks are eliminated
+Option: B: Relevant parts of the production function are not completely known
+Option: C: The government provides all funding
+Option: D: Technology is completely absent
+Answer: B
+Explanation: Leibenstein perceived entrepreneurship as activities necessary where relevant parts of the production function are not completely known.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q022:         According to Knight (1921), entrepreneurs are individuals who attempt to:
+Option: A: Avoid all market uncertainties
+Option: B: Predict and act upon change within markets
+Option: C: Stick strictly to traditional methods
+Option: D: Manage public utilities
+Answer: B
+Explanation: Knight (1921) viewed entrepreneurs as individuals who attempt to predict and act upon change within markets.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q023:         Which scholar defined an entrepreneur as an "educated" risk-taker who starts a business to follow a vision and be the master of his/her own soul?
+Option: A: Pinson (2010)
+Option: B: Di-Masi (2010)
+Option: C: Murphy (2010)
+Option: D: Ogundele (2007)
+Answer: A
+Explanation: Pinson (2010) visualized the entrepreneur as a person who starts a business to follow a vision, make money, and be the master of his/her own soul as an educated risk-taker.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q024:         According to Di-Masi (2010), how do successful entrepreneurs differ from standard small business owners?
+Option: A: They avoid taking any risks
+Option: B: They are innovative and rapidly create wealth
+Option: C: They employ fewer than two people
+Option: D: They never seek market opportunities
+Answer: B
+Explanation: Di-Masi noted that successful entrepreneurs, unlike small business owners, are innovative and can rapidly create a large amount of wealth.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q025:         What are entrepreneurs who operate within an existing organization called?
+Option: A: Technopreneurs
+Option: B: Intrapreneurs
+Option: C: Drone entrepreneurs
+Option: D: Fabian entrepreneurs
+Answer: B
+Explanation: Intrapreneurs are entrepreneurs within an organization who pursue business opportunities as they emerge.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q026:         What happens if an organization fails to encourage intrapreneurs to manifest their entrepreneurial abilities?
+Option: A: They become passive workers
+Option: B: They become frustrated and may leave to start their own businesses
+Option: C: They stop innovating permanently
+Option: D: They take over the company's legal department
+Answer: B
+Explanation: If organizations do not encourage intrapreneurs, they will be frustrated and may leave to start their own businesses.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q027:         Who defined a technopreneur in 2007 as a technological innovator and a businessman combined into one individual?
+Option: A: Schumpeter
+Option: B: Ogundele
+Option: C: Rockstar
+Option: D: Driessen
+Answer: B
+Explanation: Ogundele (2007) defined a technopreneur as a technological innovator and a businessman all combined in one individual.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: MCQ
+Q028:         A technopreneur's business operates primarily in the realm of:
+Option: A: Traditional agriculture
+Option: B: High technology
+Option: C: Cottage crafts
+Option: D: Retail trading
+Answer: B
+Explanation: A technopreneur is an individual whose business is in the realm of high technology.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: Theory
+Q029:         Compare and contrast the definitions of "entrepreneurship" as provided by Joseph Schumpeter (1934), Penrose (1963), and Gartner (1988), and summarize the core function of entrepreneurship.
+Answer: 
+Explanation: Schumpeter (1934) linked entrepreneurship to innovation in a business context; Penrose (1963) viewed it as identifying economic opportunities; Gartner (1988) conceived it as creating new organizations. The core function encompasses establishing, nurturing, and exploiting market opportunities.
+
+SubTopic: 1.2 An Overview of the Definitions of Entrepreneurship and Entrepreneur
+Type: Theory
+Q030:         Distinguish clearly between an Entrepreneur, an Intrapreneur, and a Technopreneur, explaining the unique operational environment of each.
+Answer: 
+Explanation: An entrepreneur starts and owns an independent new venture; an intrapreneur acts entrepreneurially within an existing corporate structure; a technopreneur operates an independent venture based entirely in the realm of high technology.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q031:         Which scholar identified the four types of entrepreneurs based on their interaction with the business environment in 2008?
+Option: A: Ogundele
+Option: B: Rockstar
+Option: C: Mintzberg
+Option: D: Cantillon
+Answer: B
+Explanation: Rockstar (2008) identified the four types of entrepreneurs based on interaction with the business environment.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q032:         Which of the following lists the four types of entrepreneurs identified by Rockstar (2008)?
+Option: A: Innovative, Imitating, Fabian, and Drone
+Option: B: Social, Economic, Political, and Technological
+Option: C: Leader, Liaison, Monitor, and Negotiator
+Option: D: Active, Passive, Creative, and Dynamic
+Answer: A
+Explanation: Rockstar identified Innovative, Imitating, Fabian, and Drone types.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q033:         Which type of entrepreneur is preoccupied with introducing something new into the market, organization, or nation?
 Option: A: Imitating
 Option: B: Innovative
-Option: C: Drone
-Option: D: Fabian
-Answer: C
-Explanation: Drone entrepreneurs are resistant to change and are considered "old school."
-SubTopic: Drone
-Type: MCQ
-Q009: Drone entrepreneurs prefer to stick to:
-Option: A: New market trends
-Option: B: Traditional or orthodox methods of production
-Option: C: Modern technology
-Option: D: High-risk ventures
-Answer: B
-Explanation: Drone entrepreneurs prefer to stick to their traditional or orthodox methods of production and systems.
-SubTopic: Imitating
-Type: MCQ
-Q010: The student who observes a master's work and tries to create something similar but better is an example of a(n):
-Option: A: Drone entrepreneur
-Option: B: Innovative entrepreneur
-Option: C: Imitating entrepreneur
-Option: D: Fabian entrepreneur
-Answer: C
-Explanation: The text uses the example of a student becoming better than the master as a case of an imitating entrepreneur.
-SubTopic: Classification
-Type: MCQ
-Q011: Which entrepreneur type is LEAST likely to introduce a new product to the market?
-Option: A: Drone
-Option: B: Technopreneur
-Option: C: Imitating
-Option: D: Innovative
-Answer: A
-Explanation: Drone entrepreneurs resist change and stick to traditional methods, making them least likely to introduce new products.
-SubTopic: Fabian
-Type: MCQ
-Q012: An entrepreneur who is hesitant to adopt any new technology is likely a:
-Option: A: Innovative
-Option: B: Technopreneur
 Option: C: Fabian
-Option: D: Imitating
-Answer: C
-Explanation: Fabian entrepreneurs are cautious in adopting changes and shy away from innovations.
-SubTopic: Behavioral Roles
+Option: D: Drone
+Answer: B
+Explanation: Innovative entrepreneurs are preoccupied with introducing something new into the market.
+
+SubTopic: 1.2 Types of Entrepreneurs
 Type: MCQ
-Q013: The behavioral roles of entrepreneurs include being an agent of economic change, social change, and:
-Option: A: Environmental change
-Option: B: Legal change
-Option: C: Technological change
-Option: D: Political change
-Answer: C
-Explanation: The text states entrepreneurs occupy three roles: agent of (1) economic change, (2) social change, and (3) technological change.
-SubTopic: Drone
+Q034:         Innovative entrepreneurs invest substantially in:
+Option: A: Traditional manual labor
+Option: B: Research and Development (R&D)
+Option: C: Government treasury bills
+Option: D: Obsolete machinery
+Answer: B
+Explanation: Innovative entrepreneurs are interested in innovations and invest substantially in research and development.
+
+SubTopic: 1.2 Types of Entrepreneurs
 Type: MCQ
-Q014: Which of the following is NOT a characteristic of a Drone entrepreneur?
-Option: A: Considered old school
-Option: B: Prefers traditional methods
-Option: C: Constantly innovating
-Option: D: Resistant to change
-Answer: C
-Explanation: Drone entrepreneurs resist change and prefer traditional methods. They are not constantly innovating.
-SubTopic: Imitating
+Q035:         Imitating entrepreneurs are also commonly referred to as:
+Option: A: "Old school"
+Option: B: "Copy cats"
+Option: C: "Trailblazers"
+Option: D: "Risk-avoiders"
+Answer: B
+Explanation: Imitating entrepreneurs are also referred to as "copy cats".
+
+SubTopic: 1.2 Types of Entrepreneurs
 Type: MCQ
-Q015: If an entrepreneur builds a new software that improves upon an existing popular app, they are best classified as:
+Q036:         How do imitating entrepreneurs operate in the marketplace?
+Option: A: They invent entirely new technologies from scratch
+Option: B: They observe an existing system and replicate it in a better manner
+Option: C: They refuse to adopt any modern changes
+Option: D: They avoid competing in established markets
+Answer: B
+Explanation: Imitating entrepreneurs observe an existing system and replicate it in a better manner.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q037:         Which type of entrepreneur is described as "the case of the student becoming better than the master"?
+Option: A: Drone
+Option: B: Imitating
+Option: C: Fabian
+Option: D: Innovative
+Answer: B
+Explanation: Imitating entrepreneurs create something similar but better, representing the case of the student becoming better than the master.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q038:         Which type of entrepreneur is very careful, cautious, and hesitant in adopting any changes?
+Option: A: Innovative
+Option: B: Fabian
+Option: C: Imitating
+Option: D: Technopreneur
+Answer: B
+Explanation: Fabian entrepreneurs are very careful and cautious in adopting any changes.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q039:         Aside from being cautious, Fabian entrepreneurs are described as being:
+Option: A: Aggressive innovators
+Option: B: Lazy and shying away from innovations
+Option: C: Rapid market disruptors
+Option: D: Deeply invested in R&D
+Answer: B
+Explanation: Fabian entrepreneurs are described as lazy and shying away from innovations.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q040:         Which type of entrepreneur is considered "old school" because they are completely resistant to change?
 Option: A: Drone
 Option: B: Fabian
 Option: C: Imitating
 Option: D: Innovative
-Answer: C
-Explanation: The imitating entrepreneur improves on an existing product or process to create something similar but better.
-SubTopic: Classification
-Type: Theory
-Q016: Based on Rockstar's (2008) classification, identify and describe the four distinct types of entrepreneurs based on their interaction with the business environment. Which of these types is most likely to drive market evolution, and which is most likely to hinder it? Justify your answer.
-Answer: 
-Explanation: Rockstar (2008) identifies four types: Innovative (introduces something new), Imitating (copy cats who improve existing products), Fabian (careful, cautious, lazy in adopting changes), and Drone (resistant to change, old school, traditional methods). Innovative entrepreneurs are most likely to drive market evolution due to their focus on new products and R&D. Drone entrepreneurs are most likely to hinder it as they completely resist change and stick to orthodox methods.
-SubTopic: Application
-Type: Theory
-Q017: Imagine you are a business consultant advising a struggling traditional manufacturing company. The owners are hesitant to adopt new technology. Identify what type of entrepreneur the owners are exhibiting characteristics of, and explain the risks associated with this specific entrepreneurial type in a dynamic business environment.
-Answer: 
-Explanation: The owners are exhibiting characteristics of Drone entrepreneurs (or possibly Fabian entrepreneurs, though their strong resistance points more toward Drone). They are resistant to change and prefer traditional methods. The risk is that in a dynamic business environment, their refusal to adopt new technology will make them obsolete, lose market share to innovative or imitating competitors, and eventually fail.
-`);
+Answer: A
+Explanation: Drone entrepreneurs are resistant to change and considered 'old school'.
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Entrepreneurship
-Topic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
-SubTopic: Process Characteristics
+SubTopic: 1.2 Types of Entrepreneurs
 Type: MCQ
-Q001: According to Rockstar (2008), entrepreneurship is a creative activity because it deals with:
-Option: A: Employee management
-Option: B: Product innovation and production techniques
-Option: C: Financial manipulation
-Option: D: Marketing strategies
+Q041:         Drone entrepreneurs prefer to stick strictly to:
+Option: A: Cutting-edge digital automation
+Option: B: Traditional or orthodox methods of production and systems
+Option: C: Continuous product modification
+Option: D: Imported modern technologies
 Answer: B
-Explanation: Rockstar (2008) states it deals with product innovation and production techniques innovation while bearing in mind the market.
-SubTopic: Process Characteristics
+Explanation: Drone entrepreneurs prefer to stick to their traditional or orthodox methods of production and systems.
+
+SubTopic: 1.2 Types of Entrepreneurs
 Type: MCQ
-Q002: Why is entrepreneurship considered a "dynamic process"?
-Option: A: Because it focuses only on local markets
-Option: B: Because it is always changing employees
-Option: C: Because it must bear in mind the dynamic business environment
-Option: D: Because it requires a lot of paperwork
-Answer: C
+Q042:         Entrepreneurs occupy three behavioral roles as agents of change, namely economic change, social change, and:
+Option: A: Political change
+Option: B: Technological change
+Option: C: Environmental change
+Option: D: Legal change
+Answer: B
+Explanation: Entrepreneurs occupy three roles as agents of economic change, social change, and technological change.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: MCQ
+Q043:         Which type of entrepreneur only adopts an innovation when it becomes clear that failure to do so will result in the loss of their relative position?
+Option: A: Innovative
+Option: B: Fabian
+Option: C: Technopreneur
+Option: D: Intrapreneur
+Answer: B
+Explanation: Fabian entrepreneurs are cautious and hesitant, adopting changes only when necessary to avoid falling behind.
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: Theory
+Q044:         Identify and explain the four types of entrepreneurs classified by Rockstar (2008) based on their interaction with the business environment.
+Answer: 
+Explanation: The four types are Innovative (trailblazers introducing new tech/products through R&D), Imitating ("copy cats" replicating existing systems better), Fabian (cautious and slow to adopt change), and Drone ("old school" resisting change and sticking to orthodox methods).
+
+SubTopic: 1.2 Types of Entrepreneurs
+Type: Theory
+Q045:         Compare Imitating entrepreneurs and Drone entrepreneurs, highlighting how their attitudes toward innovation affect their business survival.
+Answer: 
+Explanation: Imitating entrepreneurs actively improve upon existing systems to become better than the master, whereas Drone entrepreneurs stubbornly resist change and cling to traditional methods, making them vulnerable to obsolescence.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q046:         Which characteristic of entrepreneurship entails product innovation and production techniques innovation while keeping the market in mind?
+Option: A: Purposeful Activity
+Option: B: Creative Activity
+Option: C: Dynamic Process
+Option: D: Risk Bearing
+Answer: B
+Explanation: Creative Activity entails innovations, product innovation, and production techniques innovation while bearing the market in mind.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q047:         Entrepreneurship is described as a Dynamic Process because it has to bear in mind:
+Option: A: Static government policies
+Option: B: The constantly changing business environment
+Option: C: Fixed production costs
+Option: D: Traditional family customs
+Answer: B
 Explanation: Entrepreneurship is a dynamic process that has to bear in mind the dynamic business environment.
-SubTopic: Process Characteristics
-Type: MCQ
-Q003: Entrepreneurship is a "purposeful activity" embarked upon for:
-Option: A: Avoiding taxes
-Option: B: Solely making money
-Option: C: Gaining political power
-Option: D: Profit, humanitarian purposes, or to bring a difference to the market
-Answer: D
-Explanation: It is embarked upon for a specific purpose, which could be for profit making, humanitarian purposes, or to bring a difference to the market.
-SubTopic: Process Characteristics
-Type: MCQ
-Q004: Why is entrepreneurship considered to involve risk?
-Option: A: Because employees are unreliable
-Option: B: Because entrepreneurial decisions can have far-reaching impacts and are hard to reverse
-Option: C: Because entrepreneurs are reckless
-Option: D: Because the government strictly regulates it
-Answer: B
-Explanation: Entrepreneurial decisions are critical, enormous, and cannot be easily reverted, having far-reaching impacts.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q005: Di-Masi (2010) states that entrepreneurs:
-Option: A: Take risks only when guaranteed success
-Option: B: Calculate risks and are glad to let others bear the risk when convenient
-Option: C: Take reckless risks
-Option: D: Avoid risk entirely
-Answer: B
-Explanation: Di-Masi notes that entrepreneurs calculate risks and are more than glad to let others bear their risk when it is convenient for them.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q006: What does "Technical Knowledge" refer to in the context of entrepreneurship?
-Option: A: Knowing how to write a business plan
-Option: B: Knowing how to use a computer
-Option: C: Having expertise about production techniques and marketing for the venture
-Option: D: Understanding the stock market
-Answer: C
-Explanation: Depending on the venture, the entrepreneur must have technical expertise about production techniques and marketing.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q007: "Self Confidence and Multi-Skilled" means the entrepreneur must:
-Option: A: Rely entirely on their team
-Option: B: Avoid situations where they lack skills
-Option: C: Be an expert in only one field
-Option: D: Be a jack of all trades and believe in him/herself
-Answer: D
-Explanation: The entrepreneur has to be a jack of all trade and master of all, possessing different skills, and must have self-confidence.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q008: An entrepreneur must be a "never say never" kind of person. This trait is called:
-Option: A: Prudence
-Option: B: Tolerance
-Option: C: Risk-Taker
-Option: D: Confidence in the Face of Difficulties
-Answer: D
-Explanation: The text states the entrepreneur must be confident in the face of difficulties and discouraging circumstances, having a 'never say never' kind of person.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q009: What distinguishes a successful entrepreneur from an inventor?
-Option: A: An entrepreneur must see what others cannot and carve a new niche, not necessarily invent
-Option: B: Inventors are always better at business
-Option: C: An entrepreneur must be an inventor
-Option: D: Entrepreneurs do not use inventions
-Answer: A
-Explanation: The text states the entrepreneur may not necessarily be an inventor, but should be able to see what others cannot and carve out a new niche.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q010: A "Results-Oriented" entrepreneur ensures goals are pursued:
-Option: A: Only if there is guaranteed profit
-Option: B: Doggedly by all concerned willingly and with joy
-Option: C: By the leader alone
-Option: D: By any means necessary, including unethical ones
-Answer: B
-Explanation: The entrepreneur sets goals and ensures they are doggedly pursued by all concerned willingly and with joy.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q011: The text compares starting a new business to:
-Option: A: Going to the grocery store
-Option: B: Taking a vacation
-Option: C: Running a marathon
-Option: D: Bringing a child into the world and nurturing it
-Answer: D
-Explanation: The text compares it to bringing a child into the world and nurturing the child to adulthood, requiring dedication and hard work.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q012: Being "Calm" requires an entrepreneur to remain cool even when:
-Option: A: Dealing with a difficult employee
-Option: B: Exposed to stress, emergency, or crisis situations
-Option: C: They are on vacation
-Option: D: They are not making a profit
-Answer: B
-Explanation: Entrepreneurs need to be cool, calm, and collected, remaining calm even when exposed to stress, emergency, or crisis situations.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q013: Why must an entrepreneur be "Focused" and pay attention to small details?
-Option: A: Because they have nothing else to do
-Option: B: To save money on auditing
-Option: C: To micromanage employees
-Option: D: Small things handled improperly can lead to disastrous outcomes
-Answer: D
-Explanation: Attention has to be paid to a lot of details because small things when not handled properly may lead to disastrous outcomes.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q014: Why is "Prudence" (sound financial management) important?
-Option: A: To avoid paying taxes
-Option: B: Because finance is the life-wire of the business and needed to achieve profit objectives
-Option: C: Because banks require it
-Option: D: To impress investors
-Answer: B
-Explanation: Finance is the life-wire of the business, and to achieve the profit objective, the entrepreneur must engage in efficient financial management.
-SubTopic: Entrepreneur Traits
-Type: MCQ
-Q015: According to the text, who is the entrepreneur's most important team member?
-Option: A: The lawyer
-Option: B: The customer
-Option: C: The supplier
-Option: D: The investor
-Answer: B
-Explanation: The text states that the entrepreneur's most important team members are the customers, for without customers a business cannot survive.
-SubTopic: Process Characteristics
-Type: Theory
-Q016: The text describes entrepreneurship as a "dynamic," "purposeful," and "creative" activity that inherently "involves risk." Elaborate on each of these four characteristics of the entrepreneurial process. How do these elements differentiate entrepreneurship from routine business management?
-Answer: 
-Explanation: Creative: involves product and production innovation. Dynamic: adapts to the changing business environment. Purposeful: done for profit, humanitarian reasons, or to make a difference. Risk: decisions have far-reaching impacts and are hard to reverse. These elements differentiate it from routine management because routine management focuses on maintaining the status quo, whereas entrepreneurship actively seeks change, innovation, and accepts inherent uncertainty.
-SubTopic: Entrepreneur Traits
-Type: Theory
-Q017: Synthesize the various personality traits and skills identified by scholars (such as Di-Masi, Stephenson, and Hadzima & Pilla) to create a profile of a highly effective entrepreneur. Focus specifically on how traits like "Risk Bearing Ability," "Self Confidence," and "Total Commitment" are interconnected and necessary for business survival.
-Answer: 
-Explanation: A highly effective entrepreneur is innovative, results-oriented, and multi-skilled. Risk bearing ability allows them to take calculated risks (shifting risk when convenient). Self-confidence enables them to handle any situation without inferiority and believe in their vision. Total commitment is necessary because starting a business is like raising a child—it requires dedication, hard work, and single-mindedness. These traits are interconnected: confidence fuels the ability to take calculated risks, and total commitment ensures they persevere through the inevitable challenges to keep the business alive.
-`);
 
-window.CBT_SUBJECT_BANKS.push(`Subject: Entrepreneurship
-Topic: 1.4. Roles of Entrepreneurs
-SubTopic: Managerial Roles
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
 Type: MCQ
-Q001: The roles of entrepreneurs are the same as the basic managerial roles identified by whom in 1973?
-Option: A: Adam Smith
-Option: B: Henry Mintzberg
-Option: C: Joseph Schumpeter
-Option: D: Peter Drucker
+Q048:         Why is entrepreneurship considered a Purposeful Activity?
+Option: A: It is embarked upon for profit, humanitarian purposes, or to make a difference in the market
+Option: B: It requires zero planning
+Option: C: It is done purely as an unplanned hobby
+Option: D: It avoids setting measurable goals
 Answer: B
-Explanation: The roles are the same as the basic managerial roles identified by Henry Mintzberg in 1973.
-SubTopic: Managerial Roles
+Explanation: Purposeful Activity means entrepreneurship is embarked upon for profit, humanitarian purposes, or to bring a difference to the market.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
 Type: MCQ
-Q002: When an entrepreneur performs ceremonial duties and represents the organization in formal functions, they are acting as a:
-Option: A: Figure Head
-Option: B: Spokesman
-Option: C: Liaison
-Option: D: Leader
+Q049:         Driessen and Zwart (2010) identified three main characteristics of successful entrepreneurs: Need for Achievement (n Ach), Internal Locus of Control (ILOC), and:
+Option: A: Need for Power (n Pow)
+Option: B: Risk-Taking Propensity (RTP)
+Option: C: Tolerance of Ambiguity (ToA)
+Option: D: Endurance (End)
+Answer: B
+Explanation: The three main characteristics identified by Driessen and Zwart are need for achievement, internal locus of control, and risk-taking propensity.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q050:         Which of the following is classified by Driessen and Zwart (2010) as a secondary characteristic of successful entrepreneurs?
+Option: A: Need for achievement (n Ach)
+Option: B: Need for autonomy (n Aut)
+Option: C: Internal locus of control (ILOC)
+Option: D: Risk-taking propensity (RTP)
+Answer: B
+Explanation: Need for autonomy is one of the five secondary characteristics identified by Driessen and Zwart.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q051:         According to Di-Masi (2008), how do successful entrepreneurs approach risk?
+Option: A: They take blind, reckless risks
+Option: B: They bear calculated risks and seek others to bear the risk when convenient
+Option: C: They avoid all uncertain business ventures
+Option: D: They rely entirely on luck
+Answer: B
+Explanation: Successful entrepreneurs take calculated risks and in some cases shift risks to others.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q052:         What does being a "jack of all trades and master of all" imply for an entrepreneur?
+Option: A: Relying solely on external consultants
+Option: B: Being multi-skilled (e.g., possessing marketing, interpersonal, and language skills)
+Option: C: Focusing on only one narrow task
+Option: D: Avoiding technical knowledge
+Answer: B
+Explanation: It implies possessing diverse skills unlike other individuals, such as marketing, interpersonal, and language skills.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q053:         Starting and creating a new business is compared in the notes to:
+Option: A: Buying a lottery ticket
+Option: B: Bringing a child into the world and nurturing it to adulthood
+Option: C: Running a short sprint
+Option: D: Reading a novel
+Answer: B
+Explanation: Starting a new business requires total commitment, likened to bringing a child into the world and nurturing it to adulthood.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: MCQ
+Q054:         Why is Prudence (versatility in financial management) vital for an entrepreneur?
+Option: A: Finance is the "life-wire" of the business
+Option: B: It eliminates the need for customers
+Option: C: It replaces product innovation
+Option: D: It guarantees tax exemption
 Answer: A
-Explanation: The Figure Head role involves performing ceremonial duties by representing the organization in formal and informal functions.
-SubTopic: Managerial Roles
+Explanation: Prudence is essential because finance is the life-wire of the business.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
 Type: MCQ
-Q003: As a "Leader," the entrepreneur is responsible for:
-Option: A: Allocating financial resources
-Option: B: Negotiating with suppliers
-Option: C: Hiring, firing, training, and motivating employees
-Option: D: Monitoring the external environment
-Answer: C
-Explanation: The Leader role involves leading people in the organization by hiring, firing, training, and motivating them.
-SubTopic: Managerial Roles
+Q055:         Who are identified in the notes as the entrepreneur's most important team members?
+Option: A: Commercial bank managers
+Option: B: The customers
+Option: C: External legal auditors
+Option: D: Government regulators
+Answer: B
+Explanation: The entrepreneur's most important team members are the customers.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
 Type: MCQ
-Q004: The role that acts as the link between the business and outside parties is the:
-Option: A: Disturbance Handler
-Option: B: Negotiator Role
-Option: C: Liaison Role
-Option: D: Monitor Role
-Answer: C
-Explanation: The Liaison Role is acting as the link between the business and the parties outside the business.
-SubTopic: Managerial Roles
+Q056:         Why are customers considered the most important team members of an entrepreneur?
+Option: A: They provide startup capital
+Option: B: Without customers, a business cannot survive
+Option: C: They manage daily factory operations
+Option: D: They write company policies
+Answer: B
+Explanation: Customers are the most important team members because without customers a business cannot survive.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
 Type: MCQ
-Q005: Constantly monitoring both the internal and external environment of the business is the:
-Option: A: Figure Head Role
-Option: B: Resource Allocator
-Option: C: Spokesman Role
-Option: D: Monitor Role
-Answer: D
-Explanation: The entrepreneur acts as a monitor, monitoring both the internal and external environment of the business constantly.
-SubTopic: Managerial Roles
+Q057:         Regarding Planning Ability, the notes state that "he/she who fails to plan...":
+Option: A: Succeeds by chance
+Option: B: Plans to fail
+Option: C: Saves operational time
+Option: D: Avoids market risk
+Answer: B
+Explanation: Planning is important because he who fails to plan, plans to fail.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
 Type: MCQ
-Q006: Transmitting information both within and outside the business is known as the:
+Q058:         How should an entrepreneur exercise Tolerance when dealing with people of varying personalities and perceptions?
+Option: A: By agreeing to every demand made by workers
+Option: B: By being tolerant while not being weak, in order to get things done
+Option: C: By avoiding communication with employees
+Option: D: By enforcing rigid uniformity
+Answer: B
+Explanation: The entrepreneur needs to be tolerant while not being weak, in order to get things done.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: Theory
+Q059:         Explain the four characteristics of entrepreneurship as a process (Creative Activity, Dynamic Process, Purposeful Activity, and Involves Risk).
+Answer: 
+Explanation: Creative Activity involves product/production innovation; Dynamic Process accounts for the changing business environment; Purposeful Activity is for profit or humanitarian goals; Involves Risk refers to critical, irreversible venture decisions.
+
+SubTopic: 1.3 Characteristics of Entrepreneurship and Entrepreneurs
+Type: Theory
+Q060:         Discuss five personal traits or behavioral skills required of a successful entrepreneur (such as Prudence, Customer-Centricity, Total Commitment, Calculated Risk-Bearing, and Team Player), explaining why each is critical to business survival.
+Answer: 
+Explanation: Prudence manages financial life-wires; Customer-Centricity satisfies unmet market needs; Total Commitment ensures endurance like nurturing a child; Calculated Risk-Bearing prevents reckless losses; Team Player recognizes customers and partners as vital for survival.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q061:         The basic managerial roles performed by entrepreneurs were identified in 1973 by:
+Option: A: Joseph Schumpeter
+Option: B: Henry Mintzberg
+Option: C: Alfred Marshall
+Option: D: Richard Cantillon
+Answer: B
+Explanation: The basic managerial roles performed by entrepreneurs were identified by Henry Mintzberg in 1973.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q062:         In which role does the entrepreneur perform ceremonial duties by representing the organization in formal and informal functions?
 Option: A: Liaison Role
-Option: B: Information Disseminator Role
-Option: C: Entrepreneurial Role
-Option: D: Leader Role
-Answer: B
-Explanation: The Information Disseminator Role involves acting as the organizational representative and transmitting information both within and outside the business.
-SubTopic: Managerial Roles
-Type: MCQ
-Q007: When acting as the "Spokesman," the entrepreneur:
-Option: A: Only speaks to the government
-Option: B: Acts as the representative of the business to insiders and outsiders
-Option: C: Monitors competitors
-Option: D: Keeps information secret
-Answer: B
-Explanation: The manager acts as the spokesman of the business; he/she is the person for the business both inside and outside.
-SubTopic: Managerial Roles
-Type: MCQ
-Q008: What is described as the basic role of the entrepreneur?
-Option: A: Leader
-Option: B: Entrepreneurial Role (launching new ideas and bearing risk)
-Option: C: Figure Head
+Option: B: Figure Head Role
+Option: C: Monitor Role
 Option: D: Disturbance Handler
 Answer: B
-Explanation: The Entrepreneurial Role is the basic role of the entrepreneur; he/she launches new ideas for the business and bears the risk.
-SubTopic: Managerial Roles
+Explanation: In the Figure Head Role, the entrepreneur acts by representing the organization in formal and informal ceremonial functions.
+
+SubTopic: 1.4 Roles of Entrepreneurs
 Type: MCQ
-Q009: Acting as an arbitrator in situations of conflict to maintain organizational harmony is the:
-Option: A: Resource Allocator
-Option: B: Negotiator Role
-Option: C: Disturbance Handler
-Option: D: Monitor
-Answer: C
-Explanation: The entrepreneur acts as an arbitrator in situations of conflict so as to maintain organizational harmony as a Disturbance Handler.
-SubTopic: Managerial Roles
-Type: MCQ
-Q010: Deciding how the scarce resources of the business are allocated among competing ends is the:
-Option: A: Resource Allocator Role
+Q063:         Which managerial role involves hiring, firing, training, and motivating employees?
+Option: A: Spokesman Role
 Option: B: Leader Role
-Option: C: Entrepreneurial Role
-Option: D: Spokesman Role
-Answer: A
-Explanation: The entrepreneur decides on how the scarce resources of the business are allocated among its competing ends as a Resource Allocator.
-SubTopic: Social Roles
-Type: MCQ
-Q011: Which of the following is considered a Social Role of an entrepreneur?
-Option: A: Adapting imported technology
-Option: B: Transformation of traditional indigenous industry into a modern enterprise
-Option: C: Bearing the ultimate risk of uncertainty
-Option: D: Utilizing local raw materials
+Option: C: Negotiator Role
+Option: D: Resource Allocator
 Answer: B
-Explanation: Social roles include transformation of traditional indigenous industry into a modern enterprise, stimulation of indigenous entrepreneurship, job creation, and provision of social welfare.
-SubTopic: Economic Roles
+Explanation: In the Leader Role, the entrepreneur leads people by hiring, firing, training, and motivating them.
+
+SubTopic: 1.4 Roles of Entrepreneurs
 Type: MCQ
-Q012: "Mobilizing savings necessary for the enterprise" falls under which category of roles?
-Option: A: Technological Roles
-Option: B: Managerial Roles
-Option: C: Economic Roles
-Option: D: Social Roles
-Answer: C
-Explanation: Economic roles include bearing the ultimate risk, mobilizing savings, providing a channel for disposal of economic activities, and utilizing local raw materials.
-SubTopic: Technological Roles
-Type: MCQ
-Q013: Stimulating indigenous technology in the production process is an example of:
-Option: A: A Social Role
-Option: B: A Technological Role
-Option: C: An Economic Role
-Option: D: A Managerial Role
-Answer: B
-Explanation: Technological roles include stimulating indigenous technology, adapting traditional/imported technology, and developing technological competence.
-SubTopic: Economic Roles
-Type: MCQ
-Q014: Providing a channel for the disposal of economic activities is a:
-Option: A: Disturbance Handler Role
-Option: B: Technological Role
-Option: C: Economic Role
-Option: D: Social Role
-Answer: C
-Explanation: Providing channel for the disposal of economic activities is listed under Economic Roles of Entrepreneur.
-SubTopic: Social Roles
-Type: MCQ
-Q015: Job or employment creation in the community is classified as a:
+Q064:         Acting as the link between the business and parties outside the business defines the:
 Option: A: Liaison Role
-Option: B: Economic Role
-Option: C: Social Role
-Option: D: Technological Role
-Answer: C
-Explanation: Job or employment creation in the community is listed under Social Roles of Entrepreneur.
-SubTopic: Managerial Roles
+Option: B: Monitor Role
+Option: C: Information Disseminator Role
+Option: D: Entrepreneurial Role
+Answer: A
+Explanation: In the Liaison Role, the entrepreneur acts as the link between the business and outside parties.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q065:         Which role requires the entrepreneur to constantly scan both the internal and external environment of the business?
+Option: A: Spokesman Role
+Option: B: Monitor Role
+Option: C: Figure Head Role
+Option: D: Disturbance Handler
+Answer: B
+Explanation: In the Monitor Role, the entrepreneur constantly monitors both internal and external environments.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q066:         Transmitting information both within and outside the business as an organizational representative is the:
+Option: A: Information Disseminator Role
+Option: B: Resource Allocator Role
+Option: C: Negotiator Role
+Option: D: Leader Role
+Answer: A
+Explanation: The Information Disseminator transmits information within and outside the business.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q067:         Launching new ideas for the business and bearing the associated risk is described as the basic:
+Option: A: Spokesman Role
+Option: B: Entrepreneurial Role
+Option: C: Liaison Role
+Option: D: Monitor Role
+Answer: B
+Explanation: The Entrepreneurial Role involves launching new ideas and bearing the risk.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q068:         In which role does the entrepreneur act as an arbitrator in situations of conflict to maintain organizational harmony?
+Option: A: Resource Allocator
+Option: B: Disturbance Handler
+Option: C: Figure Head
+Option: D: Information Disseminator
+Answer: B
+Explanation: The Disturbance Handler acts as an arbitrator in conflict situations to maintain harmony.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q069:         Deciding how scarce business resources are distributed among competing ends to achieve organizational goals is the:
+Option: A: Negotiator Role
+Option: B: Resource Allocator Role
+Option: C: Monitor Role
+Option: D: Spokesman Role
+Answer: B
+Explanation: The Resource Allocator decides how scarce resources are allocated among competing ends.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q070:         Representing the business in bargaining with labor categories and external sources falls under the:
+Option: A: Leader Role
+Option: B: Negotiator Role
+Option: C: Figure Head Role
+Option: D: Monitor Role
+Answer: B
+Explanation: The Negotiator Role involves negotiating on behalf of the business with labor and outside sources.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q071:         Which of the following is classified as a Social Role of the entrepreneur?
+Option: A: Bearing the ultimate risk of uncertainty
+Option: B: Job or employment creation in the community
+Option: C: Mobilizing savings for the enterprise
+Option: D: Adapting imported technology to the local environment
+Answer: B
+Explanation: Job or employment creation in the community is a Social Role.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q072:         Which of the following is an Economic Role of the entrepreneur?
+Option: A: Provision of social welfare service of redistributing wealth
+Option: B: Utilizing local raw materials and human resources
+Option: C: Stimulation of indigenous technology in production
+Option: D: Transformation of traditional indigenous industry
+Answer: B
+Explanation: Utilizing local raw materials and human resources is an Economic Role.
+
+SubTopic: 1.4 Roles of Entrepreneurs
+Type: MCQ
+Q073:         Developing technological competence in oneself and the workforce through innovation (Ogundele, 2007) is categorized under:
+Option: A: Social Roles
+Option: B: Technological Roles
+Option: C: Economic Roles
+Option: D: Ceremonial Roles
+Answer: B
+Explanation: Developing technological competence is part of the Technological Roles.
+
+SubTopic: 1.4 Roles of Entrepreneurs
 Type: Theory
-Q016: Henry Mintzberg (1973) identified several basic managerial roles that entrepreneurs must perform. Select five of these roles (e.g., Figure Head, Leader, Monitor, Resource Allocator, Negotiator) and provide a practical example of how an entrepreneur would execute each of these roles in a typical business week.
+Q074:         Identify and explain any six (6) of Henry Mintzberg’s (1973) managerial roles as performed by an entrepreneur in operating a successful business.
 Answer: 
-Explanation: Examples of practical execution: Figure Head - attending a community event or signing official documents; Leader - conducting a team meeting to motivate staff and hiring a new employee; Monitor - reviewing sales data and industry news to spot trends; Resource Allocator - deciding which department gets the budget for a new project; Negotiator - meeting with a supplier to agree on a contract price for raw materials.
-SubTopic: Functional Roles
+Explanation: Six roles include Figure Head (ceremonial duties), Leader (hiring/motivating), Liaison (external linking), Monitor (scanning environment), Disturbance Handler (resolving conflicts), and Resource Allocator (distributing scarce resources).
+
+SubTopic: 1.4 Roles of Entrepreneurs
 Type: Theory
-Q017: The text categorizes the specific roles of an entrepreneur into Social, Economic, and Technological functions. Explain how an entrepreneur acts as an agent of economic change and technological adaptation. Why is the transformation of traditional indigenous industries considered a vital "Social Role" of an entrepreneur in a developing economy?
+Q075:         Categorize and discuss the specific functional roles of an entrepreneur under Social Roles, Economic Roles, and Technological Roles, giving two examples for each category.
 Answer: 
-Explanation: As an agent of economic change, the entrepreneur bears uncertainty, mobilizes savings, and utilizes local resources. For technological adaptation, they adapt traditional and imported technology to the local environment and stimulate indigenous technology. Transforming traditional indigenous industries is a vital social role because it modernizes the economy, stimulates indigenous entrepreneurship, creates jobs, and helps redistribute wealth and income, which is crucial for a developing economy's welfare.
+Explanation: Social roles involve community job creation and wealth redistribution; Economic roles involve bearing uncertainty and utilizing local raw materials; Technological roles involve stimulating indigenous tech and adapting imported technology.
 `);
