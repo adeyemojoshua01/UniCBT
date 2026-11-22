@@ -55,14 +55,20 @@ module.exports = async function handler(req, res) {
       const noteTags = noteFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
       const bankTags = bankFiles.map(path => `  <script defer src="${path}"></script>`).join('\n');
 
-      function replaceBlock(content, startMarker, endMarker, newTags) {
-        const startIndex = content.indexOf(startMarker);
-        const endIndex = content.indexOf(endMarker);
-        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) return content;
-        const before = content.substring(0, startIndex + startMarker.length);
-        const after = content.substring(endIndex);
-        return `${before}\n${newTags}\n${after}`;
-      }
+      function replaceBlock(content, startMarker, endMarker, newTags, fallbackAnchor = '</body>') {
+  const startIndex = content.indexOf(startMarker);
+  const endIndex = content.indexOf(endMarker);
+  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+    const before = content.substring(0, startIndex + startMarker.length);
+    const after = content.substring(endIndex);
+    return `${before}\n${newTags}\n${after}`;
+  }
+  // Fallback: drop the tags just before </body>
+  if (content.includes(fallbackAnchor)) {
+    return content.replace(fallbackAnchor, `  ${newTags}\n${fallbackAnchor}`);
+  }
+  return content;
+}
 
       const updatedContent = replaceBlock(
         replaceBlock(
