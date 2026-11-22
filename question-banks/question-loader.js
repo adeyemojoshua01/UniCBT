@@ -103,6 +103,73 @@
     }, 100);
   }
 
+  function applyExternalMaterials(ns, EXT_NOTES, EXT_IMAGES) {
+    var subNotes  = EXT_NOTES[ns.name]  || {};
+    var subImages = EXT_IMAGES[ns.name] || {};
+    if (!ns.notes) ns.notes = {};
+    if (!ns.topicImages) ns.topicImages = {};
+
+    Object.keys(subNotes).forEach(function(topicName) {
+      var existingTopic = ns.topics.find(function(t) { return t.name.toLowerCase() === topicName.toLowerCase(); });
+      if (!existingTopic) { existingTopic = { id: topicId(topicName), name: topicName }; ns.topics.push(existingTopic); }
+      ns.notes[existingTopic.id] = subNotes[topicName];
+    });
+    Object.keys(subImages).forEach(function(topicName) {
+      var existingTopic = ns.topics.find(function(t) { return t.name.toLowerCase() === topicName.toLowerCase(); });
+      if (!existingTopic) { existingTopic = { id: topicId(topicName), name: topicName }; ns.topics.push(existingTopic); }
+      ns.topicImages[existingTopic.id] = subImages[topicName].slice();
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     DEFERRED STUDY MATERIALS
+     index.html lists the notes files in window.CBT_NOTE_FILES instead of
+     loading them with <script> tags. They are fetched after the app is
+     interactive (or immediately if the student opens the Study Hub first).
+     Notes are cached in localStorage, so repeat visits show them instantly.
+     If CBT_NOTE_FILES is absent (old index.html) everything behaves as before.
+     ------------------------------------------------------------------ */
+  var banksLoaded = false, materialsDone = false, materialsPromise = null;
+
+  function loadScript(src) {
+    return new Promise(function (resolve) {
+      var el = document.createElement('script');
+      el.src = src; el.async = true;
+      el.onload = resolve;
+      el.onerror = function () { console.warn('question-loader.js: could not load ' + src); resolve(); };
+      document.head.appendChild(el);
+    });
+  }
+
+  function applyMaterialsToApp() {
+    if (!banksLoaded || !window.app || !window.app.data) return;
+    var EXT_NOTES = window.CBT_SUBJECT_NOTES || {}, EXT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
+    Object.keys(window.app.data.subjects || {}).forEach(function (id) {
+      applyExternalMaterials(window.app.data.subjects[id], EXT_NOTES, EXT_IMAGES);
+    });
+    window.app.saveSubjects();
+    if (window.app.data.mode === 'landing') {
+      var c = document.getElementById('app-container');
+      if (c && c.innerHTML.trim() !== '') window.app.showLanding();
+    }
+  }
+
+  window.cbtMaterialsReady = function () { return !Array.isArray(window.CBT_NOTE_FILES) || materialsDone; };
+  window.cbtEnsureMaterials = function () {
+    if (window.cbtMaterialsReady()) return Promise.resolve();
+    if (!materialsPromise) {
+      materialsPromise = Promise.all(window.CBT_NOTE_FILES.map(loadScript)).then(function () {
+        materialsDone = true; applyMaterialsToApp();
+      });
+    }
+    return materialsPromise;
+  };
+  function prefetchMaterials() {
+    if (window.cbtMaterialsReady()) return;
+    var go = function () { window.cbtEnsureMaterials(); };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500);
+  }
+
   function mergeSaved(newSubjects) {
     var saved = {}; try { saved = JSON.parse(localStorage.getItem('cbt_subjects') || '{}') || {}; } catch (e) { saved = {}; }
     var savedList = Object.values(saved);
@@ -121,20 +188,7 @@
         if (savedImages[savedSub.id] && Array.isArray(savedImages[savedSub.id]) && savedImages[savedSub.id].length) { remappedImages[ns.id] = savedImages[savedSub.id]; imagesChanged = true; }
       }
 
-      var subNotes  = EXT_NOTES[ns.name]  || {};
-      var subImages = EXT_IMAGES[ns.name] || {};
-
-      Object.keys(subNotes).forEach(function(topicName) {
-        var existingTopic = ns.topics.find(function(t) { return t.name.toLowerCase() === topicName.toLowerCase(); });
-        if (!existingTopic) { existingTopic = { id: topicId(topicName), name: topicName }; ns.topics.push(existingTopic); }
-        ns.notes[existingTopic.id] = subNotes[topicName];
-      });
-
-      Object.keys(subImages).forEach(function(topicName) {
-        var existingTopic = ns.topics.find(function(t) { return t.name.toLowerCase() === topicName.toLowerCase(); });
-        if (!existingTopic) { existingTopic = { id: topicId(topicName), name: topicName }; ns.topics.push(existingTopic); }
-        ns.topicImages[existingTopic.id] = subImages[topicName].slice();
-      });
+      applyExternalMaterials(ns, EXT_NOTES, EXT_IMAGES);
     });
 
     if (imagesChanged) { Object.keys(remappedImages).forEach(function (id) { savedImages[id] = remappedImages[id]; }); try { localStorage.setItem('cbt_images', JSON.stringify(savedImages)); } catch (e) {} }
@@ -163,7 +217,9 @@
     if (typeof window.app.saveImages === 'function') window.app.saveImages();
     window.app.data.refreshLocked = false;
 
+    banksLoaded = true;
     console.log('✅ question-loader.js: loaded ' + count + ' questions.');
+    if (materialsDone) applyMaterialsToApp(); else prefetchMaterials();
     if (window.app.data.mode === 'landing') {
       var container = document.getElementById('app-container');
       if (container && container.innerHTML.trim() !== '') window.app.showLanding();
