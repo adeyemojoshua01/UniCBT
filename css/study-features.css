@@ -1,0 +1,66 @@
+/* =========================================================================
+   eduCBT — css/study-features.css
+   Styles for: reading progress, highlights, bookmarks, saved panel,
+   full-text note search. Load AFTER theme-aurora.css.
+   (Video / playlist styles are built into the video module itself.)
+   ========================================================================= */
+
+/* ---------- Read progress ---------- */
+.read-badge {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 1px 8px;
+  border-radius: 999px; font-size: .65rem; font-weight: 700; letter-spacing: .02em; vertical-align: middle;
+  background: rgba(47, 174, 133, .16); color: #4cc9a0; border: 1px solid rgba(47, 174, 133, .3);
+}
+.hub-progress { width: 150px; max-width: 100%; height: 3px; margin-top: 6px; border-radius: 3px; overflow: hidden; background: var(--ink-600, #24314f); }
+.hub-progress span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #b08a2e, #ecd48a); }
+#note-read-btn.is-read { color: #4cc9a0; border-color: rgba(76, 201, 160, .45); background: rgba(47, 174, 133, .14); }
+
+/* ---------- Highlights ---------- */
+mark.note-hl { color: inherit; border-radius: 3px; padding: 0 1px; cursor: pointer; transition: box-shadow .3s; }
+mark.note-hl.hl-y, .saved-hl.hl-y { background: rgba(250, 204, 21, .38); }
+mark.note-hl.hl-g, .saved-hl.hl-g { background: rgba(74, 222, 128, .32); }
+mark.note-hl.hl-p, .saved-hl.hl-p { background: rgba(244, 114, 182, .34); }
+mark.note-hl.flash { box-shadow: 0 0 0 4px rgba(207, 166, 70, .6); }
+.saved-hl { border-radius: 4px; padding: 1px 4px; }
+
+.hl-pop-inner {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 14px;
+  background: rgba(10, 15, 28, .97); border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, .85); color: #e7edf6;
+}
+.hl-pop-inner.hidden { display: none; }
+.hl-pop-label { font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
+.hl-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .55); transition: transform .15s; }
+.hl-swatch:hover { transform: scale(1.12); }
+.hl-swatch.hl-y { background: #facc15; }
+.hl-swatch.hl-g { background: #4ade80; }
+.hl-swatch.hl-p { background: #f472b6; }
+.hl-remove { font-size: .82rem; font-weight: 700; color: #f2a7b5; display: inline-flex; gap: 6px; align-items: center; }
+
+/* ---------- Bookmarks on headings ---------- */
+.note-bm-btn { margin-left: .55em; font-size: .62em; opacity: .4; background: none; border: 0; color: inherit; cursor: pointer; vertical-align: middle; transition: opacity .15s, color .15s; }
+.note-bm-btn:hover { opacity: 1; }
+.note-bm-btn.on { opacity: 1; color: #dcb95f; }
+
+/* ---------- Saved panel ---------- */
+.saved-tabs { display: flex; border-bottom: 1px solid var(--ink-600, #24314f); }
+.saved-tabs button { flex: 1; padding: 12px; font-size: .85rem; font-weight: 700; color: #77839f; border-bottom: 2px solid transparent; transition: color .15s; }
+.saved-tabs button.active { color: #e0bf68; border-bottom-color: #cfa646; }
+.saved-item { display: flex; align-items: stretch; margin-bottom: 8px; border: 1px solid var(--ink-600, #24314f); border-radius: 12px; background: var(--ink-800, #131c31); overflow: hidden; }
+.saved-open { flex: 1; min-width: 0; text-align: left; padding: 10px 14px; transition: background .15s; }
+.saved-open:hover { background: rgba(207, 166, 70, .08); }
+.saved-title { font-size: .9rem; font-weight: 700; color: #eaeef7; line-height: 1.4; }
+.saved-sub { margin-top: 3px; font-size: .72rem; color: #77839f; }
+.saved-del { padding: 0 14px; color: #77839f; transition: color .15s, background .15s; }
+.saved-del:hover { color: #e57d93; background: rgba(200, 52, 79, .1); }
+
+/* ---------- Full-text search results (Study Hub) ---------- */
+.ft-head { font-size: .75rem; font-weight: 700; color: #a9b4cc; margin-bottom: 8px; }
+.ft-empty { padding: 14px; text-align: center; font-size: .85rem; color: #77839f; border: 1px dashed var(--ink-600, #24314f); border-radius: 12px; }
+.ft-card { display: block; width: 100%; text-align: left; margin-bottom: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--ink-600, #24314f); background: var(--ink-850, #0e1526); transition: border-color .15s, transform .15s; }
+.ft-card:hover { border-color: rgba(207, 166, 70, .5); transform: translateY(-1px); }
+.ft-title { display: flex; justify-content: space-between; gap: 10px; font-size: .92rem; font-weight: 700; color: #eaeef7; }
+.ft-count { flex: none; font-size: .65rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(207, 166, 70, .15); color: #e0bf68; }
+.ft-sub { margin: 2px 0 6px; font-size: .7rem; color: #77839f; }
+.ft-snip { font-size: .78rem; line-height: 1.5; color: #a9b4cc; margin-top: 3px; }
+.ft-snip mark { background: rgba(207, 166, 70, .35); color: #fff; border-radius: 3px; padding: 0 2px; }
