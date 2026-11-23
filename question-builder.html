@@ -51,6 +51,21 @@ window.MathJax = {
   .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
   .folder-icon { transition: transform 0.2s; }
   details[open] > summary .folder-icon { transform: rotate(90deg); }
+
+  /* Force long equations to scroll horizontally instead of breaking the page */
+mjx-container {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+mjx-container[display="true"] {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
 </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
