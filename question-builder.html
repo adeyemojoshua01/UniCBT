@@ -21,6 +21,7 @@ window.MathJax = {
   body { background: #070A12; color: #E7EEF6; -webkit-tap-highlight-color: transparent; }
   * { scrollbar-width: thin; scrollbar-color: #25304d transparent; }
   *::-webkit-scrollbar { width: 6px; height: 6px; } *::-webkit-scrollbar-thumb { background:#25304d; border-radius:8px; }
+  
   .panel { background: #0B1020; border: 1px solid #1e2740; }
   .field { background:#101830; border:1px solid #26314f; color:#E7EEF6; border-radius:10px; width:100%; padding:10px 12px; font-size:13px; }
   .field:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
@@ -38,8 +39,11 @@ window.MathJax = {
   .hidden { display:none !important; }
   .fmt { white-space:pre-wrap; word-break:break-word; }
   .qcard { background:#0B1020; border:1px solid #1e2740; border-radius:14px; }
-  mjx-container { max-width:100% !important; overflow-x:auto; overflow-y:hidden; }
-  mjx-container[display="true"] { display:block !important; width:100% !important; max-width:100% !important; overflow-x:auto !important; }
+  
+  /* LaTeX Overflow Fix */
+  mjx-container { max-width:100% !important; overflow-x:auto !important; overflow-y:hidden !important; }
+  mjx-container[display="true"] { display:block !important; width:100% !important; max-width:100% !important; overflow-x:auto !important; overflow-y:hidden !important; -webkit-overflow-scrolling:touch; }
+  
   .tab-btn { flex: 1; padding: 14px 0; font-size: 13px; font-weight: 700; color: #8598AC; border-bottom: 2px solid transparent; transition: all 0.2s; text-align: center; }
   .tab-btn.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
   .pane { display: none; }
@@ -51,21 +55,6 @@ window.MathJax = {
   .tree-spine { border-left: 1px solid #1e2740; margin-left: 10px; padding-left: 10px; }
   .folder-icon { transition: transform 0.2s; }
   details[open] > summary .folder-icon { transform: rotate(90deg); }
-
-  /* Force long equations to scroll horizontally instead of breaking the page */
-mjx-container {
-  max-width: 100% !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-}
-mjx-container[display="true"] {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch;
-}
 </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
@@ -187,7 +176,6 @@ mjx-container[display="true"] {
 </div>
 
 <div id="toast-layer" class="fixed top-20 right-4 z-[90] flex flex-col gap-2 items-end pointer-events-none"></div>
-<!-- Paste Modal -->
 <div id="paste-modal" class="modal-shell hidden">
   <div class="modal-card">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
@@ -204,7 +192,6 @@ mjx-container[display="true"] {
         <button onclick="document.getElementById('paste-input').value=''; document.getElementById('paste-preview').classList.add('hidden');" class="btn btn-ghost"><i class="fas fa-eraser"></i> Clear</button>
       </div>
 
-      <!-- Preview Area (Hidden by default) -->
       <div id="paste-preview" class="hidden rounded-xl border border-[#26314f] bg-[#0a1020] p-4">
         <div id="paste-summary" class="text-sm font-semibold text-slate-200 mb-2"></div>
         <div class="flex items-center gap-2 mt-3">
@@ -577,7 +564,11 @@ updateOption: function (i, val) {
         B.renderStructure(); B.renderContent();
     },
 
-    renderMathText: function (t) { return esc(t).replace(/\n/g, '<br>'); },
+    renderMathText: function (t) { 
+        if (!t) return '';
+        // Converts newlines to HTML breaks so the preview shows them correctly
+        return esc(t).replace(/\n/g, '<br>'); 
+    },
     typeset: function () {
         if (window.MathJax) MathJax.typesetPromise([document.getElementById('workspace')]).catch(()=>{});
     },
@@ -1126,7 +1117,10 @@ importFromGitHub: async function(path) {
                     } else {
                         lines.push(`Answer: ${q.correct}`);
                     }
-                    if (q.explanation) lines.push(`Explanation: ${q.explanation}`);
+                    if (q.explanation) {
+                        var safeExpl = q.explanation.replace(/\n/g, '<br>');
+                        lines.push(`Explanation: ${safeExpl}`);
+                    }
                 });
             });
             blocks.push(lines.join('\n'));
@@ -1165,8 +1159,7 @@ importFromGitHub: async function(path) {
 })();
 </script>
 
-  <!-- Unified Import/Export Modal -->
-<div id="file-ops-modal" class="modal-shell hidden">
+  <div id="file-ops-modal" class="modal-shell hidden">
   <div class="modal-card">
     <div class="flex items-center justify-between px-5 py-3.5 border-b border-[#1e2740] bg-[#0c1222]">
       <h2 class="font-bold text-sm"><i class="fas fa-file-import text-indigo-400 mr-2"></i>Import / Export</h2>
@@ -1219,8 +1212,6 @@ importFromGitHub: async function(path) {
     </div>
   </div>
 </div>
-
-<!-- Update the header button to open this modal instead of the old one -->
 
 <script>
   // Override the header button to open the new modal
