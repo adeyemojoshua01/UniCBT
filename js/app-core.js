@@ -769,12 +769,14 @@
       if (titleEl) titleEl.textContent = (resolvedName || 'Topic') + ' · Notes';
       
       // ... REST OF THE VIEW NOTE LOGIC ...
-      var bodyEl = document.getElementById('note-viewer-content');
+            var bodyEl = document.getElementById('note-viewer-content');
       if (bodyEl) {
         if (window.marked && typeof this.parseMarkdownWithMath === 'function') {
-          bodyEl.innerHTML = this.parseMarkdownWithMath(note);
+          // Force line breaks by adding two spaces before every newline
+          var forcedBreaks = note.replace(/\n/g, '  \n'); 
+          bodyEl.innerHTML = this.parseMarkdownWithMath(forcedBreaks);
         } else {
-          bodyEl.innerHTML = note;
+          bodyEl.innerHTML = note.replace(/\n/g, '<br>');
         }
       }
       
