@@ -6,125 +6,72 @@ window.CBT_SUBJECT_NOTES['Fundamental Fluid Mechanics']['Introduction to fluid m
 @[svg](diagram.svg)
 
 
-## **Fluid Mechanics Definitions:**
+## 1. Definition of Fluid Mechanics
+**Fluid Mechanics** is the branch of applied mechanics that studies the behavior of fluids (liquids & gases) at rest (fluid statics) and in motion (fluid dynamics) with respect to the force applied.
 
- ### *Fluid mechanics is the branch of physics and engineering that studies the behavior of fluids—which include both liquids and gases—and the forces acting upon them.*
+**Fluid Mechanics** is the science that studies the behavior of fluids at rest (fluid statics) and in motion (fluid dynamics), considering the pressure, acceleration, velocity, and forces acted upon.
 
-*   Fluid mechanics is the study of fluid at rest and fluid in motion with the consideration of Pressure, force and acceleration/velocity.
+---
 
-*   Fluid mechanics is the Science that Studies on how fluid behaves in a static state and also in a dynamic State.
+## 2. Sub-Categories of Fluid Mechanics
+Fluid Mechanics is divided into two main branches:
 
-- Fluid mechanics is the study of how liquids and gases behave, whether they are at rest or in motion.
+**1. Fluid Statics**
+This is the study of fluids (liquids & gases) at rest. It considers the pressure applied without considering the velocity and acceleration. 
+*Sub-categories:*
+*   **Hydrostatics:** The study of liquids at rest. It considers the pressure applied without the velocity and acceleration.
+    *   *Examples:* Water pressure at the bottom of a dam, a hydraulic lift, a ship floating on the ocean, a submarine submerged in water.
+*   **Aerostatics:** The study of gases at rest. It considers the pressure acting upon it without reference to the velocity and acceleration.
+    *   *Examples:* Atmospheric pressure changes with altitude, a helium balloon floating in still air, air pressure inside a scuba tank, a barometer measuring air pressure.
 
+**2. Fluid Dynamics**
+This is the study of fluids (liquids & gases) in motion. It considers the pressure, velocity, acceleration, and forces acting upon it.
+*Sub-categories:*
+*   **Fluid Kinetics:** The study of fluids (liquids and gases) in motion with respect to the pressure, forces, velocity, and acceleration acting upon it.
+*   **Fluid Kinematics:** The study of fluids (liquids and gases) in motion that considers only the displacement of the fluids without reference to the force acting upon it.
 
-| **Branch of fluid mechanics**|
-|-------------------|
-| Fluid Statics |
-| Fluid Dynamics |
-__________
+---
 
-## **FluId Statics**
+## 3. What is a Fluid?
+A fluid is a substance that deforms under the influence of shear stress acting upon it. 
 
-### *Fluid statics is the branch of fluid mechanics that studies liquids and gases when they are completely at rest, focusing on pressure and forces in stationary systems.*
+A fluid is a substance (liquids and gases) that continuously deforms when acted upon by shear stress at any magnitude.
 
-- It is the branch of mechanics that deals with fluids at rest where all forces are in complete equilibrium and there is no relative motion or shearing stress between fluid particles.
+A fluid is a substance that cannot resist deformation under the influence of shear stress when acted upon at any magnitude.
 
-- It is the study of how pressure and forces behave in non-moving liquids and gases.
+---
 
-|Sub-category of Fluid Statics | 
-|------|
-|Hydrostatics|
-|Aerostatics|
+## 4. Categories and Types of Fluid
+**Categories of Fluid:**
+1.  **Liquids:** A fluid that has a fixed volume, has no definite shape, but deforms to the shape of the container it is in.
+    *   *Examples:* Water, Mercury, Alcohol, Engine Oil, Blood.
+2.  **Gases:** A fluid that has no definite volume, has no definite shape, is compressible, and tends to occupy available space in a container it is in.
+    *   *Examples:* Air, Oxygen, Carbon Dioxide, Natural Gas, Helium.
 
+**Types of Fluid (Based on Viscosity and Flow Behavior):**
+1.  **Newtonian Fluid:** A fluid whose viscosity remains constant regardless of how much shear stress (force) is applied. It flows immediately when force is applied.
+    *   *Examples:* Water, air, alcohol, thin motor oil.
+2.  **Non-Newtonian Fluid:** A fluid whose viscosity changes depending on the amount of shear stress applied. It may become thicker or thinner when agitated.
+    *   *Examples:* Ketchup, blood, paint, toothpaste, Oobleck (cornstarch and water).
+3.  **Ideal Plastic (Bingham Plastic):** A specific type of non-Newtonian fluid that behaves like a solid until a certain minimum amount of force (yield stress) is applied. Once that force is reached, it flows like a liquid.
+    *   *Examples:* Toothpaste, mayonnaise, drilling mud.
+4.  **Ideal Fluid:** A theoretical fluid that is completely incompressible (density never changes) and has zero viscosity (no internal friction). It does not exist in reality but is used for simple mathematical models.
+5.  **Real Fluid:** Any actual fluid in the real world. It has viscosity (resists flow) and is compressible (especially gases).
 
-**Hydrostatics**
+---
 
-*Hydrostatics is the branch of fluid mechanics that studies liquids (such as water, oil, or mercury) when they are completely at rest.*
-
-- Core Focus: It examines how stationary liquids create pressure, how that pressure increases with depth, and the forces they exert on container walls or submerged objects.
-
-*Simple Definition: It is the science of still water and how it pushes against things.*
-
-
-|Real-Life Samples|Explanation|
-|--------|---|
-|1. Water Towers| Elevated tanks use still water pressure daily |
-|2. Swimming Pools| Deep water pushes heavily on your ears.|
-|3. Floating Boats| Motionless water lifts ships to the surface.|
-|4. Dams| Heavy walls block massive stationary water reservoirs.|
-|5. Ice Floating in a Drink| Motionless liquid supports the floating ice cube.|
-
-**Aerostatics**
-
-*Aerostatics is the branch of fluid mechanics (specifically under fluid statics) that studies gases at rest.*
-
-- Core Focus: It examines gases like air when they are not moving, looking closely at atmospheric pressure, how air pressure changes as you go higher in altitude (such as up a mountain), and buoyant forces in gases.
-
-*Simple Definition:The science of still air and gases.*
-
-|Real-Life Sample|Explanation|
-|------|------|
-|Hot Air Balloons| A balloon filled with heated air floats peacefully in the sky because the surrounding still air provides an upward buoyant force|
-|Car or Bicycle Tires| Air that is pumped inside a tire sits under pressure, holding its shape and supporting the weight of the vehicle while motionless.|
-|Weather Balloons| Large balloons filled with gases like helium or hydrogen sit or float in the atmosphere, balanced by the surrounding air pressure.|
-|Blimps and Airships| Huge airships hover stationary in the air because their internal gas volume creates enough buoyancy to offset gravity.|
-|Barometers| Traditional air pressure gauges use sealed chambers of air to measure atmospheric pressure changes caused by the weight of stationary air above us.|
-
-
-
-## **Fluid Dynamics**
-
-### *Fluid dynamics is the branch of fluid mechanics that studies liquids and gases when they are in motion, along with the forces that cause or affect that motion.*
-
-- It is the study of how fluids flow and swirl.
-
-- It is the study of how fluids behave when forces are unbalanced, resulting in acceleration, flow, turbulence, and energy transfer between different parts of the fluid.
-
-- It is the science of moving fluids—tracking how liquids and gases flow, swirl, and interact with the objects around them (like wind blowing past a car or blood pumping through your veins).
-
-|Real-Life Samples|Explanation|
-|---|---|
-|Airplane Flight| Air moving rapidly over and under an airplane's specially shaped wings creates lift, allowing heavy planes to soar through the sky.|
-|Blood Circulation| Your heart pumps blood through your veins and arteries, moving vital nutrients and oxygen continuously throughout your body.|
-|Weather Patterns and Wind| Moving air currents, breezes, and massive jet streams flow through the atmosphere, shaping global weather and storms.|
-|Car Aerodynamics| As a car drives down the highway, air flows smoothly around its sleek body to reduce drag and improve fuel efficiency.|
-|Rivers and Waterfalls| Gravity pulls water downstream through riverbeds and over cliffs, creating flowing currents, rapids, and swirling eddies.|
-
-
-
-## **Fluid**
-*   Fluid is a substance that deforms under the influence of Shear Stress at any magnitude.
-
-*   Fluid is a substance that when Shear Stress is applied, the fluid tends to deform at any pressure/magnitude.
-
-*   Fluid is a substance that deform continuously when Shear Stress is acted upon at any magnitude.
-
- **Fluid is made up of two substance;**
-1) Liquid
-2) Gas
-
-1) Liquid is a fluid that has a fixed Volume, has no fixed Shape but takes the Shape of any container it fills.
-
-2) Gas is a fluid that has no fixed Volume has no fixed Shape but tends to occupy any given space in a medium [container is crossed out] it's filled in.
-
-
-
-## **Application Areas of Fluid Mechanics**
-| Application Area |  Details |
-| ------ | --- |
-| **Biomechanics** |- Blood flow through arteries and veins;<br> - Airflow in the lungs;<br> - Flow of cerebral fluid |
-| **Households** |- Piping systems for cold water, natural gas, and sewage;<br> - Piping and ducting network of heating and air-conditioning systems;<br> - refrigerator, vacuum cleaner, dish washer, washing machine, water meter, natural gas meter, air conditioner, radiator, etc. |
-| **Meteorology and Ocean Engineering** |Movements of air currents and water currents |
-| **Mechanical Engineering** |- Design of pumps, turbines, air-conditioning equipment, pollution-control equipment, etc.;<br> - Design and analysis of aircraft, boats, submarines, rockets, jet engines, wind turbines, biomedical devices, the cooling of electronic components, and the transportation of water, crude oil, and natural gas. |
-| **Civil Engineering** |- Transport of river sediments; Pollution of air and water<br> - Design of piping systems <br> - Flood control systems |
-| **Chemical Engineering** |Design of chemical processing equipment |
-| **Turbomachines** | pump, turbine, fan, blower, propeller, etc. |
-| **Military** | Missile, aircraft, ship, underwater vehicle, dispersion of chemical agents, etc. |
-| **Automobile** | IC engine, air conditioning, fuel flow, external aerodynamics, etc. |
-| **Medicine** | Heart assist device, artificial heart valve, Lab-on-a-Chip device, glucose monitor, controlled drug delivery, etc. |
-| **Electronics** | Convective cooling of generated heat. |
-| **Energy** | Combuster, burner, boiler, gas, hydro and wind turbine, etc. |
-| **Oil and Gas** | Pipeline, pump, valve, offshore rig, oil spill cleanup, etc. |`;
+## 5. Application of Fluid Mechanics
+1.  **Civil Engineering:** Designing dams, water supply systems, bridges, and sewage systems.
+2.  **Irrigation:** Designing canals, drainage systems, and pumps for agriculture.
+3.  **Mechanical Engineering:** Designing pumps, turbines, HVAC systems, and internal combustion engines.
+4.  **Ocean Engineering:** Studying wave dynamics, ship design, and offshore structures.
+5.  **Medicine:** Understanding blood flow (hemodynamics), designing ventilators, and medical devices.
+6.  **Military:** Submarine design, ballistics, and aerodynamics of aircraft.
+7.  **Pipelines:** Transporting water, oil, and natural gas over long distances.
+8.  **Aerospace Engineering:** Designing aircraft wings, rocket engines, and studying aerodynamics.
+9.  **Meteorology:** Weather forecasting, studying wind patterns, and atmospheric dynamics.
+10. **Chemical Engineering:** Designing reactors, mixing processes, and pipeline transport of chemicals.
+`;
 
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] = window.CBT_SUBJECT_IMAGES['Fundamental Fluid Mechanics'] || {};
