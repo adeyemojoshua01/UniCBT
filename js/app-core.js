@@ -576,7 +576,7 @@
         '</section>' +
 
         '<footer class="mt-8 pb-4 flex items-center justify-center text-xs text-gray-500">' +
-        '<span>version 1.0 eduCBT</span>' +
+        '<span>version 3.0.1 eduCBT</span>' +
         '</footer>';
 
       container.innerHTML = html;
