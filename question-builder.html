@@ -1116,29 +1116,43 @@ importFromGitHub: async function(path) {
         return label + ': ' + parts[0] + parts.slice(1).map(function(l) { return '\n' + (KEY.test(l) ? '\u200B' : '') + l; }).join('');
     },
 
-    generateExportJSCode: function(shuffle) {
-        var blocks = [];
-        appData.subjects.forEach(s => {
-            var lines = ['Subject: ' + s.name];
-            s.topics.forEach(t => {
-                lines.push('Topic: ' + t.name);
-                t.questions.forEach((q, i) => {
-                    lines.push(`SubTopic: ${t.subTopics.find(x => x.id === q.subTopicId)?.name || 'General'}`);
-                    lines.push(`Type: ${q.type}`);
-                    lines.push(B.dslField('Q' + String(i+1).padStart(3,'0'), q.question));
-                    if (q.type === 'MCQ') {
-                        q.options.forEach((opt, oi) => { if (opt) lines.push(`Option: ${'ABCD'[oi]}: ${opt}`); });
-                        lines.push(`Answer: ${q.correct}`);
-                    } else {
-                        lines.push(`Answer: ${q.correct}`);
-                    }
-                    if (q.explanation) lines.push(B.dslField('Explanation', q.explanation));
-                });
+generateExportJSCode: function(shuffle) {
+    var blocks = [];
+    appData.subjects.forEach(s => {
+        var lines = ['Subject: ' + s.name];
+        s.topics.forEach(t => {
+            lines.push('Topic: ' + t.name);
+            t.questions.forEach((q, i) => {
+                lines.push(`SubTopic: ${t.subTopics.find(x => x.id === q.subTopicId)?.name || 'General'}`);
+                lines.push(`Type: ${q.type}`);
+                
+                // Escape LaTeX backslashes in question text
+                var safeQuestion = String(q.question || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+                lines.push(`Q${String(i+1).padStart(3,'0')}: ${safeQuestion}`);
+                
+                if (q.type === 'MCQ') {
+                    q.options.forEach((opt, oi) => { 
+                        if (opt) {
+                            var safeOpt = String(opt).replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+                            lines.push(`Option: ${'ABCD'[oi]}: ${safeOpt}`); 
+                        }
+                    });
+                    lines.push(`Answer: ${q.correct}`);
+                } else {
+                    var safeCorrect = String(q.correct || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+                    lines.push(`Answer: ${safeCorrect}`);
+                }
+                
+                if (q.explanation) {
+                    var safeExpl = String(q.explanation).replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+                    lines.push(`Explanation: ${safeExpl}`);
+                }
             });
-            blocks.push(lines.join('\n'));
         });
-        return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' + blocks.map(b => `window.CBT_SUBJECT_BANKS.push(\`${b}\n\`);`).join('\n\n');
-    },
+        blocks.push(lines.join('\n'));
+    });
+    return 'window.CBT_SUBJECT_BANKS = window.CBT_SUBJECT_BANKS || [];\n\n' + blocks.map(b => `window.CBT_SUBJECT_BANKS.push(\`${b}\n\`);`).join('\n\n');
+},
 
     renderPreview: function() {
         var container = document.getElementById('preview-content');
