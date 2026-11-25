@@ -13,7 +13,7 @@
   function parseQuestions(text) {
     var subjects = {};
     var subject = null, topic = null, question = null;
-    var currentSubTopic = 'General', explanationMode = false;
+    var currentSubTopic = 'General', explanationMode = false, questionMode = false, pendingBlank = false;
 
     function ensureSubject(name) {
       var sname = String(name || 'Untitled').trim();
@@ -47,33 +47,40 @@
     var lines = String(text || '').split(/\r?\n/);
     lines.forEach(function (rawLine) {
       var line = rawLine.trim();
-      if (!line || line.indexOf('===') === 0) return;
+      if (!line) { if (explanationMode && question && question.explanation) pendingBlank = true; return; }
+      if (line.indexOf('===') === 0) return;
 
       if (/^Subject\s*:/i.test(line)) { subject = ensureSubject(line.replace(/^Subject\s*:/i, '').trim()); topic = null; question = null; currentSubTopic = 'General'; return; }
       if (/^Duration\s*:/i.test(line)) { if (subject) subject.duration = Number(line.replace(/^Duration\s*:/i, '').trim()) || 30; return; }
       if (/^Topic\s*:/i.test(line)) { if (!subject) subject = ensureSubject('Untitled'); topic = ensureTopic(line.replace(/^Topic\s*:/i, '').trim()); question = null; currentSubTopic = 'General'; return; }
-      if (/^SubTopic\s*:/i.test(line)) { currentSubTopic = line.replace(/^SubTopic\s*:/i, '').trim() || 'General'; question = null; explanationMode = false; return; }
+      if (/^SubTopic\s*:/i.test(line)) { currentSubTopic = line.replace(/^SubTopic\s*:/i, '').trim() || 'General'; question = null; explanationMode = false; pendingBlank = false; questionMode = false; return; }
       if (/^Type\s*:/i.test(line)) {
         if (!subject) subject = ensureSubject('Untitled'); if (!topic) topic = ensureTopic('General');
         var typeRaw = line.replace(/^Type\s*:/i, '').trim(); var mapped = 'objective';
         if (/theory/i.test(typeRaw)) mapped = 'theory'; else if (/fill/i.test(typeRaw)) mapped = 'fill';
         question = { id: Date.now() + Math.random(), text: '', type: mapped, correct: '', explanation: '', options: mapped === 'objective' ? {} : null, topicId: topic.id, subTopic: currentSubTopic || 'General', maxMarks: 10 };
-        subject.questions.push(question); explanationMode = false; return;
+        subject.questions.push(question); explanationMode = false; pendingBlank = false; questionMode = false; return;
       }
-      if (/^Q\d+\s*:/i.test(line)) { var qq = ensureQuestion(); qq.text = line.replace(/^Q\d+\s*:/i, '').trim(); explanationMode = false; return; }
-      if (/^Marks\s*:/i.test(line)) { var m = Number(line.replace(/^Marks\s*:/i, '').trim()); if (question && !isNaN(m)) question.maxMarks = m; explanationMode = false; return; }
+      if (/^Q\d+\s*:/i.test(line)) { var qq = ensureQuestion(); qq.text = line.replace(/^Q\d+\s*:/i, '').trim(); explanationMode = false; pendingBlank = false; questionMode = true; return; }
+      if (/^Marks\s*:/i.test(line)) { var m = Number(line.replace(/^Marks\s*:/i, '').trim()); if (question && !isNaN(m)) question.maxMarks = m; explanationMode = false; pendingBlank = false; questionMode = false; return; }
       if (/^Option\s*:/i.test(line)) {
         var qo = ensureQuestion(); if (!qo.options) qo.options = {};
         var rest = line.replace(/^Option\s*:/i, '').trim(); var mm = rest.match(/^([A-Da-d])\s*:\s*([\s\S]*)$/);
         if (mm) qo.options[mm[1].toUpperCase()] = mm[2].trim(); else if (rest) {
           var letters = ['A', 'B', 'C', 'D']; var next = letters.filter(function (l) { return qo.options[l] === undefined; })[0]; if (next) qo.options[next] = rest;
-        } explanationMode = false; return;
+        } explanationMode = false; pendingBlank = false; questionMode = false; return;
       }
-      if (/^Answer\s*:/i.test(line)) { if (question) question.correct = line.replace(/^Answer\s*:/i, '').trim(); explanationMode = false; return; }
-      if (/^Explanation\s*:/i.test(line)) { if (question) question.explanation = line.replace(/^Explanation\s*:/i, '').trim(); explanationMode = true; return; }
+      if (/^Answer\s*:/i.test(line)) { if (question) question.correct = line.replace(/^Answer\s*:/i, '').trim(); explanationMode = false; pendingBlank = false; questionMode = false; return; }
+      if (/^Explanation\s*:/i.test(line)) { if (question) question.explanation = line.replace(/^Explanation\s*:/i, '').trim(); explanationMode = true; pendingBlank = false; questionMode = false; return; }
       var bare = line.match(/^([A-D])\s*:\s*(.+)$/);
       if (!explanationMode && bare && question && question.type === 'objective') { if (!question.options) question.options = {}; question.options[bare[1]] = bare[2].trim(); return; }
-      if (explanationMode && question) { question.explanation = (question.explanation ? question.explanation + ' ' : '') + line; }
+      var cont = line.replace(/^\u200B/, '');
+      if (explanationMode && question) {
+        question.explanation = question.explanation ? question.explanation + (pendingBlank ? '\n\n' : '\n') + cont : cont;
+        pendingBlank = false; return;
+      }
+      // extra lines of a multi-line question (only before any option has been read, so stray text is still ignored)
+      if (questionMode && question && !(question.options && Object.keys(question.options).length)) { question.text = question.text ? question.text + '\n' + cont : cont; }
     });
 
     Object.keys(subjects).forEach(function (sid) {
@@ -167,7 +174,7 @@
   function prefetchMaterials() {
     if (window.cbtMaterialsReady()) return;
     var go = function () { window.cbtEnsureMaterials(); };
-    if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500);
+    if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500);
   }
 
   function mergeSaved(newSubjects) {
