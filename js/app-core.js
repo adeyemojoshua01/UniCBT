@@ -518,7 +518,7 @@
         '<div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-purple-100 blur-2xl"></div>' +
         '<div class="absolute -bottom-24 -left-20 w-64 h-64 rounded-full bg-green-100 blur-2xl"></div>' +
         '<div class="relative p-6 md:p-10">' +
-        '<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold uppercase tracking-wider mb-5"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Aurora Obsidian · CBT</div>' +
+        '<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-bold uppercase tracking-wider mb-5"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> COURSE CBT</div>' +
         '<div class="flex flex-col md:flex-row md:items-center gap-6">' +
         '<div class="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-green-700 text-white flex items-center justify-center shrink-0 shadow-lg"><i class="fas fa-graduation-cap text-4xl md:text-5xl"></i></div>' +
         '<div class="min-w-0 flex-grow">' +
