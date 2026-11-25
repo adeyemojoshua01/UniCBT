@@ -64,3 +64,29 @@ mark.note-hl.flash { box-shadow: 0 0 0 4px rgba(207, 166, 70, .6); }
 .ft-sub { margin: 2px 0 6px; font-size: .7rem; color: #77839f; }
 .ft-snip { font-size: .78rem; line-height: 1.5; color: #a9b4cc; margin-top: 3px; }
 .ft-snip mark { background: rgba(207, 166, 70, .35); color: #fff; border-radius: 3px; padding: 0 2px; }
+
+
+/* =========================================================================
+   MATH & EXPLANATION TEXT
+   1. Long LaTeX stays inside its box. MathJax 4 (see index.html) wraps long
+      equations onto new lines; the rules below are the safety net for anything
+      that cannot be broken (wide matrices, long fractions): it scrolls inside
+      its own box instead of pushing the layout out.
+   2. Explanations keep the line breaks the author typed in the question builder.
+   ========================================================================= */
+.mathjax, .note-content, .study-option, .explanation-box, #fullscreen-explain-body,
+.cbt-radio + label, label.study-option { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+
+mjx-container[display] {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+/* inline math may break between operators; never let it exceed its line box */
+mjx-container:not([display]) { max-width: 100%; }
+mjx-container mjx-math { max-width: 100%; }
+
+/* keep authored line breaks (collapse runs of spaces, keep newlines) */
+.explanation-box, #fullscreen-explain-body { white-space: pre-line; }
+.explanation-box mjx-container, #fullscreen-explain-body mjx-container { white-space: nowrap; }
