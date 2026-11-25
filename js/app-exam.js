@@ -204,21 +204,44 @@
       }
 
       /* -------- explanation -------- */
-      var explanationHtml = '';
-      if (isStudy && revealed) {
-        explanationHtml = '<div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">' +
+      /* -------- explanation -------- */
+var explanationHtml = '';
+if (isStudy && revealed) {
+  // Check if user manually closed the panel for this question
+  if (d.hiddenExplanations && d.hiddenExplanations[q.id]) {
+      explanationHtml = '<div class="mt-4 text-center"><button onclick="app.toggleExplanationPanel(' + q.id + ')" class="text-xs font-bold text-blue-600 hover:text-blue-800"><i class="fas fa-eye mr-1"></i> Show Explanation</button></div>';
+  } else {
+      // Check if user collapsed the panel (default is expanded)
+      var isCollapsed = d.collapsedExplanations && d.collapsedExplanations[q.id];
+      
+      explanationHtml = '<div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden transition-all duration-300">' +
+        // Header with toggle and close buttons
+        '<div class="flex items-center justify-between p-3 bg-white border-b border-gray-200">' +
           '<div class="flex items-center gap-2 font-bold ' + (revealed.isCorrect ? 'text-green-600' : 'text-red-500') + '">' +
-          '<i class="fas ' + (revealed.isCorrect ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i>' +
-          '<span>' + (revealed.isCorrect ? '✓ Correct!' : '✗ Incorrect') + '</span>' +
-          (revealed.score !== undefined ? '<span class="ml-auto text-xs px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-600">Score: ' + revealed.score + '</span>' : '') + '</div>' +
-          (q.explanation ? '<div class="mt-3"><div class="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1.5">📚 Explanation</div>' +
+            '<i class="fas ' + (revealed.isCorrect ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i>' +
+            '<span>' + (revealed.isCorrect ? '✓ Correct!' : '✗ Incorrect') + '</span>' +
+            (revealed.score !== undefined ? '<span class="ml-2 text-[10px] px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-gray-600">Score: ' + revealed.score + '</span>' : '') +
+          '</div>' +
+          '<div class="flex items-center gap-1">' +
+            '<button onclick="app.toggleExplanationPanel(' + q.id + ')" class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="' + (isCollapsed ? 'Expand' : 'Collapse') + '">' +
+              '<i class="fas fa-chevron-' + (isCollapsed ? 'down' : 'up') + '"></i>' +
+            '</button>' +
+            '<button onclick="app.closeExplanationPanel(' + q.id + ')" class="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors" title="Close"><i class="fas fa-times"></i></button>' +
+          '</div>' +
+        '</div>' +
+        
+        // Collapsible Body
+        '<div class="p-4 ' + (isCollapsed ? 'hidden' : '') + '">' +
+          (q.explanation ? '<div class="mt-1"><div class="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1.5">📚 Explanation</div>' +
             '<div class="explanation-box">' + app.esc(q.explanation).replace(/\n/g, '<br>') +
             '<button onclick="app.openFullScreenExplanation(this)" class="fullscreen-explain-btn blink-btn"><i class="fas fa-expand"></i> View in full screen</button></div></div>' : '') +
           ((!revealed.isCorrect && q.type === 'objective') ?
             '<div class="mt-3 rounded-lg border-l-4 border-green-500 bg-green-50 p-3 text-sm text-green-800">' +
             '<i class="fas fa-circle-check mr-1.5"></i>Correct answer: <span class="font-bold">' + app.esc(q.correct) + ': ' + app.esc((q.options || {})[q.correct] || '') + '</span></div>' : '') +
-          '</div>';
-      }
+        '</div>' +
+      '</div>';
+  }
+}
 
       /* -------- material buttons -------- */
       var materials = '';
