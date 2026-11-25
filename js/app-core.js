@@ -541,7 +541,7 @@
         '<button onclick="app.showCandidateOptions()" class="text-left rounded-2xl bg-white border border-gray-200 p-6 shadow-lg hover:border-green-500 transition-colors group">' +
         '<div class="flex items-center gap-4">' +
         '<div class="w-14 h-14 rounded-2xl bg-green-700 text-white flex items-center justify-center shrink-0"><i class="fas fa-user-graduate text-2xl"></i></div>' +
-        '<div class="min-w-0 flex-grow"><h3 class="text-xl font-bold text-gray-800">I\'m a Candidate</h3>' +
+        '<div class="min-w-0 flex-grow"><h3 class="text-xl font-bold text-gray-800">Candidate</h3>' +
         '<p class="text-sm text-gray-500 mt-0.5">Choose a subject, then take a timed practice paper or study with instant explanations.</p></div>' +
         '<i class="fas fa-arrow-right text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all"></i>' +
         '</div>' +
