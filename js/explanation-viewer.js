@@ -54,6 +54,21 @@
     var clone = box.cloneNode(true);
     clone.querySelectorAll('.fullscreen-explain-btn').forEach(function (b) { b.remove(); });
     
+    // --- FIX: Strip conflicting Tailwind color and background classes ---
+    // This ensures the text matches the modal's theme (white/dark/sepia)
+    var elementsToClean = [clone].concat(Array.from(clone.querySelectorAll('*')));
+    elementsToClean.forEach(function(el) {
+        // Remove background classes that would override the modal theme
+        el.classList.forEach(function(cls) {
+            if (cls.startsWith('bg-') || cls.startsWith('text-')) {
+                el.classList.remove(cls);
+            }
+        });
+    });
+    // Add a specific class to handle generic text color inheritance
+    clone.classList.add('text-inherit');
+    // ---------------------------------------------------------------------
+
     // Clear and inject the new content
     body.innerHTML = '';
     body.appendChild(clone);
