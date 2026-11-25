@@ -9,7 +9,7 @@ Option: A: \\(2x^{2} +3x +2 \\)
 Option: B: \\(3x + 2\\)
 Option: C: \\(2x + 3 \\)
 Option: D: \\(2x + 2 \\)
-Answer: B
+Answer: C
 Explanation: \\(lim_{ \\Delta x 
 \\rightarrow 0}  \\frac{f(x+ \\Delta x) - f(x)}{ \\Delta x} \\)
 
