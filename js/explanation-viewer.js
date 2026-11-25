@@ -35,6 +35,22 @@
     document.head.insertAdjacentHTML('beforeend', duplicateCSS);
   }
 
+  // Helper to sync the text color with the modal theme
+  function applyThemeTextColor() {
+    var modal = document.getElementById('fullscreen-explain-modal');
+    var content = modal.querySelector('.modal-content');
+    var body = document.getElementById('fullscreen-explain-body');
+    if (!content || !body) return;
+
+    if (content.classList.contains('theme-white')) {
+        body.style.color = '#1e293b'; // dark slate
+    } else if (content.classList.contains('theme-dark')) {
+        body.style.color = '#e2e8f0'; // light slate
+    } else if (content.classList.contains('theme-sepia')) {
+        body.style.color = '#42301a'; // dark brown
+    }
+  }
+
   window.openFullScreenExplanation = function (btnElement) {
     var modal = document.getElementById('fullscreen-explain-modal');
     var body = document.getElementById('fullscreen-explain-body');
@@ -55,18 +71,18 @@
     clone.querySelectorAll('.fullscreen-explain-btn').forEach(function (b) { b.remove(); });
     
     // --- FIX: Strip conflicting Tailwind color and background classes ---
-    // This ensures the text matches the modal's theme (white/dark/sepia)
     var elementsToClean = [clone].concat(Array.from(clone.querySelectorAll('*')));
     elementsToClean.forEach(function(el) {
-        // Remove background classes that would override the modal theme
         el.classList.forEach(function(cls) {
             if (cls.startsWith('bg-') || cls.startsWith('text-')) {
                 el.classList.remove(cls);
             }
         });
     });
-    // Add a specific class to handle generic text color inheritance
-    clone.classList.add('text-inherit');
+    
+    // Force the inherited color to be highest priority
+    clone.style.setProperty('color', 'inherit', 'important');
+    clone.style.setProperty('background', 'transparent', 'important');
     // ---------------------------------------------------------------------
 
     // Clear and inject the new content
@@ -78,6 +94,9 @@
     
     modal.classList.add('open');
     
+    // Apply the correct text color based on the current theme
+    applyThemeTextColor();
+
     if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
       try { 
         window.MathJax.typesetPromise([body]).catch(function () {}); 
@@ -96,6 +115,9 @@
     var next = order[(current + 1) % order.length];
     order.forEach(function (cls) { content.classList.remove(cls); });
     content.classList.add(next);
+    
+    // Immediately update text colors when theme changes
+    applyThemeTextColor();
   };
 
   /* expose the same triggers on the app namespace (inline markup uses app.*) */
