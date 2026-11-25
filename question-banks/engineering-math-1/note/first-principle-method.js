@@ -12,7 +12,10 @@ MXOOByq6w6o | First Principle Differentiation of Rational Terms I | Derivatives
 luGaoDOjSE0 | First Principle differentiation of y = 1/(2x +1) | First Principle (Derivative by First Principle )
 f4K_9Ww_2Ew | First Principle Differentiation of y = x^3 #excellenceacademy #jonahemmanuel #firstprinciple
 ZVQXXtAywyU | First Principle Differentiation of y=2x⁵+4x⁴-x³+3x²-5x+7 #differentiation
-O_Ul5aPsKIg | First Principle Differentiation of Rational Terms II | Derivatives`;
+O_Ul5aPsKIg | First Principle Differentiation of Rational Terms II | Derivatives
+
+
+\\(\\frac{6i}{u7}\\)`;
 
 window.CBT_SUBJECT_IMAGES = window.CBT_SUBJECT_IMAGES || {};
 window.CBT_SUBJECT_IMAGES['Engineering math 1'] = window.CBT_SUBJECT_IMAGES['Engineering math 1'] || {};
