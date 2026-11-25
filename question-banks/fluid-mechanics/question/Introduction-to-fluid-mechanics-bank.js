@@ -90,9 +90,9 @@ Answer:
 Explanation: A fluid is a substance that deforms continuously when a shear stress is applied to it at any magnitude. Note: To get full marks here, you must include the three key elements: 1. It deforms (changes shape/flows). 2. It happens because of a shear stress. 3. It happens at any magnitude (no matter how small the force is).
 SubTopic: Fluid
 Type: Theory
-Q011:         State the two types of fluids. For each type, write its definition (based on volume and shape) and list three examples.
+Q011:         State the two main categories of fluids. For each categories, write its definition (based on volume and shape) and list three examples.
 Answer: 
-Explanation: The two types of fluids are Liquids and Gases.  Liquid: A fluid that has a fixed volume but no fixed shape; it takes the shape of the object it is poured into. Examples: Water, Blood, Urine.  Gas: A fluid that has no fixed volume and no fixed shape; it fills the entire space of the object or room it is in. Examples: Smoke, Air, Helium.
+Explanation: The two main categories of fluids are Liquids and Gases.  Liquid: A fluid that has a fixed volume but no fixed shape; it takes the shape of the object it is poured into. Examples: Water, Blood, Urine.  Gas: A fluid that has no fixed volume and no fixed shape; it fills the entire space of the object or room it is in. Examples: Smoke, Air, Helium.
 SubTopic: Fluid
 Type: MCQ
 Q012:         Which of the following is an example of a Gas?
