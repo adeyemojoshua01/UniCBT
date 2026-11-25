@@ -22,7 +22,7 @@ Answer: B
 Explanation: The fundamental definition states "at any magnitude." This means even the tiniest amount of shear force will cause a fluid to yield and flow.
 SubTopic: Fluid
 Type: MCQ
-Q003:         What are the two main types of fluids?
+Q003:         What are the two main categories of fluids?
 Option: A: Solids and Gases
 Option: B: Liquids and Plasmas
 Option: C: Liquids and Gases
