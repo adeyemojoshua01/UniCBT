@@ -12,11 +12,12 @@
     '@keyframes blink-pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.35)}50%{box-shadow:0 0 0 6px rgba(37,99,235,0)}}' +
     '#fullscreen-explain-modal{display:none;position:fixed;inset:0;z-index:99999;background:rgba(2,6,23,.78);padding:16px;overflow-y:auto}' +
     '#fullscreen-explain-modal.open{display:flex;align-items:flex-start;justify-content:center}' +
-    '#fullscreen-explain-modal .modal-content{width:100%;max-width:900px;margin:24px auto;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,.45);border:1px solid rgba(148,163,184,.35);overflow:hidden}' +
-    '#fullscreen-explain-modal .explain-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;font-weight:700;font-size:15px}' +
+    '#fullscreen-explain-modal .modal-content{width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;margin:24px auto;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,.45);border:1px solid rgba(148,163,184,.35);overflow:hidden}' +
+    '#fullscreen-explain-modal .explain-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;font-weight:700;font-size:15px;flex-shrink:0}' +
     '#fullscreen-explain-modal .explain-modal-actions{display:flex;gap:8px}' +
     '#fullscreen-explain-modal .explain-modal-actions button{width:34px;height:34px;border-radius:9px;border:1px solid rgba(148,163,184,.4);cursor:pointer;font-size:15px;line-height:1}' +
-    '#fullscreen-explain-body{padding:18px 22px 26px;font-size:15px;line-height:1.75}' +
+    '#fullscreen-explain-body{padding:18px 22px 26px;font-size:15px;line-height:1.75;overflow-y:auto;flex-grow:1;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word}' +
+    '#fullscreen-explain-body *{max-width:100% !important;box-sizing:border-box}' +
     '#fullscreen-explain-modal .theme-white{background:#ffffff;color:#1e293b}' +
     '#fullscreen-explain-modal .theme-white .explain-modal-header{background:#f1f5f9;border-bottom:1px solid #e2e8f0;color:#0f172a}' +
     '#fullscreen-explain-modal .theme-white .explain-modal-actions button{background:#e2e8f0;color:#0f172a}' +
@@ -52,10 +53,20 @@
 
     var clone = box.cloneNode(true);
     clone.querySelectorAll('.fullscreen-explain-btn').forEach(function (b) { b.remove(); });
-    body.innerHTML = clone.innerHTML;
+    
+    // Clear and inject the new content
+    body.innerHTML = '';
+    body.appendChild(clone);
+    
+    // Reset scroll position to top when opening
+    body.scrollTop = 0;
+    
     modal.classList.add('open');
+    
     if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-      try { window.MathJax.typesetPromise([body]).catch(function () {}); } catch (e) {}
+      try { 
+        window.MathJax.typesetPromise([body]).catch(function () {}); 
+      } catch (e) {}
     }
   };
 
