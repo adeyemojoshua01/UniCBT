@@ -373,6 +373,30 @@ if (isStudy && revealed) {
       this.renderQuestion();
     },
 
+toggleExplanationPanel: function (qId) {
+  if (!this.data.collapsedExplanations) this.data.collapsedExplanations = {};
+  if (!this.data.hiddenExplanations) this.data.hiddenExplanations = {};
+  
+  // If it was hidden, unhide it and keep it expanded
+  if (this.data.hiddenExplanations[qId]) {
+      this.data.hiddenExplanations[qId] = false;
+      this.data.collapsedExplanations[qId] = false;
+  } else {
+      // Toggle collapse state
+      this.data.collapsedExplanations[qId] = !this.data.collapsedExplanations[qId];
+  }
+  
+  this.saveExamState();
+  this.renderQuestion();
+},
+
+closeExplanationPanel: function (qId) {
+  if (!this.data.hiddenExplanations) this.data.hiddenExplanations = {};
+  this.data.hiddenExplanations[qId] = true;
+  this.saveExamState();
+  this.renderQuestion();
+},
+
     previewTheoryImage: function (qId, input) {
       var file = input.files && input.files[0];
       if (!file) return;
